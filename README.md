@@ -1,5 +1,7 @@
 # MPC-FM-1
 
+# Its try to combine MPC + Electron (live sequences) + Roland 303 (Acid) under HUGE Effects in Fm-1
+
 Custom firmware for the **M-VAVE FM-1** pocket synth.
 
 > **Beta.** Tested on the author's FM-1. Back up your projects and samples before you install, and read [Install and recovery](docs/INSTALL_AND_RECOVERY.md) first. No warranty.
