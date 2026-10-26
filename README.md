@@ -1,7 +1,9 @@
 # MPC-FM-1
 
-# HI, DEARS! <3 Welcome to try my own view on portable synth FW! Its try to combine MPC + Electron (live sequences) + Roland 303 (Acid) under HUGE Effects in FM-1
-I need Yours Opinion about.
+# HI, DEARS! <3 Welcome to try my own view on portable synth FW! 
+# Its try to combine MPC + Electron (live sequences) + Roland 303 (Acid) under HUGE Effects in FM-1
+
+# I need Yours Opinion about.
 
  
 Custom firmware for the **M-VAVE FM-1** pocket synth.
