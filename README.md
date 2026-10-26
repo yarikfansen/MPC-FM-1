@@ -45,7 +45,12 @@ Based on the official open release FM1 Open V14 by M-VAVE ([fm1_open](https://gi
 
 ## Download and install
 
-Open the **Releases** page. Each release has:
+**Current version: v0.1 beta** — download from [release/v0.1-beta](release/v0.1-beta):
+[install page](https://github.com/yarikfansen/MPC-FM-1/raw/main/release/v0.1-beta/MPC-FM-1-install-v0.1-beta.html) ·
+[firmware .fwsc](https://github.com/yarikfansen/MPC-FM-1/raw/main/release/v0.1-beta/MPC-FM-1-v0.1-beta.fwsc) ·
+[SHA256SUMS](release/v0.1-beta/SHA256SUMS.txt)
+
+The same files are listed on the **Releases** page. Each release has:
 - `MPC-FM-1-install-<version>.html` — the install page (open it in Google Chrome),
 - `MPC-FM-1-<version>.fwsc` — the firmware file,
 - `SHA256SUMS.txt` — checksums,

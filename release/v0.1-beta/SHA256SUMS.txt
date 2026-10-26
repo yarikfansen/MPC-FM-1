@@ -1,0 +1,2 @@
+1872ac7900397d14da23d51385dbaceb232d6d17148bfa1dd3edf2ce88bbefdd *MPC-FM-1-install-v0.1-beta.html
+1638d44f32679b7b749278f63a554ecfc8e9bbe6f9b09992027f0b840637e2e6 *MPC-FM-1-v0.1-beta.fwsc
