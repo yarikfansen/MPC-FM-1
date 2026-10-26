@@ -74,7 +74,7 @@ Full steps and recovery: [docs/INSTALL_AND_RECOVERY.md](docs/INSTALL_AND_RECOVER
 
 ## Feedback, reviews, bugs
 
-Your experience shapes the next version. Please use **Issues**:
+Your experience shapes the next version. Talk with us in **[Discussions](../../discussions)** — ideas, questions, your tracks and setups. For reviews and bugs please use **Issues**:
 - [Feedback or review](../../issues/new?template=feedback.md) — what you like, what is hard, what you miss.
 - [Bug report](../../issues/new?template=bug_report.md) — what you did, what happened, firmware version, a short video if you can.
 
