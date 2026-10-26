@@ -1,0 +1,16 @@
+* text=auto eol=lf
+*.bat text eol=crlf
+# Preserve SDK source bytes for integrity checks.
+sdk/** -text
+*.a binary
+*.bin binary
+*.exe binary
+*.dll binary
+*.sea binary
+*.wasm binary
+*.o binary
+*.fwsc binary
+*.boot binary
+# Keep reviewed vendor/header bytes, including their original whitespace.
+sdk/include/libc/** whitespace=-blank-at-eof
+sdk/synth.json whitespace=cr-at-eol

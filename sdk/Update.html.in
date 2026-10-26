@@ -1,0 +1,742 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-3.0-only WITH GPL-3.0-linking-exception -->
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>FM1 工作台</title>
+<style>
+:root{color-scheme:dark;font:15px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif;background:#121518;color:#e2e7e9;--accent:#aae4c8;--muted:#859293}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 25%,#252c2c80,transparent 65%);min-height:100vh}main{max-width:1160px;margin:auto;padding:34px 36px 24px}header{display:flex;align-items:center;justify-content:space-between;gap:16px;font-size:11px;letter-spacing:.16em;color:var(--muted)}header b{color:#d5dedc;letter-spacing:.2em}.version-tag{font:10px/1.4 Consolas,"Liberation Mono",monospace;letter-spacing:.08em}h1{font-size:32px;letter-spacing:-.04em;margin:20px 0 2px;font-weight:600}h2{font-size:22px;margin:0 0 10px}h3{font-size:18px}p{color:#99a7a8}main>p{margin:4px 0 22px;font-size:13px}a{color:var(--accent)}button,input,select{font:inherit}button{border:1px solid #465150;border-radius:7px;padding:9px 15px;cursor:pointer;background:#293230;color:#dde5e1;margin:5px 6px 5px 0;transition:background .12s,border-color .12s}button:hover{background:#384541;border-color:#758a80}button.primary{background:var(--accent);color:#172e24;border-color:var(--accent);font-weight:650}button.primary:hover{background:#c4f3da}button:disabled{opacity:.4;cursor:default}button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:4px}[hidden]{display:none!important}nav{display:flex;gap:3px;border-bottom:1px solid #333c3b;margin-bottom:22px}nav button{background:transparent;border:0;border-radius:0;margin:0 22px 0 0;padding:10px 1px 13px;font-size:13px;color:#889a98;border-bottom:2px solid transparent}nav button[aria-selected=true]{color:#d1eee0;border-bottom-color:var(--accent)}section{padding:22px;border:1px solid #343e3d;border-radius:12px;background:#1b2221;margin:20px 0}#tab-sim{border:0;background:none;padding:0;margin:0}#tab-library,#tab-update{max-width:720px;margin:28px auto}.sim-toolbar{display:flex;gap:10px;align-items:center;margin:0 0 18px;flex-wrap:wrap}.sim-toolbar button{margin:0;font-size:12px;padding:8px 14px}.sim-health{display:flex;align-items:center;gap:9px;font-size:11px;color:#96a8a0}.sim-health:before{content:"";width:6px;height:6px;background:var(--accent);border-radius:50%;box-shadow:0 0 8px #aae4c844}.sim-health span+span{border-left:1px solid #46534d;padding-left:9px;color:#6f8379}.sim-toolbar label{margin:0 0 0 auto;display:flex;gap:8px;align-items:center;font-size:11px;color:#879b93}.sim-toolbar input{width:85px;accent-color:var(--accent)}
+.device-scroll{overflow:auto;padding:10px 18px 28px;margin:0 -18px;scrollbar-color:#465951 transparent}.sim-device{container-type:inline-size;position:relative;width:100%;min-width:720px;aspect-ratio:1000/624;border:1px solid #505453;border-radius:2.5%;background:linear-gradient(145deg,#343838 0%,#292d2e 40%,#252829 100%);box-shadow:inset 0 1px 1px #949b9680,inset 0 -5px 0 #161b1b,0 4px 0 #0c1010,0 12px 24px #0007,0 30px 60px #0004;user-select:none;-webkit-user-select:none}.sim-device:after{pointer-events:none;content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(100deg,#ffffff04,transparent 55%)}.device-brand{position:absolute;left:5.2%;top:3%;font:700 1.3cqw/1 Consolas,"Liberation Mono",monospace;letter-spacing:.15em;color:#b3bcb7}.device-brand span{font-size:.8cqw;font-weight:400;color:#75817c;margin-left:1cqw;letter-spacing:.08em}.case-mark{position:absolute;right:4.8%;top:3%;font:.8cqw Consolas,"Liberation Mono",monospace;letter-spacing:.18em;color:#778680}.screw{position:absolute;width:.7%;height:1.12%;border-radius:50%;background:linear-gradient(45deg,#171b1a 45%,#747d7855 48%,#1a1e1c 55%);box-shadow:0 1px 1px #69746a50}.screw.tl{left:2%;top:3%}.screw.tr{right:2%;top:3%}.screw.bl{left:2%;bottom:3%}.screw.br{right:2%;bottom:3%}.screen-bezel{position:absolute;left:29.2%;top:7.05%;width:25.6%;height:41.03%;padding:.8%;border:1px solid #111615;background:#101513;border-radius:2%;box-shadow:0 1px 1px #73807760,inset 0 2px 5px #0008}#sim-screen{display:block;width:100%;height:100%;image-rendering:auto;background:#000;border:1px solid #0d1110}@container (min-width:960px){#sim-screen{image-rendering:pixelated}}.screen-placeholder{position:absolute;inset:8%;display:grid;place-content:center;text-align:center;color:#89988c;font:1.1cqw/1.8 system-ui}.screen-placeholder strong{color:var(--accent);font-size:3cqw;letter-spacing:.16em}.screen-caption{position:absolute;top:48.9%;left:29.2%;width:25.6%;display:flex;justify-content:space-between;font:.67cqw Consolas,"Liberation Mono",monospace;letter-spacing:.15em;color:#718077}.encoder{position:absolute;width:8%;height:7.7%;transform:translate(-50%,-50%);text-align:center;z-index:2}.encoder>span{position:absolute;bottom:calc(100% + 1.1cqw);left:-12%;right:-12%;font:600 1cqw/1 Consolas,"Liberation Mono",monospace;color:#b6c4bd;letter-spacing:.04em}.encoder .dial{display:block;position:relative;width:60%;height:100%;margin:0 auto;padding:0;border:2px solid #111815;border-radius:50%;background:radial-gradient(circle at 38% 28%,#59625c 0%,#3c4740 45%,#262f29 75%,#141c17 90%);box-shadow:0 .35cqw .45cqw #0009,inset 0 .1cqw .15cqw #99a59790;touch-action:none}.encoder .dial:hover{border-color:#8baca0}.dial i{position:absolute;left:calc(50% - 1px);top:8%;width:2px;height:27%;border-radius:1px;background:#d0e6d7;transform-origin:50% 154%;transform:rotate(var(--angle,0deg));box-shadow:0 0 .3cqw #d3fadd40}.detents{position:absolute;left:0;right:0;top:calc(100% + .55cqw);display:flex;justify-content:center;gap:.5cqw;opacity:0;transition:opacity .1s}.encoder:hover .detents,.encoder:focus-within .detents{opacity:1}.detents button{width:2.8cqw;height:1.9cqw;margin:0;padding:0;font:1.3cqw/1 system-ui;border:1px solid #53665a;border-radius:.3cqw;background:#222c26;color:#bdd2c3}.panel-button{position:absolute;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0;padding:0;border:1px solid #141d18;border-top-color:#81938b60;border-radius:.7cqw;color:#c1d2c8;background:linear-gradient(#45534b,#38463e);box-shadow:0 .3cqw 0 #111c15,0 .45cqw .5cqw #0006,inset 0 .12cqw .12cqw #b4cebc22;font:600 1cqw/1.35 Consolas,"Liberation Mono",monospace;letter-spacing:.025em;touch-action:none}.panel-button:hover{background:linear-gradient(#53665a,#465d4f);border-color:#99baa170}.panel-button small{font:.58cqw/1.2 Consolas,"Liberation Mono",monospace;color:#829b89}.panel-button[data-button="12"]{color:#c4e8b3}.panel-button[data-button="13"]{color:#f6b4a1}.panel-button.lit{background:linear-gradient(#54745e,#45634f);color:#e7ffe1;border-top-color:#b2dcad}.panel-button.held{box-shadow:0 .1cqw 0 #15251b,inset 0 .2cqw .4cqw #09130c99;transform:translateY(.2cqw);background:#607d65}.panel-button.latched{outline:1px solid #c5e59c;outline-offset:2px}.panel-button.latched:after{position:absolute;right:.4cqw;top:.35cqw;width:.35cqw;height:.35cqw;border-radius:50%;background:#e0f9aa;content:""}
+.keyboard{position:absolute;left:3.6%;top:53.2%;width:92.8%;height:41%;border-radius:1cqw;border:1px solid #111916;background:linear-gradient(#171e1a,#1c231f);box-shadow:inset 0 .35cqw .5cqw #0006,0 .1cqw 0 #66776d40}.piano-key{position:absolute;transform:translateX(-50%);margin:0;padding:0;border:1px solid #0e1510;border-radius:2.3cqw;width:4.35%;background:linear-gradient(110deg,#3e4b40,#2b392e 55%,#212d24);box-shadow:inset .15cqw 0 .25cqw #8ea79244,0 .4cqw .4cqw #0009;touch-action:none;opacity:1!important;color:#7f9888}.piano-key.white{top:48%;height:43%}.piano-key.black{top:6%;height:37%;width:4.1%;background:linear-gradient(110deg,#333b35,#212b23 55%,#1b241d)}.piano-key>i{position:absolute;left:calc(50% - 1px);width:2px;top:17%;height:48%;border-radius:1px;background:#5a7660;box-shadow:inset 0 0 1px #07150a}.piano-key span{position:absolute;bottom:10%;left:-10%;right:-10%;font:.75cqw/1 Consolas,"Liberation Mono",monospace;letter-spacing:.025em}.piano-key.black span{font-size:.65cqw;bottom:11%}.piano-key:hover{border-color:#91b697;background:#415b47}.piano-key.held{background:linear-gradient(#67866a,#4e6e53);transform:translate(-50%,.22cqw);box-shadow:inset 0 .25cqw .35cqw #152b1890,0 .1cqw .2cqw #0007}.piano-key.lit>i,.piano-key.held>i{background:#c3f5a4;box-shadow:0 0 .65cqw #a0ec79aa}.piano-key.lit span,.piano-key.held span{color:#c8e3bf}.panel-caption{display:flex;justify-content:space-between;gap:16px;margin:-8px 0 0;font-size:11px;color:#71847c}.sim-status{font-size:12px;min-height:24px;color:#bfdbc9;margin:15px 0 18px;padding:10px 14px;background:#1b262080;border-left:2px solid #536e5a;border-radius:0 4px 4px 0}.sim-details{border-top:1px solid #323e37;padding-top:14px;margin-top:14px}.sim-details summary{cursor:pointer;font-size:13px;color:#9fb6a8;list-style-position:inside}.sim-details summary:hover{color:#d3edde}.sim-help{font-size:12px;color:#92a69a}.sim-help li{margin:8px 0}.sim-file-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:13px}.sim-file-row button{font-size:12px;margin:0;padding:8px 12px}.sim-file-row input,.sim-file-row select{font-size:12px}.sim-selectors{display:flex;gap:12px;margin:16px 0}.sim-selectors label{flex:1;margin:0;font-size:11px;color:#8fa596}.sim-selectors select{display:block;width:100%;margin-top:5px}.track-grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:7px}.track-tile{text-align:left;margin:0;padding:8px 10px;min-width:0;font-size:12px;background:#1c2821;border-color:#3c5042}.track-tile.selected{border-color:#9bc9a7;background:#314b3a}.track-number{color:#80958a;font-size:10px;margin-right:6px}.track-source{font-weight:650}.track-level{display:block;height:2px;margin:7px 0;background:linear-gradient(to right,#a1e5c4 var(--level,0%),#304138 var(--level,0%))}.track-steps{display:grid;grid-template-columns:repeat(16,1fr);gap:2px}.track-steps i{height:3px;background:#354c3d}.track-steps i.on{background:#81ba8f}.track-steps i.play{background:#eced9a}.track-steps i.outside{visibility:hidden}.quiet-note{margin:18px 0 0;font-size:11px;color:#718779}label{display:block;margin:18px 0 10px;font-size:13px}select,input[type=text],input[type=file]{font:inherit;max-width:100%;padding:8px;background:#111915;color:#e2ece6;border:1px solid #43574a;border-radius:6px}dl{display:grid;grid-template-columns:88px 1fr;gap:10px;margin:0;font-size:13px}dt{color:#8a9d90}dd{margin:0;overflow-wrap:anywhere}code{font-size:12px}progress{width:100%;height:8px;accent-color:var(--accent)}#status{min-height:48px;color:#e9eef4}small{display:block;color:#8b9d90;font-size:11px}#error{color:#ffb6ad;white-space:pre-wrap}.library-message{white-space:pre-wrap;min-height:28px}.boot-warning{padding:14px;background:#573826;color:#ffe7b5}.boot-warning p{color:inherit}
+@media(max-width:850px){main{padding:24px 20px}.track-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.panel-caption{flex-wrap:wrap;gap:4px}.sim-toolbar label{display:none}.version-tag{font-size:9px}.sim-health{margin-left:auto}}
+@media(max-width:480px){main{padding:18px 16px}h1{font-size:27px}.version-tag{display:none}nav button{margin-right:20px;font-size:12px}.sim-toolbar{gap:8px}.sim-toolbar button{padding:8px 11px}.sim-health{width:100%;margin:0}.device-scroll{margin:0 -6px;padding:8px 6px 24px}.track-grid{grid-template-columns:repeat(2,minmax(0,1fr))}section{padding:18px}.sim-file-row input{width:100%}}
+@media(hover:none){.detents{opacity:1}}
+#tab-manual{padding:0;border:0;background:none;margin:28px 0}.manual-heading{display:flex;align-items:start;justify-content:space-between;gap:20px}.manual-heading h2{font-size:28px}.manual-heading p{margin:4px 0 18px;font-size:13px}.manual-heading button{white-space:nowrap;font-size:12px}.manual-layout{display:grid;grid-template-columns:200px minmax(0,1fr);gap:28px;align-items:start}.manual-index{position:sticky;top:20px;padding:18px;border:1px solid #343e3d;border-radius:10px;background:#1b2221}.manual-index label{margin:0 0 8px;color:#bed3c8}.manual-index input{width:100%;min-width:0;background:#111915;border:1px solid #43574a;border-radius:6px;color:#e2ece6;padding:9px;font-size:12px}.manual-index ol{padding:0;list-style:none;margin:16px 0 0}.manual-index li{margin:8px 0}.manual-index a{display:block;font-size:12px;text-decoration:none}.manual-index a:hover{text-decoration:underline}.manual-index button{font-size:11px;padding:5px 9px}.manual-count{font-size:11px;color:var(--muted);margin:8px 0}.manual-body{min-width:0}.manual-chapter{padding:24px;border:1px solid #343e3d;border-radius:10px;background:#1b2221;margin:0 0 18px;scroll-margin-top:20px}.manual-chapter h3{font-size:19px;color:#d1eee0;margin:0 0 16px}.manual-chapter h4{margin:22px 0 8px;font-size:14px;color:#d1eee0}.manual-chapter p,.manual-chapter li{color:#afbfba;font-size:13px}.manual-chapter p{margin:10px 0}.manual-chapter li{margin:8px 0}.manual-chapter ol,.manual-chapter ul{padding-left:22px}.manual-chapter strong{color:#e2ece6}.manual-chapter kbd{font:11px/1.7 Consolas,monospace;padding:2px 5px;border:1px solid #4b6154;border-radius:4px;color:#d2e8da;white-space:nowrap}.manual-note{border-left:2px solid var(--accent);background:#26372e;padding:10px 14px;border-radius:0 5px 5px 0}.manual-table{overflow-x:auto}.manual-table table{width:100%;border-collapse:collapse;font-size:12px;line-height:1.8;color:#afbfba}.manual-table th,.manual-table td{padding:10px;text-align:left;vertical-align:top;border-bottom:1px solid #34453c}.manual-table th{color:#d2e8da;background:#243229;white-space:nowrap}.manual-table td:first-child{color:#d2e8da;min-width:90px}.manual-empty{padding:24px;border:1px dashed #506057;border-radius:10px;color:#afbfba}a:focus-visible{outline:2px solid var(--accent);outline-offset:4px}nav{overflow-x:auto}nav button{flex-shrink:0;white-space:nowrap}
+@media(max-width:700px){.manual-layout{grid-template-columns:1fr;gap:18px}.manual-index{position:static}.manual-index ol{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}.manual-chapter{padding:18px}.manual-heading{gap:10px}.manual-heading h2{font-size:24px}nav button{margin-right:16px}}
+@media print{:root{color-scheme:light;background:white;color:#111}body,main{background:white}main{max-width:none;padding:0}main>*:not(#tab-manual){display:none!important}#tab-manual{display:block!important;margin:0}.manual-heading button,.manual-index,.manual-empty{display:none!important}.manual-layout{display:block}.manual-chapter,.manual-chapter[hidden]{display:block!important;background:white;border:0;border-top:1px solid #aaa;border-radius:0;padding:18px 0;margin:0;break-inside:auto}.manual-heading h2,.manual-chapter h3,.manual-chapter h4,.manual-chapter strong,.manual-chapter p,.manual-chapter li,.manual-table td,.manual-table th{color:#111}.manual-chapter h3,.manual-chapter h4{break-after:avoid}.manual-chapter kbd{color:#111;border-color:#aaa}.manual-table{overflow:visible}.manual-table th{background:#eee}.manual-table tr{break-inside:avoid}.manual-note{background:#f2f2f2;border-color:#666}a{color:#111;text-decoration:none}}
+.preset-home{padding:18px 20px;margin:0 0 18px;border:1px solid #476354;border-radius:10px;background:#1e2c25}.preset-home-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.preset-home-head small{font-size:11px;color:#91a99a}.preset-home-head strong{font-size:21px;color:#dbf2e2;letter-spacing:.04em}.preset-home-head>span{font-size:11px;color:#a3b5a8}.preset-home label{margin:0;font-size:12px;color:#a3b5a8}.preset-home .sim-file-row{margin-top:10px}.preset-home select{min-width:175px;max-width:100%}.preset-home .preset-main{flex:1;display:flex;gap:8px;align-items:center}.preset-home .preset-main select{flex:1}.preset-home .sim-selectors{margin:14px 0 0;padding-top:12px;border-top:1px solid #3a5142}.preset-home .sim-selectors label{display:flex;align-items:center;gap:8px}.preset-home .sim-selectors select{width:auto;flex:1;margin:0;min-width:0}.preset-home .sim-help{margin:9px 0 0}.preset-home .primary{font-size:13px}.preset-home .sim-file-row button{white-space:nowrap}@media(max-width:700px){.preset-home{padding:14px}.preset-home .preset-main{flex-basis:100%}.preset-home .sim-selectors{flex-wrap:wrap}.preset-home .sim-selectors label{flex-basis:100%}.preset-home-head strong{font-size:18px}}
+.update-choice{display:flex;align-items:center;gap:12px;min-height:48px;padding:10px 12px;border:1px solid #526c70;border-radius:8px;cursor:pointer;line-height:1.6}.update-choice input{width:22px;height:22px;flex:0 0 22px;accent-color:#a9efd7;cursor:pointer}.update-choice:has(input:checked){border-color:#a9efd7;background:#203a31}#tab-update #force-warning{padding:14px;border:1px solid #d6a763;border-radius:8px;background:#3b2d1e;color:#ffe0ac}#force-activate{border-color:#d6a763;color:#ffe0ac}#update-next{font-weight:600}#sim-lcd-value{border-radius:8px;padding:8px;background:#102329;cursor:ns-resize}
+.device-status{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;margin:0 0 18px;padding:12px 16px;border:1px solid #405660;border-radius:10px;background:#15212a;font-size:12px}.device-status strong{color:#bed6df}.device-status span{color:#95aeb9;line-height:1.6}.device-status[data-state="pending"]{border-color:#95753c}.device-status[data-state="pending"] strong{color:#edc67e}.device-status[data-state="verified"]{border-color:#4d8068}.device-status[data-state="verified"] strong{color:#b8e6ce}.preset-picker #sim-read-device{grid-column:1/-1}.sim-record-state{margin:8px 0;font-size:12px;color:#b8cdd1}
+</style>
+<style>
+.save-dialog{width:min(460px,90vw);padding:24px;color:#e2ece6;background:#1b2821;border:1px solid #739a80;border-radius:12px}.save-dialog::backdrop{background:#000b}.save-dialog select{width:100%}.save-dialog p{font-size:13px}.save-dialog h2{margin-top:0}.save-dialog button{margin:8px 8px 0 0}.save-dialog [role=status]{min-height:22px;color:#c5eacb}
+.language-picker{display:flex;align-items:center;gap:8px;margin:0 0 0 auto;font-size:11px;letter-spacing:0}.language-picker select{font-size:12px;padding:5px 8px}.language-picker+span{margin-left:4px}@media(max-width:700px){header{flex-wrap:wrap}.version-tag{display:none}}
+</style>
+<style>
+/* Workbench shell. Physical controls retain their hardware geometry. */
+@media screen {
+:root{--accent:#a9efd7;--muted:#93a1a7;--line:#303e45;background:#10171c;color:#e5ebee;font:14px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+body{background:#10171c}main{max-width:1320px;padding:22px 28px 30px}
+.site-header{min-height:40px;gap:14px;letter-spacing:0;margin-bottom:18px;flex-wrap:wrap}.brand{display:flex;gap:9px;align-items:center;color:var(--accent)}.brand svg{width:30px;height:30px}.brand b{font-size:23px;line-height:1;letter-spacing:-.05em;color:#eef5f1}.brand b span{display:block;margin-top:4px;font:8px/1 Consolas,monospace;letter-spacing:.15em;color:var(--muted)}.site-header h1{font-size:17px;font-weight:500;letter-spacing:0;margin:0;color:#aebdc2}.release-badge{font:11px/1.4 Consolas,monospace;color:#8aa59a;padding:3px 7px;border:1px solid #354840;border-radius:5px}.language-picker{margin-left:auto;color:var(--muted);font-size:0;gap:0}.language-picker select{font-size:12px;padding:5px 7px;background:#172128;border-color:#35434c}.about-button{padding:5px 9px;margin:0;font-size:12px;background:transparent;border-color:transparent;color:#9daeb5}
+button{border-radius:7px;background:#223039;border-color:#3b4b54;color:#d6e3e6;font-size:13px}button:hover{background:#2d414a;border-color:#708f97}button.primary{background:var(--accent);color:#15372b;border-color:var(--accent)}button.primary:hover{background:#d0fbe9}
+.navigation-row{display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--line);padding-bottom:10px}.app-nav{flex:1;gap:4px;margin:0;padding:0;border:0;overflow-x:auto}.app-nav button{padding:8px 14px;margin:0;border:0;border-radius:7px;font-size:13px;color:#93a8b1;background:transparent;white-space:nowrap}.app-nav button[aria-selected=true]{background:#a9efd711;color:#c9f6e4}.app-nav button:hover{background:#ffffff08;color:#e4edeb}#quick-connect{flex-shrink:0;margin:0;font-size:12px;padding:7px 12px;color:#c6eddb;border-color:#4d7667;background:#203a3155}
+.device-status{padding:10px 1px;margin:0 0 12px;gap:4px 14px;min-height:36px;border:0;border-radius:0;background:none;font-size:11px}.device-status strong{font-weight:500;color:#9db7be}.device-status span{color:#7d949f}.device-status[data-state=pending] strong{color:#edc67e}.device-status[data-state=verified] strong{color:#b8e6ce}
+.workspace{display:grid;grid-template-columns:244px minmax(0,1fr);gap:24px;align-items:start}.preset-home{display:block;margin:0;padding:18px;border:1px solid var(--line);border-radius:10px;background:#192329;min-width:0;box-shadow:none}.preset-home-head{display:flex;align-items:flex-start;flex-direction:column;gap:4px;margin:0 0 15px}.preset-home-head small{font-size:10px;color:#8ea99e;letter-spacing:.06em}.preset-home-head strong{font-size:21px;line-height:1.25;color:#edf5f0;overflow-wrap:anywhere}.preset-home-head>span{font-size:10px;color:#8daba1}.preset-picker{display:grid;grid-template-columns:1fr 1fr;gap:8px}.preset-home .preset-main{grid-column:1/-1;display:block;font-size:11px;color:#8fa8b1}.preset-home .preset-main select{display:block;width:100%;min-width:0;margin-top:5px;font-size:12px;padding:8px;background:#101b22;border-color:#435b65}.preset-navigation{display:flex;grid-column:1/-1;gap:8px}.preset-navigation button{flex:1;margin:0;padding:5px;font-size:12px;min-height:30px}.preset-picker>button{width:100%;margin:0;padding:9px 5px;font-size:11px;min-height:39px}.preset-picker #sim-play-control{font-size:13px;font-weight:650}.preset-picker #sim-save-device{background:#233d33;border-color:#4e7764;color:#c1ecd8}.save-options{grid-column:1/-1;margin-top:2px}.save-options summary{font-size:11px;color:#96b0b7;cursor:pointer;padding:4px 0}.save-options .sim-file-row{display:grid;gap:6px;margin-top:7px}.save-options button{width:100%;font-size:11px;padding:7px}.preset-home .preset-hint{font-size:10px;color:#80979f;margin:8px 0 0;line-height:1.6}.preset-home .sim-selectors{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px;padding-top:15px;border-top:1px solid var(--line)}.preset-home .sim-selectors label{display:block;margin:0;font-size:11px;color:#94a8b1}.preset-home .sim-selectors select{display:block;margin:5px 0 0;width:100%;min-width:0;padding:6px;font-size:12px;background:#111c23;border-color:#3e545e}.edit-shortcuts{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:14px}.edit-shortcuts button{margin:0;padding:9px 5px;min-height:38px;font-size:11px;white-space:normal}.edit-shortcuts button[aria-pressed=true]{color:#c7f9e4;border-color:#86c6ac;background:#294a3c}.editor-more{margin-top:14px;border-top:1px solid var(--line);padding-top:11px}.editor-more summary{cursor:pointer;font-size:11px;color:#96b0b7}.editor-more .edit-shortcuts{margin-top:10px}#sim-context{font-size:10px;color:#82989f;margin:10px 0 0;line-height:1.6}
+.performance-stage{min-width:0}.sim-toolbar{gap:8px;margin:0 0 4px;padding:0 0 7px;background:none;border:0;border-radius:0;flex-wrap:wrap}.sim-toolbar button{font-size:11px;padding:6px 10px;border-radius:6px}.sim-health{font-size:10px;gap:7px}.sim-health:before{width:5px;height:5px;background:#95b6ac;box-shadow:none}.sim-health span+span{color:#81959c;border:0;padding:0}.sim-toolbar label{font-size:10px;color:#8ba0aa}.sim-toolbar input{width:68px}.device-scroll{padding:9px 10px 20px;margin:0 -10px;scrollbar-width:thin;scrollbar-color:#577366 #172026}
+.sim-device{background:linear-gradient(125deg,#3e474b 0%,#2b3439 44%,#232d32 100%);border-color:#58646a;box-shadow:inset 0 1px 1px #bacac466,inset 0 -4px 0 #182125,0 4px 0 #080e12,0 22px 40px #0006;border-radius:2.3%}.device-brand{color:#d0dcd9}.case-mark,.screen-caption{color:#92a29f}.encoder>span{color:#c3d2d3;font-size:1.05cqw}.encoder .dial{background:radial-gradient(circle at 37% 25%,#75827f 0%,#505e5c 40%,#303e3d 76%,#1c2a29 94%);border-color:#172325;box-shadow:0 .4cqw .5cqw #0008,inset 0 .12cqw .16cqw #c9d9d388}.detents button{background:#1a292e;border-color:#5c7575;color:#e4f5f0}.panel-button{background:linear-gradient(#516160,#3c4b4c);color:#d2dfdf;border-top-color:#a8bdbc55;border-radius:.6cqw;font-size:1.02cqw}.panel-button:hover{background:linear-gradient(#647b74,#476359)}.panel-button[data-button="12"]{color:#bcfbd9;background:linear-gradient(#446b58,#355444)}.panel-button[data-button="13"]{color:#ffd0bd}.keyboard{background:linear-gradient(#172328,#1a262a);border-color:#162023;box-shadow:inset 0 .35cqw .6cqw #0007,0 .1cqw 0 #859b9744}.piano-key.white{background:linear-gradient(110deg,#60716c,#425a50 58%,#314a3e);color:#aabfb7}.piano-key.black{background:linear-gradient(110deg,#35464a,#25363a 58%,#1c2b31);color:#90a9a3}.piano-key>i{background:#8daa9d}.piano-key.black>i{background:#587e71}
+.panel-caption{font-size:11px;line-height:1.7;color:#7f979f;flex-wrap:wrap;gap:3px}.panel-caption a{color:#9ec9b6;text-decoration:none}.panel-caption a:hover{text-decoration:underline}.sim-status{border:0;border-radius:0;border-top:1px solid var(--line);background:none;color:#adc9bf;padding:9px 0 0;font-size:11px;margin:10px 0 0;min-height:0;line-height:1.7}.sim-status:empty{display:none}.sim-record-state{font-size:11px;color:#a6c9b6;margin:7px 0}.sim-record-state:empty{display:none}
+.workspace-extras{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px;align-items:start}.sim-details,.library-group{border:1px solid var(--line);background:#192329;border-radius:8px;margin:0;padding:13px 16px;min-width:0}.sim-details summary,.library-group>summary{font-size:12px;color:#b6ced0;cursor:pointer}.sim-details[open],.library-group[open]{border-color:#597269}.sim-details .sim-help{font-size:12px}.sim-details .sim-file-row{gap:7px}.sim-details .sim-file-row button{font-size:11px;padding:8px 10px}
+#tab-library,#tab-update{max-width:880px;background:#192329;border-color:var(--line);border-radius:10px;padding:24px;margin:0 auto}#tab-library>h2,#tab-update>h2{font-size:22px;color:#e1eee9}#tab-library p,#tab-update p{color:#9cafb9}.library-group{margin-top:12px;background:#141f25}.library-group[open]>summary{margin-bottom:16px}.field-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}.field-row label{min-width:0}.field-row input,.field-row select{width:100%}.library-message:empty{display:none}select,input[type=text],input[type=file],input[type=number]{background:#101b22;border:1px solid #3d545e;border-radius:7px;color:#d9e7eb;max-width:100%;padding:8px}.technical-details{margin-top:14px;font-size:12px}.technical-details summary{cursor:pointer;color:#95acb4}.technical-details[open]>summary{margin-bottom:10px}
+#tab-manual{margin:0}.manual-heading h2{font-size:25px}.manual-index,.manual-chapter{background:#192329;border-color:var(--line);border-radius:10px}.manual-chapter p,.manual-chapter li{color:#b1c1c8}.manual-table th{background:#23363b;color:#c1e8d9}.manual-note{background:#203a31}.save-dialog{background:#19282e;border-color:#6a9e88;box-shadow:0 24px 90px #0007;border-radius:12px}.save-dialog p{color:#afc0c4}.save-dialog::backdrop{background:#071015bf}.about-dialog{width:min(720px,92vw);max-height:82vh;overflow:auto}.about-dialog h2{font-size:21px}.about-dialog summary{cursor:pointer;font-size:12px;color:#b5ccc2}.about-dialog pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;color:#93a6ae}.about-dialog form{text-align:right;margin-top:15px}
+@media(max-width:1099px){.workspace{grid-template-columns:1fr;gap:20px}.preset-home{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;padding:18px}.preset-home-head{grid-column:1;grid-row:1}.preset-picker{grid-column:1;grid-row:2/5}.preset-home .preset-hint{grid-column:1;grid-row:5}.preset-home .sim-selectors{grid-column:2;grid-row:1/3;margin:0;padding:0;border:0;align-self:start}.edit-shortcuts{grid-column:2;grid-row:3;margin-top:10px;align-self:start}.editor-more{grid-column:2;grid-row:4/6;align-self:start}.manual-layout{gap:20px}}
+@media(max-width:700px){main{padding:16px}.site-header{gap:9px;margin-bottom:15px}.brand b{font-size:21px}.brand svg{width:27px;height:27px}.site-header h1{font-size:15px}.language-picker select{font-size:11px;max-width:98px}.about-button{font-size:11px;padding:5px}.navigation-row{align-items:stretch;gap:8px}.app-nav{display:flex;gap:0;overflow-x:auto}.app-nav button{font-size:12px;padding:8px 10px}.device-status{font-size:10px;margin-bottom:10px}.device-status span{flex-basis:100%}.preset-home{display:block;padding:16px}.preset-home .preset-main,.preset-navigation,.save-options{grid-column:1/-1}.preset-home .sim-selectors{display:grid;grid-template-columns:1fr 1fr;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}.edit-shortcuts{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:12px;padding:0;border:0}.editor-more .edit-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))}.edit-shortcuts button{font-size:11px;padding:8px 4px;min-height:38px}.editor-more{margin-top:12px}.sim-toolbar label:not(.output-level){display:none}.sim-health{margin-left:auto}.sim-health span+span{display:inline}.sim-toolbar{gap:7px}.device-scroll{margin:0 -5px;padding:8px 5px 18px}.workspace-extras{grid-template-columns:1fr;gap:10px;margin-top:14px}.sim-details{padding:12px 14px}#tab-library,#tab-update{padding:18px}.manual-chapter{padding:18px}.manual-heading h2{font-size:23px}.field-row{grid-template-columns:1fr;gap:0}}
+@media(max-width:480px){.navigation-row{flex-wrap:wrap}.app-nav{flex-basis:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));overflow:visible}.app-nav button{padding:8px 2px;font-size:11px;white-space:normal;line-height:1.25;min-height:40px}#quick-connect{margin-left:auto;padding:5px 10px;font-size:11px}.site-header h1{display:none}.sim-health{width:auto;margin-left:auto}.sim-toolbar .output-level{margin-left:0}.release-badge{font-size:10px}.sim-toolbar{gap:6px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
+}
+
+.output-level{display:flex;align-items:center;gap:6px;white-space:nowrap}.output-level meter{width:64px;height:10px}.sim-toolbar label.output-level{display:flex;font-size:10px}
+.lcd-surface{position:relative;width:100%;height:100%}#sim-lcd-targets{position:absolute;inset:0}.lcd-target{position:absolute;margin:0;padding:0;min-width:0;border:0;border-radius:0;background:transparent;color:transparent;opacity:1}.lcd-target:hover,.lcd-target:focus-visible{background:#a9efd722;outline:1px solid #a9efd7;outline-offset:-1px}.lcd-target:disabled{pointer-events:none;background:transparent;opacity:0}.lcd-editor{text-align:center;max-width:360px;width:calc(100% - 32px)}.lcd-editor h3{font-size:24px;margin:6px 0}.lcd-value{font:32px/1.4 Consolas,monospace;color:#a9efd7;margin:12px}.lcd-adjust{display:flex;gap:12px;justify-content:center}.lcd-adjust button{font-size:24px;width:90px;margin:0}
+</style>
+<main>
+<header class="site-header"><div class="brand"><svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><path d="M4 16h4l3-9 5 18 5-18 3 9h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><b>FM1<span>M-VAVE</span></b></div><h1>工作台</h1><span id="release-version" class="release-badge"></span><label class="language-picker">Language / 语言 <select id="language" aria-label="Language / 语言"><option value="en">English</option><option value="zh-CN">简体中文</option></select></label><button id="about-open" class="about-button" aria-haspopup="dialog" aria-controls="about-dialog">关于</button></header>
+<dialog id="sim-lcd-dialog" class="save-dialog lcd-editor" aria-labelledby="sim-lcd-title">
+<h2 id="sim-lcd-title">LCD 参数编辑</h2><h3 id="sim-lcd-label"></h3><div id="sim-lcd-value" class="lcd-value"></div>
+<div class="lcd-adjust"><button id="sim-lcd-minus" aria-label="减少参数">−</button><button id="sim-lcd-plus" aria-label="增加参数">＋</button></div>
+<p>滚轮、＋／−或方向键按最小步长调节，网页试听实时生效。工程参数用“保存到设备”写入；MIDI 路由与时钟来源请在机身设置。</p><button id="sim-lcd-close">完成</button></dialog>
+<dialog id="device-save-dialog" class="save-dialog" aria-labelledby="device-save-title"><h2 id="device-save-title">保存到设备</h2><p id="device-save-source"></p><label>保存位置<select id="device-save-slot" disabled aria-label="保存到哪个设备项目槽"></select></label><p>保存会替换所选槽位，并载入该项目进行校验。完成后重启设备仍可恢复；采样库单独管理。</p><p id="device-save-status" role="status" aria-live="polite"></p><button id="device-save-confirm" class="primary" disabled>保存并校验</button><button id="device-save-cancel">取消</button></dialog>
+<div class="navigation-row"><nav class="app-nav" role="tablist" aria-label="工作台功能"><button id="mode-sim" role="tab" aria-selected="true" aria-controls="tab-sim">演奏与编辑</button><button id="mode-library" role="tab" aria-selected="false" aria-controls="tab-library" tabindex="-1">项目与音色</button><button id="mode-update" role="tab" aria-selected="false" aria-controls="tab-update" tabindex="-1">设备更新</button><button id="mode-manual" role="tab" aria-selected="false" aria-controls="tab-manual" tabindex="-1">使用说明</button></nav><button id="quick-connect">连接设备</button></div>
+<div class="device-status" id="device-sync-status" role="status" aria-live="polite" data-state="preview"><strong id="device-sync-title">网页试听 · 未连接设备</strong><span id="device-sync-detail"></span></div>
+<section id="tab-sim" role="tabpanel" aria-labelledby="mode-sim">
+
+<noscript><div class="boot-warning">JavaScript is required. Open this page in desktop Chrome or Edge. / 需要启用 JavaScript，请用电脑 Chrome 或 Edge 打开此页面。</div></noscript>
+<div class="workspace">
+<aside class="preset-home" aria-label="预设与常用操作">
+<div class="preset-home-head"><small>当前工程</small><strong id="sim-current-project" aria-live="polite">正在载入…</strong><span id="sim-project-note"></span></div>
+<div class="preset-picker"><label class="preset-main">内置预设<select id="sim-factory" data-sim disabled aria-label="选择内置预设，选择后载入"></select></label><div class="preset-navigation"><button id="sim-preset-prev" data-sim disabled aria-label="上一个预设">← 上一个</button><button id="sim-preset-next" data-sim disabled aria-label="下一个预设">下一个 →</button></div><button id="sim-factory-load" data-sim disabled hidden>载入所选</button><button id="sim-play-control" class="primary" data-sim disabled aria-pressed="false">播放</button><button id="sim-save-device" class="primary" data-sim disabled>保存到设备</button><details class="save-options"><summary>读取与保存</summary><div class="sim-file-row"><button id="sim-read-device" data-sim disabled>读取设备项目</button><button id="sim-save-control" data-sim disabled>存到此浏览器</button><button id="sim-factory-export" data-sim disabled>导出所选预设</button></div></details></div>
+<p class="sim-help preset-hint">切换预设前请保存修改。</p>
+<div class="sim-selectors"><label>当前轨道<select id="sim-track" data-sim disabled aria-label="仿真轨道"></select></label><label>音源类型<select id="sim-source" data-sim disabled aria-label="仿真音源类型"></select></label></div>
+<div class="edit-shortcuts"><button data-sim data-sim-page="15" disabled>当前轨音色</button><button data-sim data-sim-page="1" disabled>步进编曲</button><button data-sim data-sim-page="6" disabled>混音</button><button data-sim data-sim-page="10" disabled>轨道效果</button></div>
+<details class="editor-more"><summary>更多编辑</summary><div class="edit-shortcuts"><button data-sim data-sim-page="0" disabled>总览</button><button data-sim data-sim-page="3" disabled>包络</button><button data-sim data-sim-page="4" disabled>LFO</button><button data-sim data-sim-page="17" disabled>琶音参数</button><button data-sim data-sim-page="2" disabled>完整音色编辑</button><button data-sim data-sim-page="13" disabled>步进细节</button><button data-sim data-sim-page="14" disabled>节奏与录入</button><button data-sim data-sim-page="12" disabled>复制与更多</button><button data-sim data-sim-page="9" disabled>DX7 音色改名</button><button data-sim data-sim-page="7" disabled>连接设置预览</button><button data-sim data-sim-page="16" disabled>用户／内置预设列表</button></div><p id="sim-context" class="sim-help">面板 PRESETS 旋钮：换整套预设。</p></details>
+</aside>
+<div class="performance-stage">
+<div class="sim-toolbar"><button id="sim-start" class="primary" disabled>静音</button><button id="sim-tap-tempo" data-sim disabled title="连按设置 BPM">TAP</button><button id="sim-panic" data-sim disabled>紧急停音</button><div class="sim-health" role="status"><span id="sim-engine-state">正在载入</span><span id="sim-audio-state" hidden>静音编辑</span></div><label class="output-level">输出电平 <meter id="sim-output-meter" min="0" max="100" value="0" aria-label="音频输出电平"></meter></label><label>试听音量 <input id="sim-volume" type="range" min="0" max="100" value="35" aria-label="试听音量"></label></div>
+<div class="device-scroll" tabindex="0" aria-label="FM1 面板，窄屏可左右滑动">
+<div id="sim-device" class="sim-device" aria-label="FM1 实机布局">
+<div class="device-brand">FM–1 <span>WORKBENCH</span></div><span class="case-mark">POLYPHONIC SYNTHESIZER</span>
+<i class="screw tl"></i><i class="screw tr"></i><i class="screw bl"></i><i class="screw br"></i>
+<div class="screen-bezel"><div class="lcd-surface"><canvas id="sim-screen" width="240" height="240" aria-label="FM1 设备屏幕仿真"></canvas><div id="sim-lcd-targets" aria-label="LCD 点击编辑"></div></div><div id="sim-placeholder" class="screen-placeholder"><strong>FM1</strong>正在载入面板…<br>若此提示一直存在，请保存 HTML 后<br>用电脑 Chrome 或 Edge 打开。</div></div>
+<div class="screen-caption"><span>8 TRACKS / 64 STEPS</span><span>6 ENGINES</span></div>
+<div id="sim-keyboard" class="keyboard" aria-label="27 键演奏与步进键盘"></div>
+</div></div>
+<div class="panel-caption"><span>旋钮可拖动或滚轮调节，LCD 数值可点击编辑。</span><a href="#manual-panel">操作说明</a></div>
+<p id="sim-status" class="sim-status" role="status" aria-live="polite">正在载入…</p>
+<small id="sim-storage-warning" role="status" hidden>浏览器未允许保存本地存档；请导出项目文件保留编辑。</small>
+</div></div>
+<p id="sim-record-state" class="sim-record-state" role="status"></p>
+<div class="workspace-extras">
+
+<details class="sim-details"><summary>八轨状态</summary><div id="sim-tracks" class="track-grid" aria-label="八轨步进状态"></div></details>
+<details class="sim-details"><summary>文件与 MIDI</summary><div class="sim-file-row"><button id="sim-project-export" data-sim disabled>导出项目文件</button><button id="sim-timbre-export" data-sim disabled>导出轨道音色</button><button id="sim-patch-export" data-sim disabled>导出 DX7 音色</button><button id="sim-midi" data-sim disabled>连接 MIDI 输入</button><select id="sim-midi-port" hidden aria-label="仿真 MIDI 输入"></select></div><div class="sim-file-row"><input id="sim-file" type="file" accept=".fm1,.fm1t,.syx" data-sim disabled aria-label="导入仿真项目或音色"><select id="sim-voice" hidden aria-label="选择音色库中的音色"></select><button id="sim-file-apply" data-sim disabled>导入到仿真</button></div><div class="sim-file-row"><label>独立音色库 <select id="sim-library-slot" data-sim disabled></select></label><button id="sim-library-save" data-sim disabled>保存所选文件音色／当前 DX7 轨到此位置</button><button id="sim-library-bank" data-sim disabled>文件替换此组 32 音色</button><button id="sim-library-export" data-sim disabled>导出此组</button></div><div class="sim-file-row"><button id="sim-clear" data-sim disabled>清空本地仿真存档</button></div><p class="sim-help">导出文件可备份到电脑；浏览器存档与设备项目分别保存。</p><p id="sample-bank-note" class="sim-help" hidden>此预览使用演示采样；项目文件不包含采样音频。</p></details>
+</div>
+</section>
+<section id="tab-update" role="tabpanel" aria-labelledby="mode-update" hidden>
+<h2>更新固件</h2><p id="update-intro">正在校验本页内置固件。请连接 FM1 的 USB-MIDI 接口。</p>
+<dl><dt>固件</dt><dd id="profile">正在校验…</dd><dt>版本</dt><dd id="firmware-version"></dd></dl>
+<details class="technical-details"><summary>固件详情</summary><dl><dt>文件大小</dt><dd id="size"></dd><dt>构建编号</dt><dd><code id="version"></code></dd></dl></details>
+<label class="update-choice"><input id="backup" type="checkbox"> 已保存需要保留的音色、工程和采样</label>
+<details id="update-options" class="library-group"><summary>恢复与强制更新</summary><p><button id="stock-restore" disabled>刷回原厂 V15</button><button id="open-firmware" hidden>切回官方 Open 固件</button></p><p><label class="update-choice"><input id="force-update" type="checkbox"> 强制烧录（其他固件迁移）</label></p></details>
+<p id="stock-warning" role="alert" hidden>回刷将安装原厂 V15，并覆盖四个音色库，恢复 128 个出厂音色。Open 项目与采样格式不兼容，请先导出备份。已是 V15 时只恢复音色；确认后才开始写入。</p>
+<p id="force-warning" role="alert" hidden>警告：内置固件可能与当前设备不兼容。强制烧录可能清除数据、导致无法开机，并需要专用工具恢复。请只连接目标 FM1；不支持 USB-MIDI 升级协议的固件仍无法通过本页烧录。</p>
+<p id="device-identity"></p>
+<button id="connect" disabled>连接设备</button><button id="install" class="primary" disabled>开始更新</button>
+<button id="force-activate" hidden>启用强制烧录并重新连接</button><p id="update-next" aria-live="polite"></p>
+<p id="status" role="status" aria-live="polite">正在检查网页内容…</p>
+<progress id="progress" value="0" max="100" aria-label="更新进度"></progress>
+<p id="error" role="alert"></p>
+<details id="connection-details" hidden><summary>连接详情</summary><p>以下是浏览器本次检测到的端口；信息仅显示在本页。</p><p><strong>MIDI IN</strong></p><ul id="connection-inputs"></ul><p><strong>MIDI OUT</strong></p><ul id="connection-outputs"></ul><ul id="connection-attempts"></ul></details>
+<small>更新期间保持供电和 USB 连接，中断后请用同一版本网页重试。</small><p><a href="#manual-update">更新帮助</a></p>
+</section>
+<section id="tab-library" role="tabpanel" aria-labelledby="mode-library" hidden>
+<h2 id="library-title">项目与音色</h2>
+<p>管理设备项目、音色和采样。备份文件保存在这台电脑。</p>
+<button id="library-connect" disabled>连接项目库</button><button id="library-refresh" data-library disabled>刷新列表</button>
+<p id="library-status" class="library-message" role="status" aria-live="polite">等待连接支持项目库的固件。</p>
+<details class="library-group" open><summary>设备项目</summary>
+<div class="field-row"><label>设备项目槽 <select id="project-slot" data-library disabled></select></label>
+<label>当前项目名称（最多 12 个英文字母、数字或符号）<input id="project-name" type="text" maxlength="12" placeholder="UNTITLED" data-library disabled></label></div>
+<button id="project-rename" data-library disabled>修改当前名称</button>
+<button id="project-save" data-library disabled>保存到此槽</button><button id="project-load" data-library disabled>载入此槽</button>
+<button id="project-export" data-library disabled>备份当前项目</button>
+<label>恢复项目文件 <input id="project-file" type="file" accept=".fm1" data-library disabled></label>
+<button id="project-import" data-library disabled>恢复到工作区</button>
+<small>载入与恢复会替换未保存的工作区。恢复文件不会自动写入设备槽，确认后再按保存。</small>
+</details>
+<details class="library-group"><summary>轨道音色</summary>
+<div class="field-row"><label>目标轨道 <select id="timbre-track" data-library disabled></select></label>
+<label>音色文件 <input id="timbre-file" type="file" accept=".fm1t" data-library disabled></label></div>
+<button id="timbre-import" data-library disabled>导入轨道音色</button><button id="timbre-export" data-library disabled>导出轨道音色</button>
+<small>保存音源类型、音色参数和音量，不携带步进。鼓与旋律互换会清空此轨不兼容的步进；导入后可在面板 HOME+SAVE 撤销。</small>
+</details>
+<details class="library-group"><summary>DX7 标准音色</summary>
+<div class="field-row"><label>目标轨道 <select id="patch-track" data-library disabled></select></label>
+<label>音色文件 <input id="patch-file" type="file" accept=".syx" data-library disabled></label></div>
+<label>文件中的音色 <select id="patch-choice" data-library disabled><option>请先选择 .syx 文件</option></select></label>
+<button id="patch-import" data-library disabled>导入到此轨</button><button id="patch-export" data-library disabled>导出此轨音色</button>
+<small>支持 DX7 单音色及 32 音色库 SysEx，不处理扩展参数。先将目标轨道设为 DX7。导入后，NORMAL 轨请保存项目；PLAY 轨请导出轨道音色或存入 DX7 独立库。</small>
+</details>
+<details class="library-group"><summary>128 个 DX7 独立音色</summary>
+<div class="field-row"><label>音色组 <select id="bank-group" data-library disabled><option value="0">A · 1–32</option><option value="1">B · 33–64</option><option value="2">C · 65–96</option><option value="3">D · 97–128</option></select></label>
+<label>库内位置 <select id="bank-slot" data-library disabled></select></label></div>
+<button id="bank-read" data-library disabled>读取此组</button><button id="bank-export" data-library disabled>导出此组 .syx</button>
+<button id="bank-file-voice" data-library disabled>保存所选文件音色到此位置</button><button id="bank-track-voice" data-library disabled>保存所选 DX7 轨到此位置</button>
+<button id="bank-file-all" data-library disabled>用所选 32 音色文件替换此组</button>
+<small>使用上方的 DX7 文件与轨道选择。写入后自动读回校验。项目保存完整音色，更新音色库不改变已有项目；出厂 Demo 保留原始声音。旧采样若占用库空间，写入会被拒绝。</small>
+</details>
+<details id="sample-section" class="library-group"><summary>8 槽采样库</summary>
+<p>8 槽共享约 19.55 秒，可自由分配。项目与采样分别备份。</p>
+<p class="sim-help">先读取设备采样库，再选槽位和 WAV。写入会替换整库，影响所有项目。</p>
+<details class="technical-details"><summary>音频格式与容量</summary><p class="quiet-note">WAV：PCM 8/16/24/32 位或 32 位浮点，单声道或立体声，8–192 kHz；原文件不超过 32 MiB、120 秒。8 槽共享约 19.55 秒，可自由分配；每段按 10 毫秒向上取整，替换时可复用当前槽空间。</p></details>
+<p id="sample-space"></p>
+<p id="sample-limit"></p>
+<button id="sample-read" data-sample disabled>读取设备采样库</button><button id="sample-factory" data-sample disabled>载入内置采样库</button>
+<div class="field-row"><label>采样槽 <select id="sample-slot" data-sample disabled></select></label>
+<label>WAV 音频 <input id="sample-wav" type="file" accept=".wav,audio/wav" data-sample disabled></label></div>
+<label>名称（最多 15 个英文字符）<input id="sample-name" maxlength="15" data-sample disabled></label>
+<div class="field-row"><label>起点（秒）<input id="sample-start" type="number" min="0" step="0.001" value="0" data-sample disabled></label>
+<label>终点（秒）<input id="sample-end" type="number" min="0" step="0.001" value="1" data-sample disabled></label></div>
+<button id="sample-audition" data-sample disabled>试听选段</button><button id="sample-replace" data-sample disabled>编码并替换网页槽位</button><button id="sample-empty" data-sample disabled>清空网页槽位</button>
+<button id="sample-sim" data-sample disabled>送入仿真</button><button id="sample-write" class="primary" data-sample disabled>写入设备采样库</button>
+<details class="technical-details"><summary>采样库文件</summary><button id="sample-export" data-sample disabled>备份网页采样库</button><label>恢复采样库文件 <input id="sample-bank-file" type="file" accept=".fm1s" data-sample disabled></label></details>
+<button id="sample-cancel" disabled>取消 / 停止试听</button><progress id="sample-progress" value="0" max="100" aria-label="采样传输进度"></progress>
+<p id="sample-status" role="status" aria-live="polite">正在载入内置采样…</p>
+</details>
+</section>
+<section id="tab-manual" role="tabpanel" aria-labelledby="mode-manual" tabindex="0" hidden>
+<div class="manual-heading"><div><h2>FM1 使用说明书</h2><p>从第一段节奏，到保存你的作品。适用于 FM1 配套固件与网页编辑器。</p></div><button id="manual-print">打印 / 存为 PDF</button></div>
+<div class="manual-layout">
+<aside class="manual-index" aria-label="说明书目录"><label for="manual-search">查找操作</label><input id="manual-search" type="search" placeholder="如：录音、MASTER、采样" autocomplete="off" aria-controls="manual-body"><p id="manual-count" class="manual-count" role="status" aria-live="polite">共 10 章</p><button id="manual-clear" hidden>显示全部章节</button><ol>
+<li><a href="#manual-start">01 · 三分钟上手</a></li><li><a href="#manual-panel">02 · 面板与快捷键</a></li><li><a href="#manual-sequence">03 · 步进与录入</a></li><li><a href="#manual-sound">04 · 六种音源</a></li><li><a href="#manual-mix">05 · 音量与混音</a></li><li><a href="#manual-project">06 · 保存与文件</a></li><li><a href="#manual-sample">07 · 采样库</a></li><li><a href="#manual-connect">08 · MIDI、蓝牙与时钟</a></li><li><a href="#manual-update">09 · 更新固件</a></li><li><a href="#manual-help">10 · 常见问题</a></li>
+</ol></aside>
+<div id="manual-body" class="manual-body">
+<p id="manual-empty" class="manual-empty" hidden>没有找到匹配章节。试试“保存”“音量”“MIDI”等关键词，或点击“显示全部章节”。</p>
+<article id="manual-start" class="manual-chapter" tabindex="-1"><h3>01 · 三分钟上手</h3>
+<p>网页顶部和实机 HOME 页显示当前版本。开机动画约 1 秒，按键或旋钮可跳过；开机不会自动播放。</p>
+<p>FM1 有 <strong>8 条轨道、6 种音源、16 个内置工程</strong>。每轨支持 16、32、48 或 64 步；常用操作使用单键，完整细调放在长按菜单和网页里。</p>
+<ol><li><strong>准备试听。</strong>实机把 MASTER 放在适中的位置；网页点琴键或播放即可发声，无需额外开关。</li><li><strong>先听一个预设。</strong>在 HOME 总览直接转 PRESETS 切换整套预设，按 PLAY 播放。也可按 HOME 打开列表，转 PRESETS／SELECT 直接载入，PLAY 载入播放。SAVE 打开项目保存，白键 1–16 也能直接选对应预设。</li><li><strong>改声音。</strong>回总览后 SELECT 选轨，短按 EDIT 进入常用参数；在 EDIT 页转 PRESETS 换当前轨音色，再按 EDIT 返回。想换音源，在总览转 ALGORITHM 或 K2，SAVE 应用。</li><li><strong>改节奏。</strong>按 SEQ，基础页 K3 选音符或鼓声部，白键开关步；PRESETS 选步，OCT−／OCT+ 翻页。ALGORITHM 翻底部参数页，细节和节奏直接可调。</li><li><strong>调平衡。</strong>按 GLO 进入混音，白键 1–8 静音、9–16 独奏；SELECT 选轨，K1–K4 调四轨音量。再按 GLO 或 HOME 返回。</li><li><strong>保存。</strong>按 SAVE，SELECT 选 USER 槽，再按 SAVE 保存；覆盖其他已有槽会提示确认，成功后自动返回。</li></ol>
+<p class="manual-note">网页顶部“保存到设备”可直接选槽保存；“存到此浏览器”只存本机浏览器；“导出项目文件”生成电脑备份。实机 SAVE 保存到设备槽。</p></article>
+<article id="manual-panel" class="manual-chapter" tabindex="-1"><h3>02 · 面板与快捷键</h3>
+<div class="manual-table"><table><thead><tr><th scope="col">操作</th><th scope="col">用途</th></tr></thead><tbody>
+<tr><td>HOME</td><td>从编辑页回八轨总览；已经在总览时打开预设，再按取消。</td></tr>
+<tr><td>SELECT</td><td>总览、常用音色、步进和混音页选轨；完整细调页翻参数页；菜单选项目。</td></tr>
+<tr><td>PRESETS</td><td>总览直接切换整套工程预设；EDIT 页选当前轨音色；预设列表选工程；SEQ 选步；808／采样编辑页选声部；SAVE 页选存档槽。</td></tr>
+<tr><td>ALGORITHM</td><td>总览选择合成引擎，SAVE 应用、HOME 取消；SEQ／ARP 翻底部参数页；音色编辑页调算法或音色参数。</td></tr>
+<tr><td>K1 / K2 / K3 / K4</td><td>总览：音量／音源／步位置／速度。SEQ 基础页：音量／步位置／音高或鼓声部／速度。其他页看屏幕底部标签。</td></tr>
+<tr><td>EDIT 短按／长按</td><td>短按进入或退出常用参数；长按约 0.6 秒进入完整细调。非 FM 音源的常用页只显示第一组参数，细调页用 SELECT 翻页。</td></tr>
+<tr><td>SEQ 短按／长按</td><td>短按进入步进，再按回 BASIC 并恢复播放跟随。ALGORITHM 翻参数页；长按约 0.6 秒打开复制／粘贴、清空、重复、撤销及其他操作。</td></tr>
+<tr><td>GLO</td><td>单按进入／退出混音。白键 1–8 静音、9–16 独奏，无需一直按住 GLO。</td></tr>
+<tr><td>PLAY / REC</td><td>播放／暂停／续播；音乐页开关音符录入。预设页的 PLAY 为载入并播放，切换预设不弹确认。</td></tr>
+<tr><td>SAVE</td><td>打开保存页，再按保存；菜单中用于执行／确认。HOME 取消。</td></tr>
+<tr><td>OCT− / OCT+</td><td>步进页翻 16 步；演奏时上下移调八度。</td></tr>
+<tr><td>ENV / LFO / FX / SEL</td><td>ENV 打开当前音源包络；LFO 打开当前轨调制；FX 按轨调混响和延迟，SEL 进入缩放细调。</td></tr>
+<tr><td>ARP</td><td>短按开关当前轨琶音／鼓连奏；长按约 0.6 秒打开参数页。SELECT 选轨，ALGORITHM 翻页：分频／方向／音域／门长，Swing／Hold。</td></tr>
+</tbody></table></div>
+<p>总览转 K3（STEP）选择当前轨的步位置，录入时可移动写入位置。短按 REC 开关录音。</p>
+<p>同一轨的静音与独奏互斥：开启独奏会取消该轨静音，开启静音会取消该轨独奏；其他轨保持原状态。</p>
+<h4>网页操作</h4><p>选择预设后点“播放”试听。“读取与保存”管理设备读取和浏览器存档，“文件与 MIDI”导入、导出项目和音色。</p><p>常用编辑按钮直接打开音色、步进、混音和效果；其余功能在“更多编辑”。旋钮可拖动或滚轮调节，LCD 数值可点击编辑。电脑键盘 Z、S、X、D…演奏，空格播放，Esc 停音；输入文字和操作菜单时不会演奏。</p>
+<p>上排功能键在所有页面都有效：FX、SEL、ENV、LFO、EDIT、GLO、SEQ 可直接切页，ARP 短按开关、长按调参数，PLAY 控制播放。菜单或步进细节中按 REC，会进入 SEQ 基础页并开始录入；再按结束。SAVE 打开项目保存页，或执行屏幕内的确认；OCT−／OCT+ 在 SEQ 和复制菜单翻步进页，其他页面调八度。离开确认页不会执行待确认操作。</p>
+<h4>LCD 数值直接编辑</h4><p>把鼠标放在 LCD 上的数值，出现高亮即可滚轮调节；每次按参数最小步长变化，不随滚动速度加速。也可点击打开大号数值框，用滚轮、＋／−或方向键细调，Esc 关闭。支持底部参数、顶部 BPM、总览各轨音量、SEQ 循环长度、步进详情的选步数字、音色参数行、效果参数行，以及 FM 的 ALG、FB、MONO／POLY、ADSR 开关、LFO 波形／同步／PM SENS。混音页也可点静音／独奏格子设置。状态、电平、固定量化和当前引擎不支持的参数只显示；外部 MIDI 时钟下 BPM 由外部控制。切换轨道或参数页会关闭旧编辑框，避免改错参数。总览调其他轨的小音量数字不会改变当前选轨。</p>
+<p>GLO 短按（小于 0.6 秒）进入或退出混音；按住 0.6 秒可临时查看混音，松开回原页。GLO、EDIT、SEQ、ARP 的长按过程中，屏幕顶部显示进度条。</p>
+<h4>组合键</h4><p>HOME＋PLAY 紧急停音回起点；HOME＋SAVE 撤销／重做；SEQ＋EDIT 打开更多菜单；EDIT＋REC 改 DX7 音色名。都可以从长按 SEQ 的菜单完成对应操作。网页需要锁住按键时可 Shift 点击或右击，再点释放；日常操作无需使用。</p></article>
+<article id="manual-sequence" class="manual-chapter" tabindex="-1"><h3>03 · 步进与录入</h3>
+<h4>16 个白键，一页 16 步</h4><p>SEQ 基础页白键开关当前页的步；K3 选音高或鼓声部。PRESETS 在各参数页统一选步，SELECT 选轨，OCT−／OCT+ 每次换 16 步。ALGORITHM 翻底部八页：BASIC、STEP DETAILS、RHYTHM/REC、LOCKS、SYNC / LOOP、MIDI TRACK、MIDI ROUTING、TRACK ROLE。RHYTHM/REC 的 K4 选本轨 16／32／48／64 步，各轨独立循环。</p><p>播放中修改长度会显示 <strong>NEXT</strong>，到本轨下一轮起点生效。缩短不会删除后面的音符，再加长即可恢复。屏幕 <strong>FOLLOW</strong> 表示跟随播放翻页；手动编辑后显示 <strong>EDIT</strong> 并固定页面，再按 SEQ 返回基础页并恢复跟随。</p>
+<p>SEQ 基础页：旋律轨 K2 选步，K3 改已有音符；空步只设待输入音高，按白键写入。鼓轨 K3 选声部，不移动鼓点。K1 调轨道音量，K4 调速度；外部 MIDI 时钟下速度由外部设备控制。</p>
+<p>SEQ 的 SYNC / LOOP 页：K1 选 INT／MIDI，K2 调内部 BPM，K3 调循环长度。切换时钟会停止播放；MIDI 模式需外部 Start／Continue 和 Clock，等待时屏幕提示 WAIT MIDI CLOCK。外部 BPM 只读，蓝牙页的时钟设置仍可使用。</p>
+<p>SEQ 的 MIDI TRACK 页：K1 选 SEQ／ARP 的 LOCAL／BOTH／MIDI 输出，K2 选输出通道，K3 选端口，K4 开关 KEY OUT。MIDI ROUTING 页：K1 为 LOCAL，K2 为 CLK OUT，K3 选 THRU IN，K4 选 THRU OUT。SYNC 页 K4 选时钟来源。这些偏好独立于工程；网页仅预览，不向实际 MIDI 端口外发，实机请通过机身设置。</p><p>录入标记：停止时按 REC 显示 STEP，弹琴逐步写入；播放时显示 REC，按时间录入；启用预备拍后显示 CNT 4→1，下一小节才开始记录。绿色短线表示播放步，白色框表示编辑步；PRESETS 手动选步会结束录入，再按 REC 继续。</p>
+<h4>琶音：速度、方向、Swing 与 Hold</h4><p>短按 ARP 开启后按住音符；长按 ARP 打开参数。ALGORITHM 翻两页：第一页 K1 为 1/4、1/8、1/16、1/32 分频，K2 方向，K3 为 1–4 个八度，K4 为 25%–100% 门长；第二页 K1 为 0%–50% Swing，K2 开关 Hold。Hold 保持松手后的和弦，全部松手后弹新和弦即可替换；关闭 Hold、停止或紧急停音会释放锁住的音符。SELECT 选轨，各轨参数独立。HOME／SEQ 基础页 K4 调 BPM；外部时钟需 Start／Continue 和 Clock，Swing 按 24 PPQN 的精度变化。</p><p>808／SAMPLER 支持分频、方向、Swing 和 Hold；音域与门长显示“--”，不移调鼓声部。ARP 开关与六项参数随项目保存，按住或 Hold 锁住的音符不保存。</p>
+<p>TRACK ROLE（8/8）：K1 选 NORMAL、PLAY 或 OFF，K2 设输入通道。NORMAL 参与音序与录入；PLAY 用于现场演奏，切换工程时保留本轨音色和持续按住的音符；OFF 关闭本轨发声。角色和输入通道独立于工程保存。MUTE／SOLO 沿用原有操作，NORMAL 与 PLAY 各自判断独奏。</p><h4>两种录入方式</h4><p>以下录入仅适用于 NORMAL 轨；PLAY 轨用于现场演奏，不参与录入。</p><ul><li><strong>停止时按 REC：</strong>旋律音符、DRUM 808 和 SAMPLER 都在全部按键松开后前进一步；重叠按下的声音录入同一步。</li><li><strong>播放时按 REC：</strong>面板或 MIDI 演奏按最近的十六分音符量化写入，并保留力度。再次按 REC 结束录入。</li></ul>
+<h4>细节、节奏与复制</h4><p>长按 SEQ 约 0.6 秒打开更多菜单。SELECT 选 COPY STEP 或 COPY PAGE，按 SAVE 复制；菜单自动选中对应 PASTE。用 PRESETS 或 K2 选目标步，OCT−／OCT+ 换目标页，再按一次 SAVE 粘贴。顶部显示当前轨、步、页及剪贴板类型；整轨粘贴、清空与重复仍需第二次 SAVE 确认。</p><p>在 SEQ 转 ALGORITHM 到 STEP DETAILS，K1–K4 调力度、门长、概率、和弦；LOCKS 页调连音、参数锁及音符。PRESETS 或白键只选择要编辑的步，SELECT 仍选轨。进入细节或锁参数页会结束 REC 并保留录入，播放不会拉走手动光标。参数锁只作用于一步，下一步恢复；不相关的 MIDI 控制消息不会取消它，支持的 CC 若控制同一参数则覆盖锁定并更新保存值。全项目共享 16 组和弦和 16 个单步参数锁。</p><p>SEQ 的 RHYTHM/REC 页：K1 Swing、K2 节拍器（关闭／录音／常开）、K3 一小节预备拍、K4 循环长度。量化固定为十六分音符。长按 SEQ 仍保留复制、粘贴和更多操作；UNDO / REDO 在当前内容与上次编辑前状态之间切换；音色与音量到达边界后继续拧不会覆盖撤销记录。</p>
+</article>
+<article id="manual-sound" class="manual-chapter" tabindex="-1"><h3>04 · 六种音源</h3>
+<p>每条轨道都能选择任意一种音源，同类型的多条轨道也各有参数。切换音源后使用新类型的默认参数；鼓与旋律互换会清空不兼容步进，可从长按 SEQ 的菜单选择 UNDO / REDO 撤销。</p>
+<div class="manual-table"><table><thead><tr><th scope="col">音源</th><th scope="col">怎样编辑</th></tr></thead><tbody>
+<tr><td>DX7 · FM</td><td>EDIT 短按开算法／反馈／移调／音量常用页，再短按返回；长按进入完整编辑。黑键选择 OP1–OP6、Pitch、Global 或 Mono／Poly，SELECT 翻页；长按 OP 黑键约半秒开关算子。ALGORITHM 调算法，PRESETS 选内置音色。</td></tr>
+<tr><td>303 · 酸性贝斯</td><td>短按 EDIT 调第一页；长按 EDIT 后 SELECT 翻三页：Cutoff／Reso／EnvMod／Decay；Accent／Wave／Tune／Volume；Drive／DrvTyp／Slide／AccDec。PRESETS 切换锯齿／方波，编辑页 Mono／Poly 选择单音滑音或 4 复音。</td></tr>
+<tr><td>808 · 合成鼓</td><td>PRESETS 选择 11 个鼓声部或 KIT，键盘试听也会选中对应声部。长按 EDIT 后 SELECT 翻参数页。各声部可调参数不同；KIT 调整整套鼓组。</td></tr>
+<tr><td>PSG · 芯片音色</td><td>K1–K4：MODE（YM／AY／NOISE／MIX）、NOISE、TUNE、RELEASE。纯方波模式下 NOISE 不改变声音。</td></tr>
+<tr><td>PLUCK · 拨弦</td><td>K1–K4：DECAY、BRIGHT、TUNE、RELEASE。DECAY 是自然衰减，RELEASE 是松键衰减；按住键仍会自然衰减。亮度在下一次拨弦生效。</td></tr>
+<tr><td>SAMPLER · 采样</td><td>前 8 个白键选择并试听 8 槽采样，PRESETS 也可选择。第一页 Level／Tune／Length／Choke；长按 EDIT 后 SELECT 翻到第二页 Variation／Vel LPF。Choke 同组新击打会停止旧声，适合开闭镲。</td></tr>
+</tbody></table></div>
+<h4>各音源包络与 LFO</h4><p>ENV 在所有引擎上可用，显示该音源实际支持的参数。SELECT 选轨；鼓与采样可用 PRESETS 或白键选择声部。重新触发音符试听包络变化，空白旋钮表示该音源没有对应参数。</p><p>FM：K1 Attack、K2 Decay、K3 Sustain、K4 Release，调整即启用。303：K1 EnvMod、K2 Decay、K3 AccDec、K4 Cutoff；力度 100 及以上使用重音衰减 AccDec。PSG：K1 Release。Pluck：K1 Decay、K2 Release、K3 Bright。Sampler：K1 Length、K2 Choke。808：K1 Decay、K2 Attack、K3 Tone、K4 Tune，只显示所选鼓声部支持的项目。</p><p>非 FM 引擎按 LFO：K1 速度 0.05–20 Hz，K2 深度 0–100%，K3 音量起伏／左右声像，K4 三角波／方波／上升锯齿／下降锯齿。深度 0 即关闭；参数随项目、轨道音色及用户槽保存。SELECT 选轨，再按 LFO 返回。</p><p>LFO 作用于整个轨道，包括全部鼓／采样声部，也影响轨道效果发送。当前非 FM LFO 不提供音高或滤波目标。FM 保留原有音高／振幅 LFO 和两页参数。效果使用 FX。</p>
+<h4>FM 包络、调制与命名</h4><p>EDIT 的 OP RATES／OP LEVELS 显示同一条包络：RATE 越大，对应阶段越短；LEVEL 改变折点高度。L3 保持到松键，随后按 R4 到达 L4。六个算子和 PITCH 包络均会随参数更新。图形为便于编辑的示意，不是毫秒刻度；实际时长还取决于音符、缩放与电平。</p><p>FM ENV 的 A、D、S、R 都会实时改变曲线；横向按实际包络时间比例绘制，保持段只作示意，持续到松键。ADSR 关闭时曲线变灰并标为预览，实际声音使用各算子的 DX7 包络。</p><p>ENV 打开总 ADSR 页，K1–K4 为 Attack／Decay／Sustain／Release；转动任一参数会自动启用，重新弹键试听。只浏览页面保留原音色；需要回到原 DX7 包络时，PRESETS 向左关闭覆盖层，向右重新启用。LFO 用 SELECT 翻两页，SEL 进入当前算子的键盘缩放。长按 SEQ，选择 DX7 PATCH NAME 并按 SAVE，编辑 10 字符音色名，SELECT 选字符，K1 改字符，保存项目后保留。</p><p>多数调音和包络参数需重新触发音符试听。切换 DX7 内置音色会替换编辑、打开全部算子并关闭总 ADSR。</p>
+<h4>轨道效果</h4><p>按 FX，SELECT 选轨；K1 混响发送、K2 延迟发送，0 即关闭该轨发送，六种音源均可用。K3 轨道音量、K4 共用效果返回量。转 PRESETS 到第二页细调：K1 混响时间、K2 延迟时间、K3 反馈、K4 返回量，由所有轨道共用。808 在 EDIT 中仍可设置每个鼓声部的额外发送量。轨道发送量随项目和轨道音色保存；共用效果参数仅随项目保存。静音停止新发送，已有尾音自然衰减。</p>
+</article>
+<article id="manual-mix" class="manual-chapter" tabindex="-1"><h3>05 · 音量与混音</h3>
+<p><strong>MASTER 是总输出音量。</strong>实机旋钮控制合成器、USB 与蓝牙输入的最终输出，也影响 USB 录音。最小位置静音，切换项目沿用旋钮位置；它不随项目保存。转动时屏幕短暂显示 MASTER 百分比或 MASTER MUTED。</p><p><strong>轨道 LEVEL 是项目里的混音音量。</strong>在 HOME／SEQ 基础页用 K1 调当前轨。303 的 Volume、808 的声部 Level 和采样 Level 用于音色内部的平衡。</p>
+<ol><li>按一下 GLO 进入混音，按白键 1–8 切换对应轨静音。</li><li>按一下 GLO 进入混音，按白键 9–16 切换对应轨独奏。</li><li>混音页中，SELECT 选轨；K1–K4 调当前四轨组（1–4 或 5–8）的音量。</li></ol>
+<p>多个轨道可以同时独奏；同一轨的静音与独奏互斥。</p><p>网页“静音”只关闭试听，编辑与音序仍继续。要停回起点，请用 HOME＋PLAY 或“紧急停音”。</p>
+</article>
+<article id="manual-project" class="manual-chapter" tabindex="-1"><h3>06 · 保存与文件</h3>
+<p class="manual-note"><strong>工作区 ≠ 已保存项目。</strong>实机未保存的编辑只在内存中，重新开机或载入其他项目会丢失。网页与实机各有自己的存档；“保存到设备”会完成传输、写入槽位和读回校验。</p>
+<h4>预设与保存分开操作</h4><p><strong>直接切换：</strong>在 HOME 总览转 PRESETS 即可切整套预设，屏幕显示当前工程名称；播放中切换会继续播放，停止时切换保持停止。切换直接生效，不提示保存。单轨音色在 EDIT 页用 PRESETS 选择。</p><p><strong>浏览列表：</strong>总览按 HOME 打开预设，K1 向右选 FACTORY（16 个内置工程）、向左选 USER（16 个用户槽）。PRESETS／SELECT 直接载入对应编号，PLAY 载入并播放，SAVE 打开项目保存；白键 1–16 直接选编号并沿用之前的播放状态。空 USER 槽会提示，不替换当前项目。</p><p>切换预设会直接替换当前工作区，包括未保存的修改；想保留修改时，先按 SAVE 保存。官方工程只读，编辑后请存入 USER。</p><p><strong>保存：</strong>SAVE 打开保存页，SELECT／PRESETS 选 USER 槽，K1 选名称字符、K2 改字符；再按 SAVE 写入。覆盖其他已有槽须再按 SAVE 确认，成功后自动回原页面，HOME 取消。当前槽直接更新。标题星号表示未保存。</p>
+<p>顶部状态区区分浏览器试听、设备连接和未写入的网页修改。连接不会自动读取或同步；点常用区“读取设备项目”替换网页工作区，误操作可用 HOME＋SAVE 撤销。保存并读回校验一致后才显示已写入；仅存到浏览器不代表写入设备。实机旋钮修改后，请重新读取。</p><p>项目保存各轨 ARP 开关与参数；采样音频须另备份采样库。</p>
+<p>NORMAL 轨的音色修改随项目保存；PLAY 轨的音色修改请导出轨道音色，DX7 也可存入独立库。项目备份不包含独立音色库和采样音频。</p><h4>把网页作品放入 FM1</h4><ol><li>用 USB 数据线连接 FM1；在网页完成编辑，点顶部“保存到设备”。</li><li>允许浏览器 MIDI／SysEx，选择目标槽位，点击“保存并校验”。已有槽位内容会被替换。</li><li>看到“读回校验通过”再断开设备。重启后可在 USER 列表载入对应槽；不需要另外按实机 SAVE。</li></ol>
+<p>“读取设备项目”把当前实机工作区带入仿真；“恢复到工作区”也不会自动覆盖设备槽。网页的 SAVE 写入浏览器本地槽，清理浏览器数据会删除这些存档，重要作品请导出。</p>
+<div class="manual-table"><table><thead><tr><th scope="col">文件</th><th scope="col">包含什么</th></tr></thead><tbody><tr><td>.fm1</td><td>完整八轨项目：音源、参数、轨道音量、循环长度、步进等；不含采样音频。</td></tr><tr><td>.fm1t</td><td>一条轨道的音源类型、音色参数和音量；不携带步进。支持全部六种音源。</td></tr><tr><td>.syx</td><td>DX7 标准音色，支持单音色和 32 音色库。设备目标轨须设为 DX7。</td></tr><tr><td>.fm1s</td><td>完整 8 槽采样库，所有项目共用。使用自定义采样的作品须另备份此文件。</td></tr></tbody></table></div>
+<p>项目库列表读取失败时，载入、保存和导入按钮保持禁用；点击“刷新列表”重试。只有完整读取成功后才开放操作，重试会保留有效的选中槽位。</p></article>
+<article id="manual-sample" class="manual-chapter" tabindex="-1"><h3>07 · 采样库</h3>
+<p>在“项目与音色”的“8 槽采样库”编辑音频。8 槽共用 436 KiB，约 19.55 秒；可自由分配，页面显示剩余容量。先读取设备库，可保留已有采样。</p>
+<p>WAV：PCM 8/16/24/32 位或 32 位浮点，单声道或立体声，8–192 kHz；原文件不超过 32 MiB、120 秒。8 槽共享约 19.55 秒，可自由分配；每段按 10 毫秒向上取整，替换时可复用当前槽空间。</p>
+<ol><li><strong>先选完整库。</strong>修改现有实机采样时先连接项目库并“读取设备采样库”，再“备份网页采样库”。也可从内置库或 .fm1s 文件开始。</li><li><strong>选择采样槽与 WAV。</strong>设置名称（最多 15 个英文字符）、起点和终点，用“试听选段”检查裁切。</li><li><strong>可选：先在网页编辑。</strong>点击“编码并替换网页槽位”可先编辑网页库；直接写入设备时会自动完成这一步。</li><li><strong>试听仿真。</strong>点“送入仿真”，选择 SAMPLER 轨，用白键试听。</li><li><strong>写入实机。</strong>选择 WAV 后点“导入选段并写入设备”；已编辑好网页库时点“写入设备采样库”。完成设备读回校验后才会报告成功。写入会替换全部 8 槽，所有项目中的同号采样一起变化。</li><li><strong>分别备份。</strong>保存项目 .fm1，并备份采样库 .fm1s；只备份项目不能保存音频。</li></ol>
+<p>写入采样时设备暂停播放和录入。进度前段发送，后段从设备读回核对；保持连接直到显示读回一致。选择 SAMPLER 对应槽重新触发试听，808 是独立合成引擎，不会使用导入的音频。若中断导致采样未就绪，重新写入完整采样库即可恢复。项目槽独立保留。</p>
+<p>采样检查发现正在写入、读取或校验错误、回复不完整时，不会自动覆盖采样。请按提示检查连接；需要恢复时，在“项目与音色”中手动写入备份或内置采样库。</p></article>
+<article id="manual-connect" class="manual-chapter" tabindex="-1"><h3>08 · MIDI、蓝牙与时钟</h3>
+<h4>USB 与网页连接</h4><p>下载完整 HTML 后可离线试听和编辑；读写设备需要支持 Web MIDI 的电脑 Chrome／Edge 和 USB 数据线，并允许 MIDI／SysEx。不能连接时先关闭占用 MIDI 的其他网页或软件，再重新连接。默认输入通道：轨 1–7 使用通道 1–7，轨 8 使用通道 10；可在 TRACK ROLE 修改。</p><p>仿真页的“连接 MIDI 输入”用于外部键盘演奏网页。项目库连接用于读写实机项目和音色。USB 音频的输入／输出选择在电脑系统或音乐软件中设置。</p>
+<p>机身 MIDI IN（UART）与 USB MIDI 开机即同时接收，无需单独开启，也不受蓝牙总开关影响。两者使用相同的输入通道设置：默认轨道 1–7 使用通道 1–7，轨道 8 使用通道 10，可在 TRACK ROLE 修改。请选择对应通道，并检查轨道角色、静音与音量。</p>
+<h4>通道与接收规则</h4><p>所有通道消息都按发送端 CHAN 响应：CH1–7 对应轨道 1–7，CH10 对应轨道 8。音符、弯音、调制和控制器使用同一映射，与屏幕选中轨道无关；未分配的 CH8、CH9、CH11–16 忽略。更换音源不改变通道。MIDI IN、USB MIDI 与 BLE MIDI 使用相同规则。</p><p>例如键盘设为 CH2：音符、Pitch Bend、CC1、CC7 只控制轨 2；轨 8 使用 CH10。</p>
+<div class="manual-table"><table><thead><tr><th scope="col">接收消息</th><th scope="col">作用与范围</th></tr></thead><tbody>
+<tr><td>Note On / Off</td><td>全部音源接收 Note On／Off 和力度；Note On 力度 0 等同 Note Off。808／SAMPLER 按鼓音符选择声部。</td></tr>
+<tr><td>Pitch Bend</td><td>FM、303、PSG、Pluck 支持 14 位弯音，中心 8192，范围 ±2 半音；作用于已发声及后续音符。808／SAMPLER 的音高使用各声部 TUNE。</td></tr>
+<tr><td>CC1 · Mod Wheel</td><td>FM：音高颤音，音色 PMS 为 0 时调制轮仍有基础响应；303：EnvMod；PSG、Pluck、808、SAMPLER：轨道 LFO 深度，未设置 LFO 时为音量起伏。</td></tr>
+<tr><td>CC7 / CC10 / CC11 / CC91</td><td>全部音源：CC7 轨道音量；CC10 声像（0 左、64 中、127 右）；CC11 表情（0 静音、127 原音量）；CC91 混响发送。</td></tr>
+<tr><td>CC64 / Channel Pressure / CC2 / CC4</td><td>FM、303、PSG、Pluck：CC64 延音，64–127 踩下，0–63 松开。FM 另接收通道触后用于颤音，以及 CC2／CC4 的振幅控制，效果取决于音色振幅敏感度。</td></tr>
+<tr><td>CC120 / CC121 / CC123</td><td>CC120 停止该轨声音；CC123 释放该轨外部音符（延音踏板仍有效）；CC121 复位实时弯音、表情、声像、调制和踏板，不改音色参数。</td></tr>
+<tr><td>Program Change</td><td>Program Change 使用 FM1 音色：FM 0–127 对应独立库的 128 个位置；303 0／1 为锯齿／方波；PSG 0–3 为 YM／AY／NOISE／MIX。其他音源忽略。部分软件显示为 1 起始编号。</td></tr>
+<tr><td>Engine CC</td><td>303 还接收 CC5 滑音时间、CC71 共振、CC74 截止、CC75 衰减；PSG 接收 CC74 噪声、CC72 释放；Pluck 接收 CC74 亮度、CC75 衰减、CC72 释放。</td></tr>
+</tbody></table></div><p>CC7、CC91、音色切换与音色参数编辑可随项目保存。弯音、表情、声像及实时调制不写入项目；CC121 不撤销已编辑的 303 EnvMod。FM1 保留自己的音色体系，不提供 GM 128 音色表。</p>
+<h4>同步与走带</h4>
+<p>Clock、Start、Continue、Stop、歌曲位置和 MMC 不带 MIDI 通道，控制整机。选择 MIDI 时钟后，外部 Clock 按每四分音符 24 个脉冲同步；仅发送 Clock 不会自行播放。Start 从起点开始，Continue 从当前位置继续，Stop 停止播放并释放音序和琶音音符。</p><p>歌曲位置 SPP（F2）在 MIDI 时钟模式下定位，每单位为一个十六分音符，各轨按自身循环长度取余；随后发送 Continue 与 Clock。Start 会重新回到起点。System Reset（FF）停止、回起点并释放全部音符。</p><p>MMC 支持 Stop（01）、Play（02）、Deferred Play（03）、Record Strobe（06）、Record Exit（07）和 Pause（09）；接收设备 ID 00 或广播 7F。Play／Deferred Play 从当前位置继续，Record Strobe 开始录入并续播，Record Exit 只结束录入，Stop／Pause 同时结束录入。在 MIDI 时钟模式仍需外部 Clock。</p><p>例：F0 7F 7F 06 01 F7 为 MMC Stop；F0 7F 7F 06 02 F7 为 MMC Play。数字均为十六进制。</p><p>同时连接多台 MIDI 设备时只让一台发送时钟和走带，避免重复脉冲。MTC 时间码、MMC 时间码定位／快进／倒带、RPN／NRPN、复音触后、GM Reset、Bank Select、Active Sensing 超时监控及未列出的控制器目前不实现，收到后忽略。</p>
+<h4>蓝牙设置</h4><p>长按 SEQ，SELECT 选 BLUETOOTH / CLOCK，SAVE 打开蓝牙／时钟页。K1 为蓝牙总开关，K2 为蓝牙音频，K3 只选 BLE MIDI 的 DEVICE／HOST 角色，K4 选择时钟。蓝牙打开时 MIDI 服务自动可用；出厂默认蓝牙和音频打开、DEVICE 角色、内部时钟。PRESETS 选择屏幕下方操作，SAVE 执行：主设置页可打开 HOST 设备列表或清除 MIDI 配对；列表中 SELECT 选设备，PRESETS 选连接、扫描、断开或返回设置。清除配对仍需再次 SAVE 确认，HOME 取消。SEQ、EDIT 等上排功能键仍可直接切页。</p><p>网页可以预览设置页面；实际蓝牙扫描、配对和音频输入要在实机上操作。</p>
+<h4>INT 与 MIDI 时钟</h4><p><strong>INT：</strong>FM1 使用内部速度，K4 可设 30–300 BPM。<strong>MIDI：</strong>跟随外部 MIDI Clock，需外部发送 Start／Continue 才开始或继续。此时旋转速度不会改变外部速度。超过约两秒收不到时钟，屏幕显示 LOST；检查外部设备是否发送时钟，或切回 INT。</p>
+</article>
+<article id="manual-update" class="manual-chapter" tabindex="-1"><h3>09 · 更新固件</h3><p>点击“刷回原厂 V15”，连接设备、勾选备份确认，再点击“刷入原厂 V15”并确认。网页会安装内置 V15，随后恢复四个库的 128 个出厂音色；已有音色会被覆盖。已是 V15 的设备会显示“恢复原厂音色”，无需重复刷固件。恢复中断时，重新连接并重试；完成后切换音色试听。Open 项目与采样不能用于原厂固件，原厂也不提供 Open 的构建哈希读回或项目库功能。回到 Open 时，点击“切回官方 Open 固件”并按强制烧录流程操作。不支持外部固件文件。</p>
+<ol><li>在“项目与音色”备份当前项目与采样库，其他需要保留的项目槽也逐一载入并备份。独立音色库 A–D 四组分别“读取此组”并“导出此组 .syx”；PLAY 轨的音色修改另行导出，DX7 也可存入独立库后再备份。</li><li>打开最新版工作台的“设备更新”，通过 USB 数据线连接 FM1。固件已内置。</li><li>勾选“已保存需要保留的音色、工程和采样”，点击“连接设备”，允许 MIDI／SysEx。</li><li>核对设备提示，点击“开始更新”，保持供电和 USB 连接直到完成。</li><li>等待重启及版本核对。如果提示采样未就绪，在采样页写入对应的 .fm1s 备份。写入内置采样库会替换全部 8 槽，不能找回原来的自定义采样。</li></ol>
+<p>正常完成的同布局更新会保留有效项目槽和采样库；刷写前仍请分别备份工程、音色和采样。设备重启后，未保存的内存编辑不会自动恢复。固件更新也不会自动把网页仿真中的项目传到设备。</p><p>若更新中断或设备停在升级界面，保留<strong>同一版本的这张网页</strong>，检查连接后重新连接并按提示继续。从其他固件迁移时，开启“强制烧录”，重新连接并确认兼容风险。固件不支持 USB-MIDI 升级协议时，请使用该版本配套的恢复工具。跨固件迁移可能清除项目和采样，务必先备份。</p>
+<p>正常连接已识别其他固件（例如 FM-1_015）时，点击 启用强制烧录并重新连接。这一步只开启模式并重新连接，不会写入固件。页面会说明接下来缺少哪一步；确认已备份后，再点 强制烧录 并确认兼容风险才会开始。也可点击强制烧录勾选行的任意位置开启。设备仍需支持兼容的 USB-MIDI 升级协议。</p><p>拔插 USB 后重新点击连接即可；页面会清除旧设备信息。烧录与项目库切换时按提示重新连接。固件写入后请等待采样检查完成；“固件已更新”但采样未就绪时，只需检查或恢复采样库，无需重复烧录。</p><p>连接失败时，展开“连接详情”查看本次浏览器检测到的 MIDI IN／OUT。未发现端口、端口无法配对、设备未回复型号是不同的问题。先关闭其他 MIDI 软件和更新网页，再重新开机、插拔 USB 并连接；强制烧录不能跳过设备握手。</p></article>
+<article id="manual-help" class="manual-chapter" tabindex="-1"><h3>10 · 常见问题</h3>
+<h4>没有声音，或 MASTER 看起来没有变化</h4><p>网页检查静音按钮、输出电平和系统音量。实机检查 MASTER、轨道 LEVEL、静音／独奏和输出连接；MASTER 最小位置静音。</p>
+<h4>PLAY 按了不走</h4><p>按 SEQ，转 ALGORITHM 到 SYNC / LOOP，检查 K1 的 INT／MIDI 时钟来源；没有外部时钟时切回 INT。若播放走动但没声音，确认当前轨已写入步进、未静音且音量不为零。</p>
+<h4>旋钮功能与预期不同</h4><p>先看当前页面和屏幕底部名称。PRESETS 在总览切整套预设，在 EDIT 选单轨音色或鼓声部，在 SEQ 选步；K1–K4 随底部参数页改变。</p>
+<h4>改好后重启丢了，或网页与实机不一致</h4><p>工作区编辑需要保存到 USER 槽。网页面板 SAVE 只保存浏览器本地内容；顶部“保存到设备”完成后，设备槽位才有该项目。自定义采样另外写入采样库并备份 .fm1s。</p>
+<h4>换采样后其他项目的鼓声也变了</h4><p>所有项目共用 8 个采样槽。恢复对应的 .fm1s 库可找回原音频；导入 .fm1 项目不会恢复采样。</p>
+<h4>挂音、组合键没松开</h4><p>实机按 HOME＋PLAY。网页按 Esc 或“紧急停音”，并取消锁定按钮。停止演奏后再关闭其他 MIDI 输入来源。</p>
+<h4>网页无法连接或按钮不可用</h4><p>已识别设备时，切换强制烧录会自动重新连接，不会自动写入。等待连接完成，勾选备份确认，再点击强制烧录并确认兼容警告。尚未连接时，请先点击连接设备。</p><p>用电脑 Chrome／Edge 打开网页链接或完整 HTML，避免使用不运行脚本的附件预览。检查 MIDI／SysEx 权限、USB 数据线和设备连接；关闭占用端口的软件。若浏览器提示安全上下文问题，请从 localhost 或 HTTPS 打开页面。</p>
+<p>首次用播放按钮、面板 PLAY 或空格播放时，会先开启声音。开启失败会保持停止，处理浏览器声音提示后可再次播放。声音开启过程中点“紧急停音”或切换面板页，会取消等待中的播放。</p><p>Tap Tempo：在 FX 的 DELAY 页直接连按 SEQ，其他页面按住 HOME 连按 SEQ，或点击网页 TAP；连续两拍起生效，最多平均四个间隔，范围 30–300 BPM。FX 用 PRESETS 翻到 DELAY：K1 开关 SYNC，K2 调分频或毫秒，K3 调内部 BPM，K4 调反馈。新建工程默认同步八分音符；关闭 SYNC 后为固定时间 FREE，约 30–2040 毫秒。切换模式选择最接近的时间。T 为三连音，D 为附点；同步延迟跟随内部或外部 MIDI BPM，时钟丢失时保持最后间隔。旧工程保留原来的手动延迟；使用同步分频或扩展固定时间的工程需要新版固件。</p></article>
+</div></div>
+</section>
+<dialog id="about-dialog" class="save-dialog about-dialog" aria-labelledby="about-title"><h2 id="about-title">M-VAVE FM1</h2><p>© 2026 M-VAVE。APP 采用 GPLv3＋SDK 链接例外，可依许可修改和再分发，按现状提供，不提供担保。SDK 与第三方组件条款见下方声明。</p><p><a href="/*FM1_SOURCE_URL*/" target="_blank" rel="noopener noreferrer">源码与 SDK</a> · <a href="https://forum.m-vave.com" target="_blank" rel="noopener noreferrer">官方论坛</a></p><details><summary>版权与许可声明</summary><pre>/*FM1_NOTICES*/</pre></details><form method="dialog"><button>关闭</button></form></dialog>
+</main>
+<script>
+/*FM1_I18N*/
+/*FM1_PAYLOAD*/
+/*FM1_SCRIPT*/
+/*FM1_SIMULATOR*/
+(() => {
+  const $=id=>document.getElementById(id);
+  $('release-version').textContent=FM1_SIMULATOR.release_version||FM1_PACKAGE?.release_version||'';
+  const pages=['sim','library','update','manual'];
+  function showPage(name){
+    for(const page of pages){const active=page===name;$('tab-'+page).hidden=!active;$('mode-'+page).setAttribute('aria-selected',String(active));$('mode-'+page).tabIndex=active?0:-1;}
+    document.dispatchEvent(new Event('fm1-view-change'));
+  }
+  for(const name of pages){
+    $('mode-'+name).addEventListener('click',()=>showPage(name));
+    $('mode-'+name).addEventListener('keydown',event=>{
+      let i=pages.indexOf(name);
+      if(event.key==='ArrowRight')i=(i+1)%pages.length;
+      else if(event.key==='ArrowLeft')i=(i+pages.length-1)%pages.length;
+      else if(event.key==='Home')i=0;
+      else if(event.key==='End')i=pages.length-1;
+      else return;
+      event.preventDefault();showPage(pages[i]);$('mode-'+pages[i]).focus();
+    });
+  }
+  const chapters=[...document.querySelectorAll('.manual-chapter')];
+  const chapterText=chapters.map(node=>FM1I18n.sourceText(node).toLocaleLowerCase());
+  const chapterLinks=[...document.querySelectorAll('.manual-index a')];
+  function searchManual(){
+    const terms=$('manual-search').value.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);let count=0;
+    chapters.forEach((node,i)=>{const match=terms.every(term=>(chapterText[i]+' '+node.textContent.toLocaleLowerCase()).includes(term));node.hidden=!match;chapterLinks[i].parentElement.hidden=!match;if(match)count++;});
+    FM1I18n.text($('manual-count'),terms.length?'找到 '+count+' / '+chapters.length+' 章':'共 '+chapters.length+' 章');
+    $('manual-empty').hidden=count!==0;$('manual-clear').hidden=!terms.length;
+  }
+  document.addEventListener('fm1-language-change',searchManual);
+  $('manual-search').addEventListener('input',searchManual);
+  $('manual-clear').addEventListener('click',()=>{$('manual-search').value='';searchManual();$('manual-search').focus();});
+  $('manual-print').addEventListener('click',()=>window.print());
+  function openChapter(id){
+    const chapter=chapters.find(node=>node.id===id);if(!chapter)return;
+    if(chapter.hidden){$('manual-search').value='';searchManual();}
+    showPage('manual');chapter.focus({preventScroll:true});chapter.scrollIntoView({block:'start'});
+  }
+  document.querySelectorAll('a[href^="#manual-"]').forEach(link=>link.addEventListener('click',event=>{
+    event.preventDefault();const id=link.getAttribute('href').slice(1);
+    history.replaceState(null,'','#'+id);openChapter(id);
+  }));
+  window.addEventListener('hashchange',()=>openChapter(location.hash.slice(1)));
+  openChapter(location.hash.slice(1));
+  let pkg,openPkg,stockPkg,updater,library,voices=[],voiceBankBytes,projectBytes,timbreBytes,libraryReady=false,connected=false,busy=false,writing=false,finishingUpdate=false,same=false,migration=false,forceSuggested=false,updateResult='',watchedAccess,midiRequest;
+  let connecting;
+  function beginConnection(){
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(Error('连接超时，请检查 USB 连接和 MIDI 权限后重试。')),12000);
+    connecting={controller,timer};enable();return connecting;
+  }
+  async function endConnection(attempt){
+    clearTimeout(attempt.timer);
+    if(attempt.controller.signal.aborted){
+      libraryReady=false;connected=false;
+      await Promise.allSettled([library?.disconnect(),updater?.disconnect()]);
+    }
+    if(library?.link)library.link.signal=undefined;
+    if(updater?.link)updater.link.signal=undefined;
+    if(connecting===attempt)connecting=undefined;
+  }
+  function cancelConnection(){connecting?.controller.abort(Error('已取消连接。'));}
+  async function requestMidiAccess(report=status,signal) {
+    signal?.throwIfAborted();
+    if(!navigator.requestMIDIAccess)throw Error('当前浏览器不支持 Web MIDI，请使用电脑 Chrome 或 Edge');
+    let finished=false;
+    report('正在请求 MIDI 访问并初始化端口；若浏览器提示，请允许 MIDI / SysEx。');
+    navigator.permissions?.query({name:'midi',sysex:true}).then(result=>{
+      if(!finished&&result.state==='granted')report('MIDI 权限已允许，正在等待浏览器初始化设备端口…');
+    }).catch(()=>{});
+    if(!midiRequest){
+      const pending=navigator.requestMIDIAccess({sysex:true}).then(access=>{
+        if(!access.sysexEnabled)throw Error('请允许浏览器使用 MIDI / SysEx');return access;
+      });
+      midiRequest=pending;
+      pending.catch(()=>{if(midiRequest===pending)midiRequest=undefined;});
+    }
+    const request=midiRequest;
+    try {
+      const access=await FM1Web.abortable(request,signal);
+      report('正在搜索并连接 FM1…');return access;
+    } catch(error){if(midiRequest===request)midiRequest=undefined;throw error;}
+    finally {finished=true;}
+  }
+  const patchTarget=()=>{const select=$('patch-track'),node=select.selectedOptions[0],track=Number(select.value);return node&&!node.disabled&&select.value!==''&&Number.isInteger(track)&&track>=0&&track<8?track:-1;};
+  let deviceState={mode:'offline',epoch:0,busy:false},statusLink,connectionNotice;
+  function createLibrary(access){
+    const next=new FM1Web.Library(access);
+    next.onProjectChange=()=>document.dispatchEvent(new Event('fm1-device-project-change'));
+    return next;
+  }
+  const enable=()=>{
+    const locked=busy||finishingUpdate;
+    $('connect').disabled=locked||!pkg||!navigator.requestMIDIAccess; $('install').disabled=locked||!connected||migration||!updater?.link||updater.link.lost||same||!$('backup').checked; $('backup').disabled=locked||!pkg;
+    $('force-update').disabled=locked||!pkg||pkg.kind==='stock';
+    $('stock-restore').disabled=locked||!stockPkg;
+    $('stock-restore').hidden=pkg?.kind==='stock';$('open-firmware').hidden=pkg?.kind!=='stock';
+    $('open-firmware').disabled=locked;$('stock-warning').hidden=pkg?.kind!=='stock';
+    $('force-activate').hidden=!forceSuggested||$('force-update').checked;
+    $('force-activate').disabled=locked||!pkg;
+    FM1I18n.text($('update-next'),!pkg?'':finishingUpdate?'固件已更新，正在检查采样区…':busy?'设备操作进行中，请稍候。':updateResult==='stock'?'原厂 V15 和 128 个出厂音色已恢复。请切换音色试听。':updateResult==='ready'?
+      '更新已完成，可以开始使用 FM1，无需再次烧录。':updateResult==='samples'?
+      '固件已更新；下一步：在“项目与音色”中检查或恢复采样库。':!connected||migration?
+      (forceSuggested?'检测到其他固件：可点击“启用强制烧录并重新连接”。':'下一步：连接设备。'):
+      same?'已是当前版本，无需更新。':!$('backup').checked?'下一步：勾选已备份确认，才能开始烧录。':pkg.kind==='stock'?'下一步：恢复原厂固件和音色，确认后开始写入。':$('force-update').checked?
+      '下一步：点击“强制烧录”，阅读并确认兼容风险。':'下一步：点击“开始更新”。');
+    FM1I18n.text($('install'),pkg?.kind==='stock'?(connected&&updater?.identity==='FM-1_015'?'恢复原厂音色':'刷入原厂 V15'):$('force-update').checked?'强制烧录':'开始更新');
+    $('library-connect').disabled=locked||!navigator.requestMIDIAccess;
+    $('quick-connect').disabled=!connecting&&(locked||!navigator.requestMIDIAccess||(!$('tab-update').hidden&&!pkg));
+    FM1I18n.text($('quick-connect'),connecting?'取消连接':'连接设备');
+    const disconnected=!library?.link||library.link.lost;
+    const unavailable=locked||disconnected||!libraryReady;
+    for(const control of document.querySelectorAll('[data-library]'))control.disabled=unavailable;
+    $('library-refresh').disabled=locked||disconnected;
+    $('patch-import').disabled=unavailable||patchTarget()<0||!voices.length;
+    $('patch-export').disabled=unavailable||patchTarget()<0;
+    $('project-import').disabled=unavailable||!projectBytes;
+    $('timbre-import').disabled=unavailable||!timbreBytes;
+    const link=!disconnected?library.link:connected&&!updater?.link?.lost?updater?.link:undefined;
+    const mode=!disconnected?'library':link?'update':'offline';
+    deviceState={mode,epoch:deviceState.epoch+(statusLink!==link?1:0),busy:locked,connection:connectionNotice};statusLink=link;
+    document.dispatchEvent(new CustomEvent('fm1-device-state',{detail:deviceState}));
+  };
+  document.addEventListener('fm1-view-change',enable);
+  const status=(text,progress)=>{ FM1I18n.text($('status'),text); if(progress!==undefined)$('progress').value=progress; };
+  function clearUpdateConnection(text){
+    connected=false;same=false;migration=false;forceSuggested=false;updateResult='';
+    $('device-identity').textContent='';FM1I18n.text($('error'),'');status(text,0);
+  }
+  function connectionChanged(){
+    if(busy||finishingUpdate)return;
+    connectionNotice=undefined;
+    if(connected&&updater?.link?.lost)clearUpdateConnection('设备已断开，请重新连接。');
+    if(library?.link?.lost){libraryReady=false;message('设备已断开，请重新连接项目库。');}
+    enable();
+  }
+  function watch(access){if(watchedAccess)watchedAccess.removeEventListener('statechange',connectionChanged);watchedAccess=access;access.addEventListener('statechange',connectionChanged);}
+  $('backup').addEventListener('change',enable);
+  async function setForceMode(value,reconnect=connected||!!(updater?.link&&!updater.link.lost)){
+    if(busy||finishingUpdate)return false;
+    busy=true;clearUpdateConnection('烧录模式已改变，请重新连接设备。');
+    $('force-update').checked=value;$('force-warning').hidden=!value;enable();
+    try{
+      if(updater)await updater.disconnect();
+    }catch(error){FM1I18n.text($('error'),error.message);return false;}
+    finally{busy=false;enable();}
+    if(reconnect)await connectDevice();
+    return true;
+  }
+  $('force-update').addEventListener('change',()=>setForceMode($('force-update').checked));
+  $('patch-track').addEventListener('change',enable);
+  window.addEventListener('beforeunload',event=>{if(writing){event.preventDefault();event.returnValue='';}});
+  function showConnectionDetails(diagnostics){
+    const box=$('connection-details');box.hidden=!diagnostics;box.open=!!diagnostics;
+    for(const kind of ['inputs','outputs','attempts']){
+      const list=$('connection-'+kind);list.replaceChildren();
+      const entries=diagnostics?.[kind]||[];
+      if(!entries.length){const item=document.createElement('li');FM1I18n.text(item,'无');list.append(item);}
+      for(const entry of entries){
+        const item=document.createElement('li');
+        if(kind==='attempts'){
+          item.append(document.createTextNode(entry.input+' → '+entry.output+': '));
+          const reason=document.createElement('span');FM1I18n.text(reason,entry.error);item.append(reason);
+        }else item.textContent=entry;
+        list.append(item);
+      }
+    }
+  }
+  async function connectDevice(){
+    if(busy||finishingUpdate||!pkg)return;
+    busy=true;clearUpdateConnection('正在搜索并连接 FM1…');showConnectionDetails(null);
+    const report=text=>{status(text);connectionNotice={message:text,failed:false};enable();};
+    report('正在搜索并连接 FM1…');
+    let attemptUpdater;const attempt=beginConnection(),signal=attempt.controller.signal;
+    try {
+      if(library){libraryReady=false;await library.disconnect();message('已切换到网页烧录；使用项目库时请重新连接。');}
+      if(updater)await updater.disconnect();
+      const access=await requestMidiAccess(report,signal);
+      watch(access);
+      updater=new FM1Web.Updater(access,pkg,status);
+      attemptUpdater=updater;
+      const device=await updater.connect({force:$('force-update').checked,signal}); connected=true;same=!!device.same;migration=!!device.migration;forceSuggested=migration;
+      $('device-identity').textContent=device.identity;
+      status(pkg.kind==='stock'&&device.identity==='FM-1_015'?'已连接原厂 V15，可恢复出厂音色。':migration?'已识别设备和当前固件；迁移请点击“启用强制烧录并重新连接”。':same?'已是当前版本，无需更新。':$('force-update').checked?'已连接；开始强制烧录前将再次确认设备和兼容风险。':device.resume?'已连接升级模式，可继续写入这个版本':'已连接 FM1，可开始更新');
+      connectionNotice=undefined;
+    }catch(error){connectionNotice={message:error.message,failed:true};showConnectionDetails(attemptUpdater?.diagnostics);forceSuggested=error.code==='FIRMWARE_MISMATCH';FM1I18n.text($('error'),error.message);status('尚未连接');if(error.identity)$('device-identity').textContent=error.identity;}
+    finally{await endConnection(attempt);busy=false;enable();}
+  }
+  $('connect').addEventListener('click',connectDevice);
+  $('force-activate').addEventListener('click',()=>setForceMode(true,true));
+  function packageDetails(){
+    FM1I18n.text($('profile'),pkg.kind==='stock'?'原厂 V15（FM-1_015）':'官方 Open 固件');
+    $('firmware-version').textContent=pkg.release_version||'—';
+    FM1I18n.text($('version'),pkg.kind==='stock'?'FM-1_015':pkg.build_id.slice(0,16));$('version').title=pkg.kind==='stock'?pkg.sha256:pkg.build_id;
+    FM1I18n.text($('size'),(pkg.bytes/1024).toFixed(1)+' KiB');
+  }
+  async function chooseFirmware(next){
+    if(busy||finishingUpdate||!next)return;
+    const reconnect=connected;busy=true;clearUpdateConnection('烧录目标已改变，请核对版本和备份。');enable();
+    try{
+      if(updater)await updater.disconnect();
+      pkg=next;$('backup').checked=false;$('force-update').checked=pkg.kind==='stock';
+      $('force-warning').hidden=!$('force-update').checked;packageDetails();
+    }catch(error){FM1I18n.text($('error'),error.message);return;}
+    finally{busy=false;enable();}
+    if(reconnect)await connectDevice();
+  }
+  $('stock-restore').onclick=()=>chooseFirmware(stockPkg);
+  $('open-firmware').onclick=()=>chooseFirmware(openPkg);
+  const message=text=>{FM1I18n.text($('library-status'),text);if($('device-save-dialog').open)FM1I18n.text($('device-save-status'),text);};
+  const perform=async(action)=>{
+    if(busy||finishingUpdate)return;busy=true;connectionNotice=undefined;enable();
+    try{await action();}catch(error){message(error.message);}finally{busy=false;enable();}
+  };
+  const option=(value,text)=>{const node=document.createElement('option');node.value=String(value);FM1I18n.text(node,text);return node;};
+  async function deviceProject(action,refresh=false,duringUpdate=false) {
+    if(busy||(finishingUpdate&&!duringUpdate))throw Error('设备操作正在进行');busy=true;connectionNotice=undefined;enable();
+    try {
+      if(connected){clearUpdateConnection('已切换到项目库；烧录前请重新连接。');if(updater)await updater.disconnect();}
+      if(!library?.link||library.link.lost){
+        const attempt=beginConnection(),signal=attempt.controller.signal;
+        try {
+          libraryReady=false;if(library)await library.disconnect();const access=await requestMidiAccess(message,signal);
+          watch(access);library=createLibrary(access);await library.connect({signal});
+        } finally {await endConnection(attempt);}
+      }
+      const result=await action(library);
+      if(refresh)await refreshLibrary(true);
+      message('设备操作已完成。');return result;
+    } finally {busy=false;enable();}
+  }
+  const saveDialog=$('device-save-dialog');let saveBytes,saveRunning=false,saveOpening=false,saveReturnFocus;
+  function saveStatus(text){FM1I18n.text($('device-save-status'),text);}
+  async function openSave(bytes){
+    if(busy||finishingUpdate||saveOpening||saveRunning)throw Error('设备操作正在进行');
+    saveOpening=true;saveBytes=bytes?.slice();saveReturnFocus=document.activeElement;
+    const selected=!bytes?$('project-slot').value:'';
+    FM1I18n.text($('device-save-source'),bytes?'将网页当前项目写入 FM1，替换设备当前工作区。':'将 FM1 当前工作区保存到所选设备项目槽。');
+    $('device-save-confirm').disabled=true;$('device-save-slot').disabled=true;
+    $('device-save-slot').replaceChildren();saveStatus('正在连接并读取设备项目槽…');saveDialog.showModal();
+    try{
+      await deviceProject(async()=>{},true);
+      if(!saveDialog.open)return;
+      for(const node of $('project-slot').options)$('device-save-slot').append(option(node.value,node.textContent));
+      $('device-save-slot').value=selected||$('project-slot').value;
+      $('device-save-confirm').disabled=false;$('device-save-slot').disabled=false;
+      saveStatus('请选择保存位置；已有内容将被覆盖。');$('device-save-slot').focus();
+    }catch(error){saveStatus(error.message);}finally{saveOpening=false;}
+  }
+  function closeSave(){if(saveRunning)return;if(saveOpening)cancelConnection();saveDialog.close();saveBytes=undefined;saveReturnFocus?.focus();}
+  $('device-save-cancel').onclick=closeSave;
+  saveDialog.addEventListener('cancel',event=>{event.preventDefault();closeSave();});
+  $('device-save-confirm').onclick=async()=>{
+    if(saveRunning||busy||finishingUpdate)return;const slot=Number($('device-save-slot').value);
+    saveRunning=true;writing=true;$('device-save-confirm').disabled=true;
+    $('device-save-slot').disabled=true;$('device-save-cancel').disabled=true;
+    saveStatus('正在写入并读回校验，请保持设备连接…');
+    try{
+      const saved=await deviceProject(l=>l.saveProject(slot,saveBytes));
+      document.dispatchEvent(new CustomEvent('fm1-device-project-saved',{detail:{bytes:saved}}));
+      saveStatus('已保存到设备槽 '+(slot+1)+'，读回校验通过。');
+      message('已保存到设备槽 '+(slot+1)+'，读回校验通过。');
+      saveBytes=undefined;FM1I18n.text($('device-save-cancel'),'完成');
+    }catch(error){saveStatus('保存未确认完成：'+error.message);$('device-save-confirm').disabled=false;$('device-save-slot').disabled=false;}
+    finally{saveRunning=false;writing=false;$('device-save-cancel').disabled=false;}
+  };
+  saveDialog.addEventListener('close',()=>{FM1I18n.text($('device-save-cancel'),'取消');});
+  $('quick-connect').addEventListener('click',()=>connecting?cancelConnection():$('tab-update').hidden?connectLibrary():connectDevice());
+  $('about-open').onclick=()=>$('about-dialog').showModal();
+  const writeDeviceSamples=(data,progress,signal,duringUpdate=false)=>deviceProject(async l=>{
+      writing=true;
+      try{return await l.samplesWrite(data,progress,signal);}finally{writing=false;}
+    },false,duringUpdate);
+  globalThis.FM1Workbench={state:()=>deviceState,read:()=>deviceProject(l=>l.download(0)),write:bytes=>deviceProject(l=>l.upload(0,0,bytes)),save:openSave,
+    sampleInfo:()=>deviceProject(l=>l.query(11)),
+    samplesRead:progress=>deviceProject(l=>l.samplesRead(progress)),
+    samplesWrite:(data,progress,signal)=>writeDeviceSamples(data,progress,signal)};
+  async function refreshLibrary(initial=false) {
+    libraryReady=false;
+    const info=await library.query(0);
+    if(info.length!==14||info[1]!==16||info[2]>=16||!((info[0]===3&&info[3]===208&&info[4]===15)||(info[0]===4&&info[3]===224&&info[4]===15))||info.slice(6).some(source=>source>5))throw Error('设备项目库信息无效');
+    const previous=Number($('project-slot').value),selected=initial||$('project-slot').value===''||!Number.isInteger(previous)||previous<0||previous>=16?info[2]:previous;
+    const slots=[];
+    for(let slot=0;slot<info[1];slot++){
+      const name=await library.query(9,[slot],true);
+      slots.push(option(slot,(slot+1)+' · '+String.fromCharCode(...name).trim()));
+    }
+    const working=await library.download(0);
+    if(working.length!==(library.tuningBytes||(info[3]|info[4]<<8)))throw Error('设备文件长度无效');
+    FM1Web.projectVersion(working);
+    // Publish a complete snapshot only after every query succeeds. A partial
+    // list must never enable load/save/import with an empty selection.
+    $('project-slot').replaceChildren(...slots);
+    $('project-slot').value=String(selected);
+    const track=Number($('patch-track').value||0),sources=['DX7','303','808','PSG','拨弦','采样器'];
+    const toneTrack=$('timbre-track').value||'0';$('timbre-track').replaceChildren();
+    for(let i=0;i<8;i++)$('timbre-track').append(option(i,'轨道 '+(i+1)+' · '+(sources[info[6+i]]||'未知')));
+    $('timbre-track').value=toneTrack;
+    $('patch-track').replaceChildren();
+    for(let i=0;i<8;i++){
+      const node=option(i,'轨道 '+(i+1)+' · '+(sources[info[6+i]]||'未知'));node.disabled=info[6+i]!==0;$('patch-track').append(node);
+    }
+    const first=Array.from(info.slice(6)).findIndex(type=>type===0);
+    $('patch-track').value=String(info[6+track]===0?track:first);
+    $('project-name').value=String.fromCharCode(...working.slice(3836,3848)).trimEnd();
+    libraryReady=true;
+  }
+  function saveFile(bytes,name) {
+    const url=URL.createObjectURL(new Blob([bytes],{type:'application/octet-stream'})),a=document.createElement('a');
+    a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  function connectLibrary(){return perform(async()=>{
+    const report=text=>{message(text);connectionNotice={message:text,failed:false};enable();};
+    report('正在搜索并连接 FM1…');
+    const attempt=beginConnection(),signal=attempt.controller.signal;
+    try{
+      libraryReady=false;clearUpdateConnection('已切换到项目库；烧录前请重新连接。');if(updater)await updater.disconnect();if(library)await library.disconnect();
+      const access=await requestMidiAccess(report,signal);
+      watch(access);
+      library=createLibrary(access);await library.connect({signal});await refreshLibrary(true);message('项目库已连接。');connectionNotice=undefined;
+    }catch(error){connectionNotice={message:error.message,failed:true};throw error;}
+    finally{await endConnection(attempt);}
+  });}
+  $('library-connect').addEventListener('click',connectLibrary);
+  $('library-refresh').addEventListener('click',()=>perform(async()=>{await refreshLibrary();message('项目与轨道列表已刷新。');}));
+  $('project-rename').addEventListener('click',()=>perform(async()=>{
+    const name=$('project-name').value;if(!/^[\x20-\x7e]{1,12}$/.test(name))throw Error('名称须为 1–12 个可显示的英文字符');
+    await library.query(10,Array.from(name.padEnd(12),c=>c.charCodeAt(0)));message('名称已修改，请保存项目以保留修改。');
+  }));
+  $('project-save').addEventListener('click',()=>openSave().catch(error=>message(error.message)));
+  $('project-load').addEventListener('click',()=>perform(async()=>{
+    const slot=Number($('project-slot').value);
+    await library.query(8,[slot]);await refreshLibrary();message('项目已载入。');
+  }));
+  $('project-export').addEventListener('click',()=>perform(async()=>{
+    const data=await library.download(0);saveFile(FM1Web.projectFile(data),'FM1-project.fm1');message('当前项目已生成备份文件。');
+  }));
+  $('project-file').addEventListener('change',()=>perform(async()=>{
+    projectBytes=undefined;const file=$('project-file').files[0];if(!file)return;
+    if(file.size>4280)throw Error('项目备份文件过大');projectBytes=FM1Web.readProjectFile(new Uint8Array(await file.arrayBuffer()));message('备份校验通过，可以恢复到工作区。');
+  }));
+  $('project-import').addEventListener('click',()=>perform(async()=>{
+    if(!projectBytes||!confirm(FM1I18n.t('用备份替换当前未保存的工作区？设备项目槽不会自动覆盖。')))return;
+    await library.upload(0,0,projectBytes);await refreshLibrary();message('项目已恢复到工作区，请选择槽位保存。');
+  }));
+  $('timbre-file').addEventListener('change',()=>perform(async()=>{
+    timbreBytes=undefined;const file=$('timbre-file').files[0];if(!file)return;
+    if(file.size!==239)throw Error('请选择本版导出的 .fm1t 音色');
+    timbreBytes=FM1Web.readTimbreFile(new Uint8Array(await file.arrayBuffer()));message('音色校验通过，可导入到选中的轨道。');
+  }));
+  $('timbre-import').addEventListener('click',()=>perform(async()=>{
+    if(!timbreBytes)throw Error('请先选择音色文件');
+    const track=Number($('timbre-track').value);
+    if(!confirm(FM1I18n.t('替换轨道 '+(track+1)+' 的音源和音色？鼓与旋律互换会清空此轨步进。')))return;
+    await library.upload(2,track,timbreBytes);await refreshLibrary();message('音色已导入。NORMAL 轨请保存项目；PLAY 轨请导出轨道音色，DX7 也可存入独立库。');
+  }));
+  $('timbre-export').addEventListener('click',()=>perform(async()=>{
+    const track=Number($('timbre-track').value);
+    saveFile(FM1Web.timbreFile(await library.download(2,track)),'FM1-track-'+(track+1)+'.fm1t');message('轨道音色已导出。');
+  }));
+  $('patch-file').addEventListener('change',()=>perform(async()=>{
+    voices=[];voiceBankBytes=undefined;$('patch-choice').replaceChildren();const file=$('patch-file').files[0];if(!file)return;
+    if(file.size>4104)throw Error('请选择单音色或 32 音色 DX7 .syx 文件');
+    const bytes=new Uint8Array(await file.arrayBuffer());voices=FM1Web.readVoices(bytes);
+    if(bytes.length===4104)voiceBankBytes=bytes.slice(6,4102);
+    voices.forEach((p,i)=>$('patch-choice').append(option(i,(i+1)+' · '+String.fromCharCode(...p.slice(145,155)).replace(/[^\x20-\x7e]/g,'?'))));
+    message('已校验 '+voices.length+' 个音色，请选择音色与目标 DX7 轨道。');
+  }));
+  $('patch-import').addEventListener('click',()=>perform(async()=>{
+    const track=patchTarget(),patch=voices[Number($('patch-choice').value)];
+    if(!patch||track<0)throw Error('请选择 DX7 轨道与音色');
+    if(!confirm(FM1I18n.t('替换轨道 '+(track+1)+' 的音色？该轨道的音符会停止。')))return;
+    await library.upload(1,track,patch);message('音色已导入。NORMAL 轨请保存项目；PLAY 轨请导出轨道音色，DX7 也可存入独立库。');
+  }));
+  $('patch-export').addEventListener('click',()=>perform(async()=>{
+    const track=patchTarget();if(track<0)throw Error('请先将一条轨道设为 DX7，再刷新列表');
+    const patch=await library.download(1,track);saveFile(FM1Web.voiceFile(patch,track===7?9:track),'FM1-track-'+(track+1)+'.syx');message('音色已导出为 DX7 .syx 文件。');
+  }));
+  function bankSlots(raw){
+    const group=Number($('bank-group').value),old=$('bank-slot').value;
+    const list=raw?FM1Web.readVoices(FM1Web.bankFile(raw)):[];
+    $('bank-slot').replaceChildren(...Array.from({length:32},(_,i)=>option(i,(group*32+i+1)+' · '+(list[i]?String.fromCharCode(...list[i].slice(145,155)).replace(/[^\x20-\x7e]/g,' '):'DX7'))));
+    $('bank-slot').value=old||'0';
+  }
+  bankSlots();$('bank-group').addEventListener('change',()=>bankSlots());
+  $('bank-read').addEventListener('click',()=>perform(async()=>{bankSlots(await library.readBank(Number($('bank-group').value)));message('此组 32 个音色已读取。');}));
+  $('bank-export').addEventListener('click',()=>perform(async()=>{const group=Number($('bank-group').value);saveFile(FM1Web.bankFile(await library.readBank(group)),'FM1-bank-'+String.fromCharCode(65+group)+'.syx');message('音色组已导出。');}));
+  async function storeBankVoice(fromTrack){
+    const program=Number($('bank-group').value)*32+Number($('bank-slot').value);
+    const patch=fromTrack?await library.download(1,patchTarget()):voices[Number($('patch-choice').value)];
+    if(!patch)throw Error('请先选择 DX7 文件中的音色或目标 DX7 轨');
+    if(!confirm(FM1I18n.t('替换独立音色库的音色 ')+(program+1)+'？'))return;
+    bankSlots(await library.saveVoice(program,patch));message('音色已写入独立库，读回校验通过。');
+  }
+  $('bank-file-voice').addEventListener('click',()=>perform(()=>storeBankVoice(false)));
+  $('bank-track-voice').addEventListener('click',()=>perform(()=>storeBankVoice(true)));
+  $('bank-file-all').addEventListener('click',()=>perform(async()=>{
+    const group=Number($('bank-group').value),raw=voiceBankBytes||FM1Web.voiceBank(voices);
+    if(!confirm(FM1I18n.t('替换此组全部 32 个音色？建议先导出此组备份。')))return;
+    bankSlots(await library.writeBank(group,raw));message('整组音色已写入，读回校验通过。');
+  }));
+  $('install').addEventListener('click',async()=>{
+    if(busy||finishingUpdate||!connected||migration||same||!$('backup').checked)return;
+    const force=$('force-update').checked;
+    if(pkg.kind==='stock'&&!confirm(FM1I18n.t('确认恢复原厂 V15 和 128 个出厂音色？四个音色库会被覆盖，Open 项目与采样可能被清除。已是 V15 时只恢复音色。当前设备：')+updater.identity))return;
+    if(force&&pkg.kind!=='stock'&&!confirm(FM1I18n.t('确认强制烧录？当前设备：')+updater.identity+'\n\n'+FM1I18n.t('警告：可能与设备不兼容，可能丢失数据或无法开机，需要专用工具恢复。仅当确认目标设备为 FM1 并接受风险时继续。')))return;
+    busy=true;writing=true;enable();FM1I18n.text($('error'),'');
+    let completed=false;
+    try{await updater.install({force});completed=true;}
+    catch(error){FM1I18n.text($('error'),error.message);status('升级未完成；请保留本网页，检查设备连接后重试');}
+    finally{busy=false;writing=false;connected=false;finishingUpdate=completed;$('device-identity').textContent=completed?pkg.product:'';enable();}
+    if(completed&&pkg.kind==='stock'){
+      updateResult='stock';finishingUpdate=false;status('原厂 V15 和 128 个出厂音色已恢复。请切换音色试听。',100);enable();
+    }else if(completed){
+      try {status('固件已更新，正在检查采样区…');await FM1EnsureSamples({
+        sampleInfo:()=>deviceProject(l=>l.query(11),false,true),
+        samplesWrite:(data,progress)=>writeDeviceSamples(data,progress,undefined,true)
+      });updateResult='ready';status('固件与采样区均已就绪。',100);}
+      catch(error){updateResult='samples';FM1I18n.text($('error'),error.message);status('固件已更新；采样初始化未完成，请在采样页写入内置采样库。',100);}
+      finally{finishingUpdate=false;enable();}
+    }
+  });
+  let firmwareTask;
+  function loadFirmware(){
+    if(firmwareTask)return firmwareTask;
+    firmwareTask=(async()=>{
+    try {
+      if(!window.isSecureContext||!crypto.subtle)throw Error('请从 HTTPS 网站或 localhost 打开此网页');
+      $('sample-bank-note').hidden=FM1_SIMULATOR.sample_bank!=='synthesized-demo';
+      if(!FM1_PACKAGE){
+        FM1I18n.text($('update-intro'),'本页缺少内置固件，无法烧录。请重新下载完整官方工作台。');
+        FM1I18n.text($('profile'),'网页试听与编辑');$('firmware-version').textContent=FM1_SIMULATOR.release_version||'—';FM1I18n.text($('version'),FM1_SIMULATOR.sha256.slice(0,16));FM1I18n.text($('size'),'未附带设备固件');
+        status('内置固件不可用，请重新下载完整官方工作台。');
+        $('backup').disabled=true;enable();return;
+      }
+      FM1I18n.text($('error'),'');status('正在加载固件…');
+      const [prepared,stock]=await Promise.all([FM1Web.prepare(FM1_PACKAGE),FM1_PACKAGE.stock?FM1Web.prepare(FM1_PACKAGE.stock):undefined]);
+      pkg=openPkg=prepared;stockPkg=stock;
+      FM1I18n.text($('update-intro'),'连接 FM1，确认备份后点击“开始更新”。');
+      packageDetails();
+      if(!navigator.requestMIDIAccess)throw Error('当前浏览器不支持 Web MIDI，请使用电脑 Chrome 或 Edge');
+      status('固件校验通过，等待连接设备');enable();
+    }catch(error){firmwareTask=undefined;FM1I18n.text($('error'),error.message);status('固件加载失败，请重新打开设备更新页重试。');}
+    finally{enable();}
+    })();return firmwareTask;
+  }
+  document.addEventListener('fm1-view-change',()=>{if(!$('tab-update').hidden)loadFirmware();});
+  if(!FM1_PACKAGE||FM1_PACKAGE.data)loadFirmware();
+  else {status('打开设备更新页后加载固件。');enable();}
+})();
+</script>
+<script>
+/*FM1_SIM_SCRIPT*/
+</script>
+<script>
+/*FM1_SAMPLE_SCRIPT*/
+</script>
+</html>
