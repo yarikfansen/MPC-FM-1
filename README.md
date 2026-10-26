@@ -1,7 +1,7 @@
 # MPC-FM-1
 
 # HI, DEARS! <3 Welcome to try my own view on portable synth FW! 
-# Its try to combine MPC + Electron (live sequences) + Roland 303 (Acid) under HUGE Effects in FM-1
+# Its try to combine features of MPC + Electron + Roland 303 under HUGE Effects in FM-1
 
 # I need Yours Opinion about.
 
