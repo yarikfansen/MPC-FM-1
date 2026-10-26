@@ -1,6 +1,7 @@
 # MPC-FM-1
 
-# HI, DEARS! <3 Welcome to try my own view on portable synth FW! I need Yours Opinion about.
+# HI, DEARS! <3 Welcome to try my own view on portable synth FW!
+   I need Yours Opinion about.
 
 # Its try to combine MPC + Electron (live sequences) + Roland 303 (Acid) under HUGE Effects in FM-1
 
