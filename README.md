@@ -56,7 +56,15 @@ The same files are listed on the **Releases** page. Each release has:
 - `SHA256SUMS.txt` — checksums,
 - the source code of that release.
 
-Steps: [docs/INSTALL_AND_RECOVERY.md](docs/INSTALL_AND_RECOVERY.md). How to play: [docs/USER_GUIDE.md](docs/USER_GUIDE.md).
+### Install in short
+
+1. Open the install page in **Google Chrome**, allow MIDI.
+2. **Connect device** → choose the FM-1 → tick the backup box → **Start update**.
+3. **The first try usually stops** with *"Timed out waiting for reconnection"* while the synth screen is **black**. This is normal: the synth is already in M-VAVE's loader (it has no display) and the page did not find it in time. Nothing is broken.
+4. **Do not close the page and do not unplug the synth.** Press **Connect device** again, choose the FM-1, press **Start update** again on the **same page**. The second try writes the firmware and the synth restarts with *MPC FM-1* on the screen.
+5. If the page refuses to start the update, open **Recovery & force update**, enable force flash and start again.
+
+Full steps and recovery: [docs/INSTALL_AND_RECOVERY.md](docs/INSTALL_AND_RECOVERY.md). How to play: [docs/USER_GUIDE.md](docs/USER_GUIDE.md).
 
 ## Feedback, reviews, bugs
 
