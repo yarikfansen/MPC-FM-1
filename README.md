@@ -1,9 +1,9 @@
 # MPC-FM-1
 
 # HI, DEARS! <3 Welcome to try my own view on portable synth FW! 
-# Its try to combine features of MPC + Electron + Roland 303 + MiniD + Binaural + 3D sound under HUGE Effects in FM-1
+# Its try to combine features of MPC + Electron + Roland 303 + MiniD with + ChipTune Binaural + XFEED . With quality beauty sounds in each 7 ENGINES under HUGE Effects in FM-1
 
-# I need Yours Opinion about.
+# All menu logic is my logic. Wanna give a world easiest interfeises.  I need Yours Opinion about.
 
  
 Custom firmware for the **M-VAVE FM-1** pocket synth.
