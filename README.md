@@ -66,7 +66,6 @@ The `main` branch now holds the **current development source** (an ALPHA after v
 - Sequencer rework: variation, ratchet, longer notes, follow modes; arpeggiator changes.
 - Load guard with CPU display, black-box record of the last session, diagnostic web pages (`tools/fm1-diag.html`, `tools/fm1-diag2.html`).
 - Newest (13.11): still pictures for the effect pages, short names for sends, a redesigned mixer with a beat blink, readable LFO target names, 303 ENV page changes, faster screen redraws.
-- A phone companion web app (`phone/`, how to install: [docs/phone-install.md](docs/phone-install.md)); `phone/vendor/` holds a prebuilt simulator built from this source.
 - Many host tests in `tests/` (`tests/run_*.sh`).
 
 Design drawings (browser mockups) are in [docs/mockups](docs/mockups).
