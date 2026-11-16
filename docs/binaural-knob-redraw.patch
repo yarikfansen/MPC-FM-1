@@ -1,0 +1,25 @@
+diff --git a/app/screen.c b/app/screen.c
+index 730a4c5..9f0a4ba 100644
+--- a/app/screen.c
++++ b/app/screen.c
+@@ -4061,10 +4061,18 @@ static void safe_control(const struct fm1_controls *c, uint32_t now)
+ enum { BI_BRAIN, BI_EAR, BI_TIMER, BI_VOL, BI_PHONES, BI_WIDTH, BI_FEED, BI_MIX, BI_OFF,
+        BI_DELTA, BI_THETA, BI_ALPHA, BI_BETA, BI_FOCUS, BI_CUSTOM, BI_END, BI_PINK, BI_RAIN };
+ static int bi_r = 10; /* stroke radius, 1/10 px */
++/* Plain pixel strokes, 2 px (3 px for the large signs), like the MICRO D path
++ * icons. A chain of smooth dots looked softer but cost several ms per 16-row
++ * band (every band is drawn again from scratch), so a knob change on the
++ * device took tens of ms and the cells were seen half drawn or late. */
+ static void bi_seg(int x0, int y0, int x1, int y1, uint16_t c)
+ {
+-    int dx = x1 - x0, dy = y1 - y0, n = (int)isqrt_ui((unsigned)(dx * dx + dy * dy)) / 4 + 1;
+-    for (int i = 0; i <= n; ++i) fill_ellipse(x0 + dx * i / n, y0 + dy * i / n, bi_r, bi_r, c);
++    int t = bi_r >= 14 ? 3 : 2, ax = (x0 + 5) / 10, ay = (y0 + 5) / 10, bx = (x1 + 5) / 10, by = (y1 + 5) / 10;
++    int adx = bx > ax ? bx - ax : ax - bx, ady = by > ay ? by - ay : ay - by;
++    for (int o = 0; o < t; ++o) {
++        int ox = ady > adx ? o - t / 2 : 0, oy = ady > adx ? 0 : o - t / 2;
++        line(ax + ox, ay + oy, bx + ox, by + oy, c);
++    }
+ }
+ static void bi_poly(int cx, int cy, int k, const int8_t (*p)[2], unsigned n, uint16_t c) /* points in half units */
+ {

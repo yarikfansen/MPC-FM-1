@@ -64,7 +64,8 @@ int sounds_apply(unsigned track, unsigned index)
 static int index_of(unsigned track)
 {
     unsigned c = current[track], engine = groove_source_type(track);
-    return c && (c - 1U) / 40U == engine ? (int)((c - 1U) % 40U) : -1;
+    /* a restored index (sounds_state_put) may come from another build: never past the engine's library */
+    return c && (c - 1U) / 40U == engine && (c - 1U) % 40U < sounds_count(engine) ? (int)((c - 1U) % 40U) : -1;
 }
 /* Turning through the list only moves a pending choice (its name shows at
  * once); sounds_tick() loads it once the knob rests, so a fast turn does not
@@ -78,26 +79,71 @@ int sounds_step(unsigned track, int delta, uint32_t now)
     if (track >= TRACKS || !delta) return -1;
     unsigned engine = groove_source_type(track), n = sounds_count(engine);
     if (!n) return -1;
-    if (pend_track >= 0 && (unsigned)pend_track != track) sounds_tick(now + SETTLE_MS); /* another track: load it now */
+    if (pend_track >= 0 && (unsigned)pend_track != track) { /* another track: load the waiting one now */
+        if (groove_source_type((unsigned)pend_track) == pend_engine) (void)sounds_apply((unsigned)pend_track, pend_index);
+        pend_track = -1;
+    }
     int i = pend_track == (int)track ? (int)pend_index : index_of(track);
     i = i < 0 ? (delta > 0 ? 0 : (int)n - 1) : i + delta;
     i %= (int)n; if (i < 0) i += (int)n;
     pend_track = (int)track; pend_index = (unsigned)i; pend_engine = engine; pend_at = now;
     return 0;
 }
+/* Loading a sound changes many parameters at once; under a held or ringing
+ * note that clicks. So the track dips: volume down over 4 ticks, load at
+ * silence, back up over 4 ticks (about 40 ms each way). */
+static int fade_track = -1;
+static unsigned fade_stage, fade_saved, fade_index, fade_engine, fade_ticks;
+static unsigned track_volume(unsigned t)
+{
+    struct groove_view v; memset(&v, 0, sizeof v);
+    groove_get_view(t, 0, &v);
+    return v.volume;
+}
+static int fade_to(unsigned t, unsigned target)
+{
+    unsigned cur = track_volume(t);
+    if (cur != target) groove_control_edit(t, 0, (int)target - (int)cur, 0);
+    return track_volume(t) == target;
+}
 int sounds_tick(uint32_t now)
 {
+    if (fade_track >= 0) {
+        unsigned t = (unsigned)fade_track, step = fade_saved / 4U + 1U, cur = track_volume(t);
+        ++fade_ticks;
+        if (fade_stage == 1) {
+            if (fade_to(t, cur > step ? cur - step : 0U) || fade_ticks > 8U) {
+                if (track_volume(t) == 0 || fade_ticks > 8U) {
+                    if (groove_source_type(t) == fade_engine) (void)sounds_apply(t, fade_index);
+                    fade_stage = 2; fade_ticks = 0;
+                }
+            }
+            return 0;
+        }
+        unsigned next = cur + step > fade_saved ? fade_saved : cur + step;
+        (void)fade_to(t, next);
+        if (track_volume(t) >= fade_saved || fade_ticks > 8U) {
+            (void)fade_to(t, fade_saved);
+            fade_track = -1;
+            return 1;
+        }
+        return 0;
+    }
     if (pend_track < 0 || (int32_t)(now - pend_at) < SETTLE_MS) return 0;
     unsigned t = (unsigned)pend_track;
     pend_track = -1;
     if (groove_source_type(t) != pend_engine) return 0; /* the engine changed meanwhile */
-    return sounds_apply(t, pend_index) == 0;
+    unsigned vol = track_volume(t);
+    if (!vol) return sounds_apply(t, pend_index) == 0;
+    fade_track = (int)t; fade_stage = 1; fade_saved = vol; fade_index = pend_index; fade_engine = pend_engine; fade_ticks = 0;
+    return 0;
 }
 const char *sounds_name(unsigned track)
 {
     if (track >= TRACKS) return 0;
-    if (pend_track == (int)track && groove_source_type(track) == pend_engine) {
-        unsigned e = pend_engine, k = pend_index;
+    int fading = fade_track == (int)track && fade_stage == 1;
+    if ((pend_track == (int)track && groove_source_type(track) == pend_engine) || fading) {
+        unsigned e = fading ? fade_engine : pend_engine, k = fading ? fade_index : pend_index;
         return e == GROOVE_DX7 ? lib_dx7_name[k] : e == GROOVE_808 ? lib_kit[k].name : tone_at(e, k)->name;
     }
     int i = index_of(track);

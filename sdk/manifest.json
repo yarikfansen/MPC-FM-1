@@ -8,8 +8,8 @@
                   "sdk/I18n.js":  "833c3e0b367bbeef3dfefa62750a12ed5be60c93bfe7952dd7d384b815efd1dd",
                   "sdk/Package.cs":  "a6b85818e69e281b3b976abdc13dac575097866b16f7ead7f80bd557e27bb401",
                   "sdk/Samples.js":  "92c42ecff8e536e7048f8b2332222bc5bfba20db8a47b591a156bb0321924858",
-                  "sdk/Simulator.js":  "d0d96ab80d3fc560b80600ae33e2e9af56638ef8277cfc68a8a6f1dacec3d780",
-                  "sdk/Update.html.in":  "b800d06f18db7b6b1d58f7d1c470881c3875e1b3412c2362a899ac2eee055400",
+                  "sdk/Simulator.js":  "702870de50863368db625ccc524cefd751e6c6a08ff7866123456acc7762121a",
+                  "sdk/Update.html.in":  "f2f76190489ab7a8e1684c1829ef2c6d417c0d10fc186b72d03e9f950db61c8d",
                   "sdk/WebUpdate.js":  "c32cd37009c0dcecc0d95a42985ec215963b51ecb0538b7ce27fe83ab5b91e8c",
                   "sdk/config/layout.h":  "a00c6e7f0c1f7f6b4f166168f9dd8d29184295d176370409af7b19768a92459f",
                   "sdk/firmware/FM-1_015.fwsc":  "db1642b2b6fa5c2cccb11ffd13878068bb28601678d3644049f99dc40e7edb8a",
@@ -68,7 +68,7 @@
                   "sdk/include/fm1_audio_io.h":  "3c82758517f004ce02b1c0d89cadad4dc1e43d6b06f747daa6e8754c736e05df",
                   "sdk/lib/libfm1_engine.a":  "733a96c5d32e00244e31d7d7c36a4c1fb7646114f218526ee6a0964e56f94ea2",
                   "sdk/synth.json":  "c0c92cacb2ea7ef582f7f387712345174208b24343830ab334a73eb3583ea488",
-                  "sdk/config/linker.ld.in":  "f9861aafebf6913ce70bea74e7448769a8def498e1a0bf981281cfd94a3e9b3f"
+                  "sdk/config/linker.ld.in":  "d7ef2c496543304b25dc7c61eba0cfb8bffe44cd9bb38d1517f4912b6c94482a"
               },
     "external_toolchain":  {
                                "schema":  1,

@@ -395,7 +395,7 @@
       }
       if(!before||before[at+4]!==state[at+4]||before[at+5]!==state[at+5]||before[209+t]!==state[209+t]||before[217+t]!==state[217+t])FM1I18n.attr(button,'title','轨道 '+(t+1)+' · '+state[209+t]+' 步'+(state[217+t]!==state[209+t]?' · 下轮 '+state[217+t]+' 步':'')+(state[at+4]?' · 静音':'')+(state[at+5]?' · 独奏':''));
     }
-    for(const [button,at]of ui.leds)if(!before||before[at]!==state[at])button.classList.toggle('lit',!!state[at]);
+    for(const [button,at]of ui.leds)if(!before||before[at]!==state[at]){button.classList.toggle('lit',state[at]===1);button.classList.toggle('dim',state[at]===2);}
     if(message.flash){try{localStorage.setItem(storageKey,encode(message.flash));$('sim-storage-warning').hidden=true;}catch(_){$('sim-storage-warning').hidden=false;}}
     if(selectionChanged||!oldWorkspace||workspace?.slot!==oldWorkspace.slot||workspace?.factory!==oldWorkspace.factory)availability();
   }

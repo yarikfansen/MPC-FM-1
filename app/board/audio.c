@@ -39,6 +39,7 @@ FM1_AUDIO_CODE __attribute__((interrupt(""))) void fm1_audio_irq(void)
     if (interval < block_ticks - (block_ticks >> 3)) { ++statistics.short_intervals; return; }
     if (interval > block_ticks + (block_ticks >> 3)) { ++statistics.overruns; return; }
     half = fm1_audio_free_half();
+    fm1_mix_block_start = start; /* load guard in fm1_output_mix */
     /* The library renders the instrument; APP mixes external audio. */
     if (fm1_engine_render(rendered, FM1_BLOCK_FRAMES) != 0) {
         ++statistics.overruns;
@@ -86,6 +87,7 @@ int fm1_audio_start(void)
     if (!clock) return -1;
     block_ticks = (uint32_t)((uint64_t)clock * FM1_BLOCK_FRAMES / FM1_AUDIO_HARDWARE_RATE);
     if (!block_ticks) return -1;
+    fm1_mix_block_ticks = block_ticks;
     memset(receive, 0, sizeof receive);
     memset(transmit, 0, sizeof transmit);
     fm1_output_reset();

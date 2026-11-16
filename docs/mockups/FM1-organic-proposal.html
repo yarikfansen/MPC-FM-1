@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FM-1 органический стиль</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#12160f;color:#d9d6c3;font:14px/1.5 system-ui,sans-serif}
+main{max-width:1180px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:6px 0 2px;color:#efe8d0}h2{font-size:15px;margin:0 0 8px;color:#efe8d0}
+.lead{color:#a3a68f;margin:0 0 14px}
+.card{background:#1b2119;border:1px solid #2f3a2c;border-radius:21px;padding:13px 21px;margin-bottom:13px}
+.pair{display:flex;gap:21px;flex-wrap:wrap;justify-content:center}
+.pair>div{width:240px}
+canvas{width:240px;height:240px;display:block;border-radius:13px;background:#000}
+.cap{text-align:center;font-size:12px;color:#8e9a80;margin:4px 0}
+ul{margin:6px 0 0 18px;padding:0;color:#bdbfa9;font-size:13px}
+li{margin:3px 0}
+.bar{display:flex;gap:21px;align-items:center;flex-wrap:wrap;padding:8px 0;position:sticky;top:0;background:#12160f;z-index:2}
+label{cursor:pointer;color:#efe8d0}
+.sw{display:inline-block;width:18px;height:18px;border-radius:9px;vertical-align:middle;margin-right:5px}
+.fib{display:flex;align-items:flex-end;gap:8px;margin:8px 0}
+.fib div{background:#7ea77a;border-radius:8px 8px 3px 3px;color:#12160f;font-size:11px;text-align:center;font-weight:700}
+</style></head><body><main>
+<h1>FM-1 — «органический» стиль: эскиз</h1>
+<p class="lead">Экран 240×240 в 1:1 (рисуется в 2× для чёткости). Содержание и ручки те же, что в v9 — меняется только визуальный язык. Код прошивки не затронут.</p>
+<div class="bar"><label><input type="checkbox" id="ov"> показать сетку золотого сечения / Фибоначчи</label><label><input type="checkbox" id="br"> дыхание (необязательная идея)</label></div>
+
+<div class="card"><h2>Принципы</h2><ul>
+<li><b>Золотое сечение 1,618.</b> Экран делится по вертикали на шапку (55 px), окно (144 px — число Фибоначчи) и ряд ручек (41 px). Окно относится к шапке с ручками как 144 : 96 ≈ 1,5-1,6, а линия 240 / 1,618 ≈ 148 px проходит по низу главной картинки. Внутри окна боксы делятся тоже ~62 % : 38 % (например, кривая и вкладки на FX).</li>
+<li><b>Шкала Фибоначчи для отступов и радиусов:</b> 3, 5, 8, 13, 21, 34 px. Поля экрана 8, промежутки между «камешками» 3 или 5, радиусы скругления 5, 8, 13, 21. Больше никаких «случайных» чисел — глаз чувствует повтор.</li>
+<li><b>Мягкие природные цвета:</b> мох (фон), песок (текст), небо (кривые), глина (запись/выкл). Фон тёмный и малоконтрастный, чтобы глаз отдыхал. Цвета четырёх ручек узнаются, но смягчены: <span class="sw" style="background:#eaa3bf"></span>розовый <span class="sw" style="background:#93d6a0"></span>зелёный <span class="sw" style="background:#ebd27f"></span>жёлтый <span class="sw" style="background:#82d2c7"></span>бирюзовый.</li>
+<li><b>Органичные формы:</b> все блоки — «камешки» с большим скруглением, вместо острых углов — плавные кривые; значки в виде листьев, волн и семян; шаги секвенсора — капсулы.</li>
+<li><b>Мягкое движение только по делу:</b> подсветка активного элемента и бегущая точка. Необязательное «дыхание» — см. галочку сверху.</li></ul>
+<div class="fib" id="fib"></div></div>
+
+<div class="card"><h2>Экраны</h2>
+<div class="pair">
+<div><div class="cap">MIXER (8 дорожек)</div><canvas id="mix"></canvas></div>
+<div><div class="cap">SEQUENCER (4×16 + цепочка паттернов)</div><canvas id="seq"></canvas></div>
+<div><div class="cap">FX (эффект + кривая)</div><canvas id="fx"></canvas></div>
+<div><div class="cap">MICRO D — «путь звука»</div><canvas id="va"></canvas></div>
+<div><div class="cap">SAVE PROJECT</div><canvas id="save"></canvas></div>
+<div><div class="cap">GLOBAL</div><canvas id="glo"></canvas></div>
+</div>
+<ul><li>Верх везде одинаков: «120 BPM» слева, под ним F A S L 2×2, название по центру, справа PLAY и батарея.</li>
+<li>Внизу у ручек: название и значение одним шрифтом (значения — 18-20 px, названия 13-14 px), цвет полоски над ручкой — цвет ручки.</li>
+<li>Мельчайший текст 9 px (подписи путей MICRO D и фиксированные метки); всё остальное 10 px и больше.</li></ul></div>
+
+<div class="card"><h2>Сетка крупно</h2>
+<div class="pair"><div><div class="cap">золотые линии (0,382 / 0,618), зоны экрана, спираль</div><canvas id="grid"></canvas></div></div>
+<ul><li>Фиолетовые линии — золотое сечение по обеим осям (92 и 148 px). Зелёные — границы зон: шапка 0-55, окно 62-196, ручки 196-240. Спираль построена на золотом прямоугольнике 240×148.</li></ul></div>
+
+<div class="card"><h2>Идея: «дыхание» (необязательно)</h2>
+<ul><li>Очень медленный цикл около 9 секунд (вдох-выдох по косинусу). Меняется только свечение активного камешка (рамка выбранной дорожки, курсор шага, точка среза, активная буква) на 20-30 % яркости. Ничего не двигается по размеру — текст не «пляшет».</li>
+<li>Включается при простое (нет вращения ручек 10 с) и сразу выключается при действии; в настройках GLOBAL можно отключить, чтобы не будить подсветку и не грузить процессор.</li>
+<li>Попробуйте галочку «дыхание» вверху страницы.</li></ul></div>
+</main>
+<script>
+const PHI=1.618, FIBS=[3,5,8,13,21,34,55,89,144];
+const C={bg:'#1a211c',pan:'#232d26',pan2:'#2c3a31',line:'#3b4c40',tx:'#ece4cc',dim:'#98a28c',faint:'#5a6a5c',
+ moss:'#8fb98b',sand:'#d8c79c',sky:'#8db7c8',clay:'#d27f68',k:['#eaa3bf','#93d6a0','#ebd27f','#82d2c7']};
+const F=p=>'700 '+p+'px "Barlow Condensed"';
+let BR=0, OV=false;
+const SCR=[];
+function mk(id,fn){SCR.push([id,fn]);}
+function setup(id){const c=document.getElementById(id);c.width=480;c.height=480;const g=c.getContext('2d');g.setTransform(2,0,0,2,0,0);
+ g.fillStyle=C.bg;g.fillRect(0,0,240,240);
+ const r=g.createRadialGradient(120,110,20,120,120,190);r.addColorStop(0,'rgba(60,80,58,.32)');r.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=r;g.fillRect(0,0,240,240);return g;}
+function peb(g,x,y,w,h,fill,stroke,lw=1,r=13){r=Math.min(r,h/2,w/2);g.beginPath();g.roundRect(x,y,w,h,r);if(fill){g.fillStyle=fill;g.fill();}if(stroke){g.strokeStyle=stroke;g.lineWidth=lw;g.stroke();}}
+/* active pebble: outline + breathing glow */
+function act(g,x,y,w,h,col,r=13,fill=C.pan2){g.save();g.shadowColor=col;g.shadowBlur=3+8*BR;peb(g,x,y,w,h,fill,col,1.5,r);g.restore();}
+function T(g,s,x,y,p,c,a='left'){g.font=F(p);g.fillStyle=c;g.textAlign=a;g.textBaseline='top';g.fillText(s,x,y);}
+function TW(g,s,p){g.font=F(p);return g.measureText(s).width;}
+function cut(g,s,p,mw){while(s.length>1&&TW(g,s,p)>mw)s=s.slice(0,-1);return s;}
+function leaf(g,cx,cy,w,h,c,rot=0){g.save();g.translate(cx,cy);g.rotate(rot);g.beginPath();g.moveTo(-w/2,0);g.quadraticCurveTo(0,-h,w/2,0);g.quadraticCurveTo(0,h,-w/2,0);g.fillStyle=c;g.fill();g.restore();}
+function vine(g,x,y,w,c,amp=3){g.strokeStyle=c;g.lineWidth=1;g.beginPath();for(let i=0;i<=w;i++){const yy=y+Math.sin(i/w*Math.PI*4)*amp;i?g.lineTo(x+i,yy):g.moveTo(x,yy);}g.stroke();}
+/* header: 120 BPM, FASL 2x2 (13 px, gap 3), title, play, battery */
+function head(g,title,rec){
+ T(g,'120',8,3,22,C.tx);const bw=TW(g,'120',22);T(g,'BPM',11+bw,11,11,C.moss);
+ ['F','A','S','L'].forEach((l,i)=>{const x=8+(i%2)*16,y=31+Math.floor(i/2)*16,on=i<3,col=[C.tx,C.k[1],C.clay,C.k[3]][i];peb(g,x,y,13,13,on?col:null,on?null:C.faint,1.2,5);T(g,l,x+6.5,y+1,11,on?'#1a211c':C.faint,'center');});
+ g.font=F(22);const m=g.measureText('100'),cy=3+(m.actualBoundingBoxDescent-m.actualBoundingBoxAscent)/2;
+ peb(g,226,cy-6,6,13,null,C.dim,1.2,3);g.fillStyle=C.dim;g.fillRect(228,cy-8,2,2);
+ T(g,'100',222,3,22,C.tx,'right');const px=222-bw-6-10;
+ if(rec){g.fillStyle=C.clay;g.beginPath();g.arc(px+5,cy,5,0,7);g.fill();}
+ else{g.lineJoin='round';g.lineWidth=2;g.fillStyle=g.strokeStyle=C.k[1];g.beginPath();g.moveTo(px+1,cy-5);g.lineTo(px+8,cy);g.lineTo(px+1,cy+5);g.closePath();g.fill();g.stroke();}
+ if(title){const tp=title.length>9?15:20;T(g,title,120,tp==20?4:7,tp,C.tx,'center');}
+}
+/* bottom knobs: 4 columns of 60 */
+function knobs(g,l){l.forEach((k,i)=>{const x=i*60,c=C.k[i];peb(g,x+9,200,42,3,c,null,0,2);let p=14;while(p>10&&TW(g,k[0],p)>56)p--;
+ T(g,k[0],x+30,205,p,C.tx,'center');let q=20;while(q>16&&TW(g,k[1],q)>56)q--;T(g,k[1],x+30,219,q,c,'center');});}
+/* window zone: y 62..196 */
+const WY=62,WH=134;
+function engineChip(g,x,name,maxr,kind){peb(g,x,31,29,29,null,C.k[1],1.3,13);g.strokeStyle=C.tx;g.lineWidth=1.8;g.lineCap='round';g.beginPath();
+ for(let k=0;k<3;k++)for(let i=0;i<=16;i++){const xx=x+6+i*17/16,yy=39+k*6+Math.sin(i/16*6.28*(k+1))*2;i?g.lineTo(xx,yy):g.moveTo(xx,yy);}g.stroke();
+ T(g,cut(g,name,19,maxr-(x+35)),x+35,36,19,C.k[1]);}
+function lamp(g,right,cy,label,txt,col,ink){const lw=TW(g,label,13),x=right-(lw+3+22);T(g,label,x,cy-7,13,C.tx);peb(g,x+lw+3,cy-5.5,22,11,col,null,0,5);T(g,txt,x+lw+3+11,cy-4.5,9,ink,'center');return x;}
+
+/* ---------- screens ---------- */
+function mixer(g){head(g,'MIXER');
+ const tr=['303 SAW','808 KIT','SOFT LEAD','PLUCK','SAMPLER','PSG YM','PIANO 1','BASS 2'];
+ tr.forEach((n,i)=>{const y=63+i*16.4,sel=i==0;
+  if(sel)act(g,6,y-1,228,15,C.k[0],8,C.pan2);else peb(g,6,y-1,228,15,C.pan,null,0,8);
+  T(g,String(i+1),17,y+1,11,sel?C.tx:C.dim,'center');T(g,n,26,y+1.5,11,sel?C.tx:C.dim);
+  for(let s=0;s<16;s++){const on=(s*(i+3))%5==0;peb(g,92+s*8.8,y+2,6,10,on?C.k[i%4]:C.pan2,null,0,3);}});
+ knobs(g,[['VOL','100'],['FILT','64'],['SEND','20'],['STATE','ON']]);}
+function seq(g){head(g,'SEQUENCER');
+ const sx=lamp(g,234,38,'STEPS','64',C.pan2,C.tx),cx=lamp(g,234,53,'CHAIN','OFF',C.clay,'#1a211c');
+ engineChip(g,43,'ACID SQUELCH BASS 2',Math.min(sx,cx)-6);
+ for(let i=0;i<16;i++){peb(g,10+i*14,64,10,8,i==2?C.k[2]:i<5?C.sand:null,i<5?null:C.faint,1,4);}
+ const on=[0,3,6,8,10,14,16,22,24,27,40,44,51,60];
+ for(let r=0;r<4;r++)for(let s=0;s<16;s++){const i=r*16+s,x=8+s*13.8+Math.floor(s/4)*2,y=79+r*29,o=on.includes(i);
+  peb(g,x,y,11,24,o?C.k[1]:C.pan,o?null:(s%4==0?C.line:'#2f3b33'),1,5.5);
+  if(i==9)peb(g,x+1,y+1,9,22,null,C.clay,1.6,5);
+  if(i==16){g.save();g.shadowColor=C.tx;g.shadowBlur=2+6*BR;peb(g,x-1,y-1,13,26,null,C.tx,1.3,6.5);g.restore();}}
+ knobs(g,[['VELOCITY','100'],['GATE','75%'],['PROB','100%'],['NOTE','A2']]);}
+function fxCurve(){const p=[];for(let x=0;x<224;x++){const u=x/223,w=20*Math.pow(2,u*10)/1500,den=Math.sqrt((1-w*w)**2+0.16*w*w),db=20*Math.log10(1/den);p.push([8+x,Math.max(112,Math.min(188,166-db*2))]);}return p;}
+function fx(g){head(g,'FX');
+ g.font=F(24);T(g,'FILTER',120,31,24,C.k[0],'center');
+ peb(g,6,WY,228,WH,C.pan,C.line,1,21);
+ /* tabs: 62 % / 38 % of the 224 width are not used here; 9 equal tabs inside a pebble strip */
+ peb(g,10,WY+4,220,18,C.bg,null,0,9);
+ const n=['FLT','DRV','CHO','PHA','RNG','REV','EQ','DLY','SND'],cw=220/9;
+ n.forEach((s,i)=>{const cx=10+cw*(i+.5),on=i==0;if(on)act(g,10+cw*i+1,WY+4,cw-2,18,C.k[0],9,C.pan2);T(g,s,cx,WY+7,11,on?C.k[0]:i>6?C.tx:C.dim,'center');});
+ const pts=fxCurve();g.save();g.beginPath();g.roundRect(8,WY+26,224,WH-30,13);g.clip();
+ const gr=g.createLinearGradient(0,100,0,190);gr.addColorStop(0,'rgba(141,183,200,.40)');gr.addColorStop(1,'rgba(141,183,200,.04)');
+ g.fillStyle=gr;g.beginPath();g.moveTo(8,192);pts.forEach(p=>g.lineTo(p[0],p[1]));g.lineTo(232,192);g.fill();
+ g.strokeStyle=C.sky;g.lineWidth=2;g.lineJoin='round';g.beginPath();pts.forEach((p,i)=>i?g.lineTo(...p):g.moveTo(...p));g.stroke();g.restore();
+ leaf(g,200,98,10,3,C.moss,-.5);vine(g,16,184,60,'rgba(143,185,139,.25)',2);
+ knobs(g,[['TYPE','ACID'],['CUTOFF','1.5K'],['RESO','80'],['MIX','127']]);}
+function va(g){head(g,'MICRO D');
+ /* sound-path strip: 5 chips of 40, 6 apart */
+ const st=['WAVES','THICK','BRIGHT','SHAPE','MOVE'],cc=[C.k[0],C.k[1],C.k[2],C.k[3],C.sky];
+ st.forEach((s,i)=>{const x=8+i*46,on=i==2;
+  if(on)act(g,x,WY,40,17,C.k[2],8,C.k[2]);else peb(g,x,WY,40,17,C.pan,C.line,1,8);
+  T(g,s,x+20,WY+3,10,on?'#1a211c':C.dim,'center');
+  if(i<4){g.strokeStyle=C.faint;g.lineWidth=1.2;g.beginPath();g.moveTo(x+41,WY+8.5);g.lineTo(x+45,WY+8.5);g.stroke();g.beginPath();g.moveTo(x+43,WY+6.5);g.lineTo(x+45.5,WY+8.5);g.lineTo(x+43,WY+10.5);g.stroke();}});
+ /* big picture: window 5..196, golden split */
+ const y0=WY+23,h=196-y0;peb(g,6,y0,228,h,C.pan,C.line,1,21);
+ g.save();g.beginPath();g.roundRect(7,y0+1,226,h-2,20);g.clip();
+ const pts=[];for(let x=0;x<224;x++){const u=x/223,w=u*1.6,res=1.9,den=Math.sqrt((1-w*w)**2+(w/res)**2);pts.push([8+x,Math.max(y0+6,Math.min(y0+h-6,y0+h-18-Math.log(1/den+.2)*26*(1)))]);}
+ const gr=g.createLinearGradient(0,y0,0,y0+h);gr.addColorStop(0,'rgba(235,210,127,.38)');gr.addColorStop(1,'rgba(235,210,127,.03)');
+ g.fillStyle=gr;g.beginPath();g.moveTo(8,y0+h);pts.forEach(p=>g.lineTo(...p));g.lineTo(232,y0+h);g.fill();
+ g.strokeStyle=C.k[2];g.lineWidth=2.2;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(...p):g.moveTo(...p));g.stroke();
+ /* pulse dot at cutoff (golden x = 148) */
+ const dx=148,dp=pts[dx-8];g.fillStyle='rgba(235,210,127,'+(.35+.3*BR)+')';g.beginPath();g.arc(dx,dp[1],6+3*BR,0,7);g.fill();g.fillStyle=C.tx;g.beginPath();g.arc(dx,dp[1],3,0,7);g.fill();
+ vine(g,14,y0+h-8,70,'rgba(143,185,139,.3)',2);leaf(g,24,y0+14,10,3,C.moss,-.6);leaf(g,36,y0+10,8,2.5,C.moss,.3);
+ g.restore();
+ knobs(g,[['CUTOFF','1.5K'],['RESO','80'],['CONTOUR','64'],['DRIVE','20']]);}
+function save(g){head(g,'SAVE PROJECT');
+ peb(g,78,34,84,22,C.pan2,C.line,1,11);T(g,'SLOT 03',120,37,18,C.tx,'center');
+ peb(g,6,WY,228,WH,C.pan,C.line,1,21);T(g,'NAME',16,WY+5,10,C.dim);
+ const nm='MY SONG_',w=25,gp=3,x0=(240-(8*w+7*gp))/2;
+ for(let i=0;i<8;i++){const x=x0+i*(w+gp),y=WY+17;if(i==3)act(g,x,y,w,36,C.k[1],13,C.pan2);else peb(g,x,y,w,36,C.bg,null,0,13);
+  T(g,nm[i],x+w/2,y+7,24,i==3?C.k[1]:C.tx,'center');}
+ peb(g,22,WY+66,88,40,C.k[0],null,0,21);T(g,'SAVE',66,WY+74,24,'#1a211c','center');
+ T(g,'to',120,WY+77,16,C.dim,'center');
+ peb(g,130,WY+66,88,40,null,C.k[1],1.6,21);g.strokeStyle=C.k[1];g.lineWidth=3;g.lineCap='round';g.lineJoin='round';g.beginPath();g.moveTo(162,WY+86);g.lineTo(171,WY+95);g.lineTo(186,WY+77);g.stroke();
+ vine(g,22,WY+121,196,'rgba(143,185,139,.28)',3);leaf(g,120,WY+121,12,3.5,C.moss,0);
+ knobs(g,[['SLOT','03'],['CURSOR','4'],['LETTER','S'],['ACTION','WRITE']]);}
+function glo(g){head(g,'GLOBAL');
+ const it=[['SWING','0%'],['THEME','MOSS'],['CLICK','OFF'],['OUTPUT','LINE']];
+ it.forEach(([a,b],i)=>{const y=WY+i*34,sel=i==1;
+  if(sel)act(g,6,y,228,31,C.k[1],15,C.pan2);else peb(g,6,y,228,31,C.pan,null,0,15);
+  T(g,a,19,y+(sel?5:7),sel?20:16,sel?C.tx:C.dim);T(g,(sel?'‹ ':'')+b+(sel?' ›':''),221,y+(sel?5:7),sel?20:16,sel?C.k[1]:C.dim,'right');});
+ knobs(g,[['SWING','0%'],['THEME','MOSS'],['CLICK','OFF'],['OUTPUT','LINE']]);}
+
+/* ---------- golden grid overlay ---------- */
+function overlay(g){g.save();g.lineWidth=.8;g.setLineDash([3,3]);
+ g.strokeStyle='rgba(200,120,255,.9)';const a=240/PHI,b=240-a;
+ [a,b].forEach(v=>{g.beginPath();g.moveTo(v,0);g.lineTo(v,240);g.moveTo(0,v);g.lineTo(240,v);g.stroke();});
+ g.strokeStyle='rgba(120,255,160,.85)';[55,WY,196].forEach(v=>{g.beginPath();g.moveTo(0,v);g.lineTo(240,v);g.stroke();});
+ g.setLineDash([]);g.fillStyle='rgba(200,120,255,.95)';g.font='700 8px sans-serif';g.textAlign='left';g.textBaseline='top';
+ g.fillText('148',a+2,2);g.fillText('92',b+2,2);g.fillText('148',2,a+1);g.fillText('92',2,b+1);
+ g.restore();}
+function spiral(g){g.save();g.strokeStyle='rgba(255,200,90,.95)';g.lineWidth=1.5;let x=0,y=0,w=240,h=240/PHI,d=0;
+ g.setLineDash([]);for(let i=0;i<9;i++){let s;g.strokeStyle='rgba(255,255,255,.18)';
+  if(w>=h){s=h;g.strokeRect(x,y,s,s);g.strokeStyle='rgba(255,200,90,.95)';g.beginPath();
+   if(d%4==0){g.arc(x+s,y+s,s,Math.PI,Math.PI*1.5);x+=s;w-=s;}
+   else if(d%4==2){g.arc(x,y,s,0,Math.PI*.5);x+=s;w-=s;x+=0;}
+   else{g.arc(x+s,y+s,s,Math.PI,Math.PI*1.5);x+=s;w-=s;}
+   g.stroke();}
+  else{s=w;g.strokeRect(x,y,s,s);g.strokeStyle='rgba(255,200,90,.95)';g.beginPath();
+   g.arc(x+(d%4==1?0:s),y+s,s,d%4==1?-Math.PI*.5:Math.PI,d%4==1?0:Math.PI*1.5);g.stroke();y+=s;h-=s;}
+  d++;if(s<4)break;}
+ g.restore();}
+function gridScreen(g){g.fillStyle=C.bg;g.fillRect(0,0,240,240);
+ /* zones */
+ peb(g,6,3,228,52,'rgba(143,185,139,.08)',null,0,13);peb(g,6,WY,228,WH,'rgba(141,183,200,.09)',null,0,21);peb(g,6,200,228,36,'rgba(234,163,191,.08)',null,0,13);
+ spiral(g);overlay(g);
+ g.fillStyle='#ece4cc';g.font='700 10px "Barlow Condensed",sans-serif';g.textAlign='center';g.textBaseline='top';
+ g.fillText('ШАПКА 55',200,24);g.fillText('ОКНО 134  (144 вместе с зазором)',160,125);g.fillText('РУЧКИ 44',200,216);}
+
+/* ---------- Fibonacci bars ---------- */
+(function(){const el=document.getElementById('fib');FIBS.forEach(n=>{const d=document.createElement('div');d.style.width=Math.max(26,n/2+22)+'px';d.style.height=Math.max(18,n/1.2)+'px';d.textContent=n;el.appendChild(d);});
+ const s=document.createElement('span');s.style.cssText='color:#8e9a80;font-size:12px;margin-left:8px';s.textContent='шкала в px: 3 5 8 13 21 34 55 89 144 — каждое число ≈ 1,618 × предыдущее';el.appendChild(s);})();
+
+mk('mix',mixer);mk('seq',seq);mk('fx',fx);mk('va',va);mk('save',save);mk('glo',glo);
+function draw(){SCR.forEach(([id,fn])=>{const g=setup(id);fn(g);if(OV){overlay(g);}});
+ const gg=document.getElementById('grid').getContext('2d');const c=document.getElementById('grid');c.width=480;c.height=480;gg.setTransform(2,0,0,2,0,0);gridScreen(gg);}
+document.getElementById('ov').onchange=e=>{OV=e.target.checked;draw();};
+let raf=0,t0=0;
+function loop(t){BR=(1-Math.cos((t-t0)/9000*Math.PI*2))/2;draw();raf=requestAnimationFrame(loop);}
+document.getElementById('br').onchange=e=>{if(e.target.checked){t0=performance.now();raf=requestAnimationFrame(loop);}else{cancelAnimationFrame(raf);BR=0;draw();}};
+const fontsReady=document.fonts?Promise.all([document.fonts.load('700 20px "Barlow Condensed"'),document.fonts.load('700 10px "Barlow Condensed"','ШАПКАОКНОРУЧКИ'),document.fonts.ready]):Promise.resolve();
+fontsReady.catch(()=>{}).then(draw);
+draw();
+</script></body></html>

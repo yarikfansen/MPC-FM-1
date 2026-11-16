@@ -1,0 +1,439 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>FM-1 v6 Screens</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+/* Layout: a bench of device screens (240 px LCD drawn at 2x), each with its notes. Single dark look, like the panel. */
+:root {
+  --bench: #121014;      /* page ground, a warm near-black */
+  --panel: #1c1a20;      /* card behind each screen */
+  --line: #2c2932;
+  --ink: #ece7ef;        /* text */
+  --dim: #9a93a3;
+  --k1: #ff7eb3;         /* knob 1, the new pink */
+  --k2: #3ee07a;         /* knob 2 green */
+  --k3: #ffd23f;         /* knob 3 yellow */
+  --k4: #2fd8c8;         /* knob 4 turquoise */
+  --font-ui: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-lcd: "Barlow Condensed", "Arial Narrow", sans-serif;
+  color-scheme: dark;
+}
+html, body { background: var(--bench); color: var(--ink); }
+body { font-family: var(--font-ui); line-height: 1.5; padding-block: 28px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+header h1 { font-family: var(--font-lcd); font-weight: 700; font-size: 2.2rem; letter-spacing: .02em; margin: 0; text-wrap: balance; }
+header p { color: var(--dim); margin: 6px 0 0; max-width: 68ch; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: .85rem; color: var(--dim); }
+.legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 20px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.card h2 { font-family: var(--font-lcd); font-weight: 600; font-size: 1.25rem; margin: 0; letter-spacing: .03em; display: flex; justify-content: space-between; gap: 8px; }
+.card h2 small { font-family: var(--font-ui); font-size: .75rem; color: var(--dim); font-weight: 400; letter-spacing: 0; }
+canvas { width: 100%; max-width: 480px; aspect-ratio: 1; display: block; margin: 0 auto; border-radius: 4px; background: #000; image-rendering: auto; }
+.card ul { margin: 0; padding-left: 18px; font-size: .88rem; color: var(--dim); display: flex; flex-direction: column; gap: 3px; }
+.card ul b { color: var(--ink); font-weight: 600; }
+.q { border-left: 3px solid var(--k3); padding: 2px 0 2px 10px; font-size: .88rem; }
+.q b { color: var(--k3); }
+.ctl { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: 600 .82rem var(--font-ui); color: var(--ink); background: #2a2630; border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+button:hover { border-color: var(--dim); }
+button:focus-visible { outline: 2px solid var(--k4); outline-offset: 2px; }
+button[aria-pressed="true"] { background: #3a2f3e; border-color: var(--k1); }
+footer { color: var(--dim); font-size: .85rem; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>FM-1 v6 — образцы экранов</h1>
+    <p>Черновик к согласованию. Это не прошивка, а рисунок экрана 240×240 по списку правок. Цвета кнобов: 1 розовый, 2 зелёный, 3 жёлтый, 4 бирюзовый. Котик и осциллограф живые.</p>
+    <div class="legend">
+      <span style="--c:var(--k1)">K1</span><span style="--c:var(--k2)">K2</span><span style="--c:var(--k3)">K3</span><span style="--c:var(--k4)">K4</span>
+    </div>
+  </header>
+
+  <section class="grid" id="grid"></section>
+
+  <footer>Ответ можно дать прямо в чате: номер экрана и что поменять. После согласования переношу всё в прошивку и собираю веб-симулятор.</footer>
+</div>
+
+<script>
+const C = { bg:'#000', panel:'#16141a', line:'#2a2730', text:'#f2eef4', dim:'#8c8594', faint:'#4a4552',
+  k:['#ff7eb3','#3ee07a','#ffd23f','#2fd8c8'], red:'#ff4b4b', orange:'#ff9a3c', pink:'#c2407a',
+  track:['#ff7eb3','#ffb03c','#ffe14a','#7ee35a','#3ad6c5','#4aa3ff','#a98bff','#ff6fd8'] };
+const LCD = '"Barlow Condensed","Arial Narrow",sans-serif';
+
+function font(px, w=700){ return `${w} ${px}px ${LCD}`; }
+function txt(g, s, x, y, px, col, align='left', w=700){ g.font=font(px,w); g.fillStyle=col; g.textAlign=align; g.textBaseline='top'; g.fillText(s,x,y); }
+function fitTxt(g, s, x, y, px, col, maxw, align='center'){ g.font=font(px); let p=px; while (g.measureText(s).width>maxw && p>8){ p--; g.font=font(p);} txt(g,s,x,y+(px-p)/2,p,col,align); }
+function rr(g,x,y,w,h,r,fill,stroke){ g.beginPath(); g.roundRect(x,y,w,h,r); if(fill){g.fillStyle=fill;g.fill();} if(stroke){g.strokeStyle=stroke;g.lineWidth=1;g.stroke();} }
+
+/* ---------- shared chrome ---------- */
+function badge(g, x, y, letter, col, on=true){ // filled square with the letter cut out
+  rr(g,x,y,12,12,2,on?col:null,on?null:C.faint);
+  txt(g,letter,x+6,y+0.5,11,on?C.bg:C.faint,'center');
+}
+/* Right trio: play, percent, battery. Margins mirror the left side: the battery
+ * ends as far from the right edge as the BPM digits start from the left. Both
+ * icons sit the same distance from the digits and are centred on them. */
+const EDGE=6, GAP=4, DIG_Y=3, DIG_MID=15;
+function inkMid(g,str,px,y){ g.font=font(px); g.textBaseline='top'; const m=g.measureText(str);
+  const top=y+(m.fontBoundingBoxAscent-m.actualBoundingBoxAscent), bot=y+m.fontBoundingBoxAscent+m.actualBoundingBoxDescent; return (top+bot)/2; }
+function trio(g, state, pct){
+  const MID=inkMid(g,String(pct),22,DIG_Y)-1; // exact ink centre of the digits, nudged up 1 px
+  const col = pct>=65?C.k[1]:pct>=30?C.k[2]:pct>=15?C.orange:C.red;
+  const bx=240-EDGE-6; // battery 6 px wide, white
+  // battery 13 px body + 2 px cap = 15 px, centred on the digits
+  const BM=MID-3; // battery 3 px higher (v6.1: +1 px)
+  rr(g,bx,BM-5.5,6,13,1.5,null,C.text); g.fillStyle=C.text; g.fillRect(bx+2,BM-7.5,2,2);
+  const h=Math.round(10*pct/100); g.fillRect(bx+1.5,BM+6-h,3,h);
+  g.font=font(22); const m=g.measureText(String(pct)), dw=m.width, dr=bx-GAP;
+  txt(g,String(pct),dr,DIG_Y,22,col,'right');
+  const px=dr-dw-GAP-11, py=MID-7.5; // play 1 px higher
+  if(state==='play'){ const w=11,hh=13;
+    g.fillStyle=C.k[1]; g.beginPath(); g.moveTo(px,py); g.lineTo(px+w,py+hh/2); g.lineTo(px,py+hh); g.fill();
+    g.strokeStyle='#1d8c48'; g.lineWidth=1; g.beginPath(); g.moveTo(px+2,py+hh-4); g.lineTo(px+w-4,py+hh/2+0.2); g.stroke(); }
+  else if(state==='pause'){ g.fillStyle=C.k[2]; g.fillRect(px,py,4,13); g.fillRect(px+7,py,4,13); }
+  return px;
+}
+/* Centre: line 1 = the section you are in, line 2 = what you are working on. */
+function topBar(g, o){
+  txt(g,String(o.bpm||120),5,DIG_Y-2,24,C.text);
+  const bw=(()=>{g.font=font(24);return g.measureText(String(o.bpm||120)).width;})();
+  txt(g,'BPM',8+bw,13,9,C.dim,'left',600);
+  const icons=(o.icons||[['F',true,C.text],['A',false,C.k[1]],['S',false,C.red]]).concat([['L',!!o.lfo,C.k[3]]]);
+  icons.forEach(([l,on,col],i)=>badge(g,5+i*15,29,l,col,on));
+  const left=trio(g,o.transport||'play',o.batt??87);
+  const L=64, R=left-6, cx=(L+R)/2;
+  if(o.section) fitTxt(g,o.section,cx,4,11,C.dim,R-L);
+  if(o.object) fitTxt(g,o.object,cx,17,13,C.text,R-L);
+}
+function holdBar(g, frac){ if(frac>0){ g.fillStyle='#3a3540'; g.fillRect(4,193,232,2); g.fillStyle=C.text; g.fillRect(4,193,Math.round(232*frac),2);} }
+function knobs(g, list, hint){
+  list.forEach((k,i)=>{
+    const x=i*60; if(!k) return;
+    g.fillStyle=C.k[i]; g.fillRect(x+6,197,48,2);
+    fitTxt(g,k[0],x+30,201,12,C.text,56);
+    fitTxt(g,k[1],x+30,214,16,C.k[i],56);
+  });
+}
+const CAT=["................","...o.......o....","..opo.....opo...","..okkooooookko..",".okkdkkkkkdkkko.",".okkkkkkkkkkkko.",".okwgkkkkkwgkko.",".okbgkkkkkbgkko.",".okkkkcpckkkkko.","..okkkccckkkko..","...ookkkkkkoo...","..okdkccccdko...","..okkccccckko.o.","..okdccccckdkook","..okkcckkcckkko.","...oooo..oooo..."];
+const CATUP=CAT.map((r,i)=>i==0?"o..............o":i==1?"ok.o.......o.ko.":i==2?"okopo.....opoko.":i==9?"..okkkcbckkkko..":r);
+const CATS={
+ ginger:{o:'#3b2200',k:'#ff8c00',d:'#c45a00',c:'#ffe3c8',w:'#fff',g:'#46fc41',b:'#000',p:'#ff6aa8'},
+ black:{o:'#55505e',k:'#1b1a1f',d:'#2c2a32',c:'#3a3842',w:'#fff',g:'#ffd23f',b:'#000',p:'#ff6aa8'},
+ white:{o:'#7d7884',k:'#f4f1f6',d:'#d8d3dd',c:'#ffffff',w:'#fff',g:'#4aa3ff',b:'#000',p:'#ff8cb8'},
+ tabby:{o:'#2a2a30',k:'#9a9aa6',d:'#4c4c56',c:'#e3e3ea',w:'#fff',g:'#7ee35a',b:'#000',p:'#ff6aa8'}};
+let catName='ginger', scopeMode='bands';
+const PAL=new Proxy({}, {get:(_,k)=>CATS[catName][k]});
+const CATSLEEP=['................','................','................','................','................','................','................','..o.....o.......','.opo...opo......','.okkoookko.oooo.','okkdkkkkdkooddko','okbbkkkbbkkkkkko','okkkcpckkkkdkdko','.okkcccokkkkkkko','..oooooooooooooo','................'];
+function cat(g, x, y, s, up=false, flip=false, sleep=false){
+  (sleep?CATSLEEP:up?CATUP:CAT).forEach((row,r)=>[...row].forEach((ch,c)=>{ if(ch==='.')return; g.fillStyle=PAL[ch]; const cx=flip?15-c:c; g.fillRect(x+cx*s,y+r*s,s,s); }));
+}
+
+/* ---------- screens ---------- */
+const T0 = performance.now();
+function now(){ return (performance.now()-T0)/1000; }
+
+/* Mixer columns on one 6 px rhythm: number | name | meter | 16 steps | M/S. */
+function mixer(g){
+  topBar(g,{section:'MIXER', object:'1 · DX7 · NEON KEYS', lfo:true});
+  const names=['NEON KEYS','ACID LINE','808 KIT','CHIP LEAD','PLUCK','SAMPLER','PAD','BASS 2'];
+  const t=now(), NUM=9, NAME=20, METER=72, GRID=84, PITCH=8.5, MS=230;
+  names.forEach((n,i)=>{
+    const y=50+i*17, sel=i===0;
+    if(sel){ g.fillStyle=C.pink; g.fillRect(3,y+2,1,12); }
+    txt(g,String(i+1),NUM,y+1,13,sel?C.text:C.dim,'center');
+    fitTxt(g,n,NAME,y+2,12,sel?C.text:'#b9b2c0',46,'left');
+    const lvl=0.35+0.6*Math.abs(Math.sin(t*2+i));
+    g.fillStyle='#2a2730'; g.fillRect(METER,y+3,4,11); g.fillStyle=C.track[i]; const h=Math.round(11*lvl); g.fillRect(METER,y+14-h,4,h);
+    for(let s=0;s<16;s++){
+      const x=GRID+s*PITCH, on=(s*(i+3))%5===0, vol=0.4+0.6*((s*7+i)%4)/3;
+      rr(g,x,y+3,6,11,1.5,on?C.track[i]:'#141218', on? null : (s%4===0?'#3a3640':'#26232c'));
+      if(on){ g.fillStyle='#000'; g.globalAlpha=1-vol; g.fillRect(x+1,y+4,4,9); g.globalAlpha=1; }
+    }
+    const play=Math.floor(t*4)%16; if(i<5){ rr(g,GRID+play*PITCH,y+3,6,11,1.5,null,'#fff'); }
+    txt(g,i===2?'M':i===4?'S':'',MS,y+1,13,i===2?C.k[2]:C.k[3],'center');
+  });
+  holdBar(g,0.4);
+  knobs(g,[['VOLUME','100'],['BRIGHT','64'],['SEND','20'],['STATE','ON']]);
+}
+
+/* SEQ: 16 columns spread edge to edge (beat groups 2 px apart), 4 rows filling
+ * the space between the pattern strip and the knob bars with equal gaps. */
+function seq(g){
+  topBar(g,{section:'SEQUENCER', object:'2 · 303 · ACID LINE', lfo:true, icons:[['F',true,C.text],['A',true,C.k[1]],['S',false,C.red]]});
+  const Y=C.k[2], chainOn=Math.floor(now()/3)%2===0;
+  // CHAIN + small ON/OFF, centred as one group
+  g.font=font(11); const cw=g.measureText('CHAIN').width, lw=chainOn?16:20, gx=120-(cw+3+lw)/2;
+  txt(g,'CHAIN',gx,44,11,Y,'left',700);
+  rr(g,gx+cw+3,46,lw,8,2,chainOn?C.k[1]:C.red); txt(g,chainOn?'ON':'OFF',gx+cw+3+lw/2,45.5,8,'#000','center',700);
+  // 16 patterns
+  const L=10, W=220, P=W/16;
+  for(let i=0;i<16;i++){ const x=L+i*P, used=i<5||i===9, cur=i===2, selp=i===3;
+    rr(g,x+1,59,P-3,8,2, cur?Y:used?'#7a6a2a':null, selp?'#fff':cur?null:used?null:'#5a4f22'); }
+  // grid: 4 groups of 4, 2 px between groups, from x=4 to x=236
+  const GW=232, CW=11, gap=(GW-16*CW-3*2)/15;
+  const X=s=>4+s*(CW+gap)+Math.floor(s/4)*2;
+  const top=73, bottom=191, RH=24, rgap=(bottom-top-4*RH)/3;
+  const t=now(), play=Math.floor(t*4)%64;
+  for(let r=0;r<4;r++) for(let s=0;s<16;s++){
+    const i=r*16+s, x=X(s), y=top+r*(RH+rgap), on=[0,3,6,8,10,14,16,22,24,27,32,35,38,44,48,51,54,60].includes(i);
+    rr(g,x,y,CW,RH,3,on?'#3ee07a':'#101013', on?null:(s%4===0?'#45404c':'#2a2730'));
+    if(on){ const v=0.5+0.5*((i*5)%4)/3; g.fillStyle='#000'; g.globalAlpha=1-v; g.fillRect(x+1,y+1,CW-2,RH-2); g.globalAlpha=1; }
+    if(i===play) rr(g,x,y,CW,RH,3,null,'#ff4b4b');
+    if(i===17) rr(g,x,y,CW,RH,3,null,'#fff');
+  }
+  knobs(g,[['STEP','18'],['VELOCITY','100'],['LENGTH','1/2'],['NOTE','A2']]);
+}
+
+/* Scope: a disco ball and its drifting light spots behind seven frequency
+ * bands (bass inside and thickest, highs outside and thinnest). The bands only
+ * grow outwards and never touch the cat; peaks throw sparks. */
+const sparks=[];
+function scope(g){
+  topBar(g,{section:'SCOPE', object:'PATTERN 3'});
+  const t=now(), cx=120, cy=236, R0=62, silent=(t%12)>9.5;
+  const loud=silent?0:0.6+0.4*Math.sin(t*0.7);
+  // light spots
+  for(let k=0;k<18;k++){ const a=t*0.5+k*0.61, d=30+((k*37)%90), x=120+Math.cos(a)*d*1.5, y=110+Math.sin(a*1.3+k)*d*0.6;
+    if(y<44||y>190||x<2||x>238) continue; g.fillStyle=['#ff7eb3','#2fd8c8','#ffd23f','#ffffff','#c08bff'][k%5]; g.globalAlpha=silent?0.12:0.55; g.fillRect(x,y,2,2); g.globalAlpha=1; }
+  // ball
+  const r=15, bx=120, by=66; g.strokeStyle='#5a5464'; g.beginPath(); g.moveTo(bx,42); g.lineTo(bx,by-r); g.stroke();
+  for(let i=-3;i<=3;i++) for(let j=-3;j<=3;j++){ const x=bx+i*4.3, y=by+j*4.3; if((x-bx)**2+(y-by)**2>r*r) continue;
+    const lit=(Math.sin(i*1.7+j*2.3+t*4)+1)/2; const v=150+100*lit|0; g.fillStyle=`rgb(${v},${v},${Math.min(255,v+30)})`; g.fillRect(x-1.8,y-1.8,3.6,3.6); }
+  const cols=['#ff4b4b','#ff9a3c','#ffd23f','#3ee07a','#2fd8c8','#4aa3ff','#c08bff'];
+  for(let b=0;b<7;b++){ const e=silent?0:Math.max(0,Math.sin(t*(1.3+b*0.6)+b*1.7))*loud;
+    g.strokeStyle=cols[b]; g.lineWidth=3.2-b*0.35; g.beginPath();
+    for(let k=0;k<=96;k++){ const a=Math.PI+k/96*Math.PI, w=Math.abs(Math.sin(k*(0.25+b*0.12)+t*(3+b*1.5)))*e*11;
+      const rr2=R0+2+b*7+w, x=cx+Math.cos(a)*rr2, y=cy+Math.sin(a)*rr2; k?g.lineTo(x,y):g.moveTo(x,y);
+      if(w>9.5 && Math.random()<0.06) sparks.push({x,y,vx:Math.cos(a)*(0.6+Math.random()),vy:Math.sin(a)*(0.6+Math.random()),life:1,c:cols[b]}); }
+    g.stroke(); }
+  for(let i=sparks.length-1;i>=0;i--){ const p=sparks[i]; p.x+=p.vx; p.y+=p.vy; p.life-=0.04;
+    if(p.life<=0||p.y<44){ sparks.splice(i,1); continue; } g.globalAlpha=p.life; g.fillStyle=p.c; g.fillRect(p.x,p.y,2,2); g.globalAlpha=1; }
+  const beat=Math.floor(t*2);
+  if(silent){ cat(g,cx-24,cy-48,3,false,false,true); const z=(t*20)%24; txt(g,'Z',cx+20,cy-50-z,10,C.text); txt(g,'z',cx+28,cy-56-(z+12)%24,9,C.dim); }
+  else cat(g,cx-24,cy-50,3,beat%2===1,Math.floor(beat/2)%2===1);
+}
+
+function arp(g){
+  topBar(g,{section:'ARPEGGIATOR', object:'4 · PSG · CHIP LEAD', icons:[['F',true,C.text],['A',true,C.k[1]],['S',false,C.red]]});
+  const t=now();
+  // piano roll
+  rr(g,6,46,228,70,3,'#0b0a0d',C.line);
+  const notes=[0,4,7,12,7,4,0,4,7,12,16,12];
+  const pos=Math.floor(t*6)%notes.length;
+  notes.forEach((n,i)=>{ const x=12+i*18, y=104-n*3.4; rr(g,x,y,15,6,2,i===pos?'#fff':C.k[1]); });
+  // two mirrored blocks (62 px wide, same top and bottom) with the cat on grass between
+  const BL=6, BR=172, BW=62, TOP=124, BOT=184;
+  const hold=Math.floor(t/2)%2===0;
+  txt(g,'HOLD',BL,TOP,12,C.text,'left',700);
+  g.font=font(12); const hw=g.measureText('HOLD').width, lw=hold?16:20;
+  rr(g,BL+hw+3,TOP+2,lw,8,2,hold?C.k[1]:C.red); txt(g,hold?'ON':'OFF',BL+hw+3+lw/2,TOP+1.5,8,'#000','center',700);
+  txt(g,'PRESETS',BL,TOP+16,17,'#c9c2d0','left',700);
+  txt(g,'UP-DN',BL,BOT-24,24,C.text,'left',600); // mode, one weight lighter
+  rr(g,BR,TOP,29,12,3,'#2a2730',C.line); txt(g,'OCT−',BR+14.5,TOP+1,9,C.text,'center',600);
+  rr(g,BR+33,TOP,29,12,3,'#2a2730',C.line); txt(g,'OCT+',BR+47.5,TOP+1,9,C.text,'center',600);
+  txt(g,'2',BR+BW/2,BOT-44,44,C.text,'center');
+  // grass from block to block, 2 px clear of both
+  g.fillStyle='#1f7a3a'; g.fillRect(BL+BW+2,BOT-3,BR-BL-BW-4,4);
+  for(let x=BL+BW+2;x<BR-2;x+=3){ const h=3+((x*7)%5); g.fillStyle=x%2?'#3ee07a':'#2bb85f'; g.fillRect(x,BOT-3-h+Math.sin(t*2+x)*0.8,1.5,h); }
+  const beat=Math.floor(t*2);
+  cat(g,96,BOT-48,3,beat%2===1);
+  knobs(g,[['RATE','1/16'],['GATE','60%'],['HUMAN','20%'],['VARY','35%']]);
+}
+
+function globalDrum(g){
+  topBar(g,{section:'GLOBAL', icons:[['F',true,C.text],['A',false,C.k[1]],['S',false,C.red]]});
+  const rows=['OUTPUT  +6DB','BPM  120','SWING  12%','CLICK  REC','COUNT IN  1 BAR','CLOCK  INT','LOW CUT  OFF','BLUETOOTH  ›'];
+  const t=now(); const sel=Math.floor(t/1.4)%rows.length;
+  for(let d=-2; d<=2; d++){
+    const i=(sel+d+rows.length)%rows.length, ad=Math.abs(d);
+    const px=[24,17,13][ad], y=118+Math.sign(d)*[0,32,58][ad]-px/2;
+    const col=ad===0?C.text:ad===1?'#a8a1b0':ad===2?'#6a6472':'#45404c';
+    if(ad===0) rr(g,8,y-4,224,px+8,4,'#1e1b23');
+    fitTxt(g,rows[i],120,y,px,col,220);
+  }
+  knobs(g,[['BPM','120'],null,null,null]);
+}
+
+/* SEL: the active row drops to the bottom, right over the knob bars, in knob
+ * colours; the other rows wait above, dimmed. No second set of knob labels. */
+function selMenu(g){
+  topBar(g,{section:'ACTIONS', object:'2 · 303 · ACID LINE'});
+  const rows=[['COPY',['STEP','PAGE','TRACK','TIMBRE']],['PASTE',['STEP','PAGE','TRACK','TIMBRE']],['CLEAR',['STEP','PAGE','TRACK','UNDO']],['REPEAT',['→32','→48','→64','PANIC']]];
+  const sel=Math.floor(now()/1.6)%4;
+  const others=rows.filter((_,r)=>r!==sel);
+  others.forEach(([name,items],k)=>{ const y=48+k*30;
+    txt(g,name,10,y,11,C.dim,'left');
+    items.forEach((it,i)=>{ const x=6+i*58.5; rr(g,x,y+13,54,14,3,null,'#3a3640'); txt(g,it,x+27,y+14.5,11,C.dim,'center'); }); });
+  const [name,items]=rows[sel];
+  txt(g,name,10,148,15,C.text,'left');
+  items.forEach((it,i)=>{ const x=i*60+6; g.fillStyle=C.k[i]; g.fillRect(x,197,48,2);
+    rr(g,x,166,48,26,4,C.k[i]); txt(g,it,x+24,172,14,'#000','center'); }); // one size for all four
+}
+
+function edit(g){
+  topBar(g,{section:'EDIT', object:'1 · DX7'});
+  txt(g,'BANK 2 · ROM2A',120,46,12,C.dim,'center',600);
+  fitTxt(g,'NEON KEYS',120,60,30,C.text,220);
+  txt(g,'PATCH 17 / 32',120,94,12,C.dim,'center',600);
+  const rows=[['TONE',['ALGO','FDBK','TRANS','LEVEL'],['5','6','+0','100']],['ENV',['ATTACK','DECAY','SUSTAIN','RELEASE'],['12','40','70','35']]];
+  rows.forEach(([n,ls,vs],r)=>{ const y=118+r*36, on=r===0; if(on) rr(g,4,y-2,232,34,4,'#1e1b23');
+    txt(g,n,10,y,11,on?C.text:C.dim); ls.forEach((l,i)=>{ fitTxt(g,l,30+i*60,y+12,11,on?C.text:C.dim,56); fitTxt(g,vs[i],30+i*60,y+21,12,on?C.k[i]:C.faint,56);});});
+  knobs(g,[['ALGO','5'],['FDBK','6'],['TRANS','+0'],['LEVEL','100']]);
+}
+
+/* FM lab: the six voices (operators) are singing cat heads. Bottom row =
+ * voices you hear (carriers), top row = voices that colour them (modulators);
+ * a wavy thread shows who colours whom. SELECT picks the voice. */
+/* Six different cats: fur, pattern and eye colour. */
+const VOICES=[
+ {fur:'#ff9a3c', dark:'#c96a1c', light:'#ffe0bf', eye:'#46fc41', mark:'stripes'},   // ginger tabby
+ {fur:'#26252b', dark:'#141317', light:'#3a3842', eye:'#ffd23f', mark:'none'},      // black
+ {fur:'#f4f1f6', dark:'#cfc9d6', light:'#ffffff', eye:'#4aa3ff', mark:'none'},      // white
+ {fur:'#9a9aa6', dark:'#55555f', light:'#e3e3ea', eye:'#7ee35a', mark:'stripes'},   // grey tabby
+ {fur:'#f4efe6', dark:'#c9772a', light:'#ffffff', eye:'#46fc41', mark:'calico'},    // calico
+ {fur:'#efe3cf', dark:'#5a4334', light:'#fff6e8', eye:'#4aa3ff', mark:'mask'}];    // siamese
+function catHead(g,x,y,s,v,mouth,t){
+  const ear=(sx)=>{ g.fillStyle=v.fur; g.beginPath(); g.moveTo(x+sx*13*s,y-3*s); g.lineTo(x+sx*11*s,y-17*s); g.lineTo(x+sx*3*s,y-11*s); g.fill();
+    g.fillStyle='#ff9cc4'; g.beginPath(); g.moveTo(x+sx*10.5*s,y-6*s); g.lineTo(x+sx*10*s,y-13.5*s); g.lineTo(x+sx*5.5*s,y-10*s); g.fill(); };
+  ear(-1); ear(1);
+  if(v.mark==='mask'){ g.fillStyle=v.dark; [-1,1].forEach(sx=>{ g.beginPath(); g.moveTo(x+sx*13*s,y-3*s); g.lineTo(x+sx*11*s,y-17*s); g.lineTo(x+sx*3*s,y-11*s); g.fill(); }); }
+  g.fillStyle=v.fur; g.beginPath(); g.ellipse(x,y,14*s,11.5*s,0,0,Math.PI*2); g.fill();              // round face
+  g.beginPath(); g.ellipse(x-11*s,y+4*s,4*s,4.5*s,0,0,Math.PI*2); g.ellipse(x+11*s,y+4*s,4*s,4.5*s,0,0,Math.PI*2); g.fill(); // cheeks
+  if(v.mark==='stripes'){ g.fillStyle=v.dark; [-4,0,4].forEach(dx=>g.fillRect(x+dx*s-1*s,y-11*s,2*s,5*s)); g.fillRect(x-14*s,y-1*s,4*s,1.6*s); g.fillRect(x+10*s,y-1*s,4*s,1.6*s); }
+  if(v.mark==='calico'){ g.fillStyle=v.dark; g.beginPath(); g.ellipse(x-7*s,y-6*s,6*s,5*s,0.4,0,Math.PI*2); g.fill(); g.fillStyle='#2a2730'; g.beginPath(); g.ellipse(x+8*s,y-7*s,5*s,4*s,-0.4,0,Math.PI*2); g.fill(); }
+  if(v.mark==='mask'){ g.fillStyle=v.dark; g.beginPath(); g.ellipse(x,y+3*s,7*s,6*s,0,0,Math.PI*2); g.fill(); }
+  g.fillStyle=v.light; g.beginPath(); g.ellipse(x-3*s,y+4.5*s,4*s,3.2*s,0,0,Math.PI*2); g.ellipse(x+3*s,y+4.5*s,4*s,3.2*s,0,0,Math.PI*2); g.fill(); // muzzle
+  const blink=Math.sin(t*0.9+x)>0.97;
+  [-1,1].forEach(sx=>{ const ex=x+sx*5.5*s, ey=y-2.5*s;
+    if(blink){ g.fillStyle='#000'; g.fillRect(ex-2.5*s,ey,5*s,1*s); return; }
+    g.fillStyle=v.eye; g.beginPath(); g.ellipse(ex,ey,2.8*s,3*s,0,0,Math.PI*2); g.fill();
+    g.fillStyle='#000'; g.fillRect(ex-0.7*s,ey-2.4*s,1.4*s,4.8*s); g.fillStyle='#fff'; g.fillRect(ex+0.6*s,ey-2*s,1*s,1*s); });
+  g.fillStyle='#ff6aa8'; g.beginPath(); g.moveTo(x-1.6*s,y+1.6*s); g.lineTo(x+1.6*s,y+1.6*s); g.lineTo(x,y+3.2*s); g.fill(); // nose
+  if(mouth>0.15){ g.fillStyle='#3a0f1c'; g.beginPath(); g.ellipse(x,y+6.5*s,2.2*s,mouth*3.4*s,0,0,Math.PI*2); g.fill(); }
+  else { g.strokeStyle='#3a0f1c'; g.lineWidth=0.8; g.beginPath(); g.arc(x-1.4*s,y+4.2*s,1.4*s,0,Math.PI); g.arc(x+1.4*s,y+4.2*s,1.4*s,0,Math.PI); g.stroke(); }
+  g.strokeStyle='rgba(255,255,255,.55)'; g.lineWidth=0.6; // whiskers
+  [-1,1].forEach(sx=>{ [-1,0,1].forEach(k=>{ g.beginPath(); g.moveTo(x+sx*5*s,y+4.5*s+k*1.2*s); g.lineTo(x+sx*17*s,y+3.5*s+k*3*s); g.stroke(); }); });
+  g.lineWidth=1;
+}
+let glowMode='back';
+function backGlow(g,x,y){ const gr=g.createRadialGradient(x,y,4,x,y,30); gr.addColorStop(0,'rgba(255,126,179,.85)'); gr.addColorStop(0.55,'rgba(255,126,179,.25)'); gr.addColorStop(1,'rgba(255,126,179,0)'); g.fillStyle=gr; g.beginPath(); g.arc(x,y,30,0,Math.PI*2); g.fill(); }
+function nimbus(g,x,y,t){ g.save(); g.translate(x,y); g.scale(1,0.3); g.strokeStyle='#ffd23f'; g.lineWidth=3; g.shadowColor='#ffd23f'; g.shadowBlur=6; g.beginPath(); g.arc(0,0,13,0,Math.PI*2); g.stroke(); g.restore();
+  g.fillStyle='rgba(255,236,150,.9)'; const a=t*2; g.fillRect(x+Math.cos(a)*13-1,y+Math.sin(a)*4-1,2,2); }
+function halo(g,x,y){ const gr=g.createRadialGradient(x,y,1,x,y,20); gr.addColorStop(0,'rgba(255,126,179,.9)'); gr.addColorStop(1,'rgba(255,126,179,0)');
+  g.save(); g.translate(x,y); g.scale(1,0.28); g.translate(-x,-y); g.fillStyle=gr; g.beginPath(); g.arc(x,y,20,0,Math.PI*2); g.fill(); g.restore(); }
+function wavy(g,x1,y1,x2,y2,t,col){ g.strokeStyle=col; g.lineWidth=1.2; g.beginPath();
+  for(let i=0;i<=20;i++){ const u=i/20, x=x1+(x2-x1)*u, y=y1+(y2-y1)*u, n=Math.sin(u*14-t*8)*2; i?g.lineTo(x+n,y):g.moveTo(x+n,y); } g.stroke(); }
+/* FM lab: six voices on a symmetric 3 x 2 grid. Bottom row = voices you hear,
+ * top row = voices that colour them (wavy thread). The chosen voice is lit
+ * from below by a halo with a small gap. */
+const ALG5=[[1,0,0,0],[2,0,1,1],[3,1,0,0],[4,1,1,3],[5,2,0,0],[6,2,1,5,1]];
+function fmLab(g){
+  topBar(g,{section:'FM LAB', object:'1 · NEON KEYS · ALGO 5'});
+  const t=now(), sel=1+Math.floor(t/2)%6;
+  const P=o=>{const a=ALG5.find(x=>x[0]===o); return [44+a[1]*76, a[2]?76:142];};
+  ALG5.forEach(([o,,,to])=>{ if(to){ const [x,y]=P(o),[tx,ty]=P(to); wavy(g,x,y+37,tx,ty-23,t,'#6a6472'); } });
+  ALG5.forEach(([o,,row,,fb])=>{ const [x,y]=P(o), on=o===sel, car=row===0;
+    if(on && glowMode==='back') backGlow(g,x,y-2);
+    const sing=car?(0.3+0.7*Math.abs(Math.sin(t*5+o))):0.05;
+    catHead(g,x,y,1.2,VOICES[o-1],sing*[0.95,0.7,0.9,0.6,0.85,0.5][o-1],t);
+    if(on && glowMode==='nimbus') nimbus(g,x,y-26,t);
+    if(fb){ g.strokeStyle='#8a7f97'; g.beginPath(); g.arc(x+19,y-10,4,0,Math.PI*1.6); g.stroke(); }
+    txt(g,String(o),x,y+25,11,on?C.text:C.dim,'center');
+    if(car && Math.floor(t*3+o)%3===0) txt(g,'♪',x+18,y-16-((t*12+o*5)%10),11,C.k[2],'center',600);
+  });
+  const ratio=[1,2,3,0.5,7,14][sel-1], fine=[0,12,0,30,0,5][sel-1], det=[0,2,-3,0,1,-1][sel-1], lev=[0.95,0.7,0.9,0.6,0.85,0.5][sel-1];
+  const boxes=[[0,'RATIO','×'+ratio],[1,'FINE','+'+fine],[2,'DETUNE',(det>0?'+':'')+det],[3,'LEVEL',Math.round(lev*99)]];
+  boxes.forEach(([i,l,v])=>{ const x=i*60+4, y=196, w=52, h=24, col=C.k[i];
+    g.fillStyle=col; g.fillRect(x+2,y-3,48,2);
+    rr(g,x,y,w,h,3,'#0b0a0d');
+    g.strokeStyle=col; g.lineWidth=1.3; g.beginPath();
+    const wave=(cyc,ph,amp)=>{ for(let k=0;k<=w;k++){ const yy=y+h/2-Math.sin(k/w*Math.PI*2*cyc-ph)*amp; k?g.lineTo(x+k,yy):g.moveTo(x+k,yy);} };
+    if(i===0) wave(Math.min(ratio,8),t*3,8);
+    if(i===1) wave(2*(1+fine/100),t*3,8);
+    if(i===2){ wave(2,t*3,8); g.stroke(); g.globalAlpha=0.6; g.beginPath(); wave(2,t*3-t*det*0.8,8); }
+    if(i===3) wave(2,t*3,10*lev);
+    g.stroke(); g.globalAlpha=1;
+    txt(g,l,x+2,y+h+1,10,C.dim,'left',600); txt(g,String(v),x+w-1,y+h+1,10,col,'right',700);
+  });
+}
+
+const RINGT=['SINE','SQUARE','TRI','SAW','NOISE','TRACK','SHIFT','ENV'];
+function masterFx2(g){
+  topBar(g,{section:'MASTER FX'});
+  const fx=['FLT','DRV','CHO','PHA','RNG','REV','EQ','DLY','SND'], on=[1,1,0,0,0,1,1,1,0];
+  const t=now(), sel=Math.floor(t/2.2)%9;
+  fx.forEach((f,i)=>{ const x=4+i*26, a=i===sel; rr(g,x,44,24,18,4,a?C.k[0]:'#1c1a21',a?null:'#3a3640');
+    fitTxt(g,f,x+12,46,12,a?'#000':C.text,22); g.fillStyle=on[i]?C.k[1]:'#3a3640'; g.fillRect(x+10,64,4,2); });
+  const names=['FILTER','DRIVE','CHORUS','PHASER','RING MOD','REVERB','EQ','DELAY','SENDS'];
+  fitTxt(g,names[sel],120,72,22,C.text,228);
+  rr(g,6,100,228,86,4,'#0b0a0d',C.line);
+  g.strokeStyle=C.k[[1,2,3,3,0,1,3,2,1][sel]]; g.lineWidth=2; g.beginPath();
+  for(let x=0;x<=226;x++){ const u=x/226; let y;
+    if(sel===0){ const w=Math.pow(2,(u-0.45)*10); y=150-20*Math.log10(Math.max(1e-3,1/Math.sqrt((1-w*w)**2+(w*0.25)**2)))*1.8; }
+    else if(sel===5||sel===7){ y=180-70*Math.exp(-u*4)*(sel===7?(Math.abs(Math.sin(u*30))>0.9?1:0.15):1); }
+    else if(sel===6){ y=143-18*Math.exp(-((u-0.15)**2)*60)+14*Math.exp(-((u-0.5)**2)*80)-10/(1+Math.exp(-(u-0.85)*30)); }
+    else y=143-28*Math.sin(u*Math.PI*(sel===4?10:4)-t*3)*(sel===1?Math.min(1,0.6+u):1);
+    y=Math.max(102,Math.min(184,y)); x?g.lineTo(7+x,y):g.moveTo(7,y); }
+  g.stroke();
+  const kv=[['TYPE','ACID','CUTOFF','820','RESO','92','MIX','127'],['TYPE','SOFT','DRIVE','40','TONE','100','MIX','64'],['TYPE','CHORUS','RATE','40','DEPTH','60','MIX','0'],['STAGES','6','RATE','30','FDBK','50','MIX','0'],['TYPE',RINGT[Math.floor(now()/0.9)%RINGT.length],'FREQ','2.3K','SPREAD','0','MIX','80'],['TYPE','HALL','DECAY','70','PRDLY','15MS','MIX','60'],['MID HZ','1K','LOW','+5DB','MID','-3DB','HIGH','+2DB'],['TIME','64','FDBK','40','-','','RETURN','80'],['-','','DECAY','70','-','','RETURN','90']][sel];
+  knobs(g,[[kv[0],kv[1]],[kv[2],kv[3]],[kv[4],kv[5]],[kv[6],kv[7]]]);
+}
+function masterFx(g){
+  topBar(g,{section:'MASTER FX'});
+  const types=['ACID','SEM','LADDER','COMB','DJ'], sel=Math.floor(now()/1.4)%5;
+  types.forEach((ty,i)=>{ const x=6+i*46, on=i===sel; rr(g,x,46,42,18,4,on?C.k[0]:null,on?null:'#3a3640'); fitTxt(g,ty,x+21,48,13,on?C.bg:C.dim,40); });
+  // response curve with a resonant peak
+  rr(g,6,72,228,110,4,'#0b0a0d',C.line);
+  const t=now(), fc=0.35+0.25*Math.sin(t*0.8), q=[0.92,0.55,0.95,0.7,0.4][sel];
+  g.beginPath(); for(let x=0;x<=228;x++){ const u=x/228, w=Math.pow(2,(u-fc)*10);
+    let m; if(sel===1){ m=1/Math.sqrt((1-w*w)**2+(w*(2-1.9*q))**2); } else { const k=4*q; const re=1-6*w*w, im=4*w-4*w*w*w; m=1/Math.sqrt((re+k)**2+im*im)*(1+k)*0.8; m*=sel===0?1/Math.sqrt(1+w*w):1; }
+    if(sel===3){ m=0.6/Math.sqrt(1-1.6*Math.cos(u*40)+0.64); }
+    if(sel===4){ m=fc<0.5? 1/Math.sqrt(1+Math.pow(w,8)) : Math.pow(w,4)/Math.sqrt(1+Math.pow(w,8)); }
+    const db=20*Math.log10(Math.max(m,1e-3)); const y=150-db*2.2; x? g.lineTo(6+x,Math.min(180,Math.max(74,y))) : g.moveTo(6,Math.min(180,y)); }
+  g.strokeStyle=C.k[1]; g.lineWidth=2; g.stroke();
+  knobs(g,[['TYPE',types[sel]],['CUTOFF','820'],['RESO','92'],['MIX','127']]);
+}
+
+const SCREENS=[
+ ['Микшер', 'MIXER', mixer, ['Сверху по центру: строка 1 — раздел, строка 2 — дорожка · движок · патч','Play, цифры и батарея (белая) центрованы по цифрам, отступы одинаковые; до правого края столько же, сколько слева до BPM','Колонки на общем шаге: номер, название, индикатор, шаги, M/S — сетка сдвинута вправо']],
+ ['Секвенсор', 'SEQUENCER', seq, ['Шаги равномерно от края до края и по высоте, зазоры одинаковые','Белый курсор ровно по размеру красной лампы','CHAIN и маленькая лампа ON/OFF одной группой по центру']],
+ ['Осциллограф', 'SCOPE', scope, ['7 частотных полос: бас внутри и толще, верх снаружи и тоньше; искры на пиках','Диско-шар и огоньки на фоне','Окрас котика будет менять любой кноб (без подписи) — здесь кнопками ниже'], [
+   ['Котик', [['Рыжий',()=>catName='ginger'],['Чёрный',()=>catName='black'],['Белый',()=>catName='white'],['Полосатый',()=>catName='tabby']]]]],
+ ['Арпеджиатор', 'ARPEGGIATOR', arp, ['Два зеркальных блока одной ширины и высоты: слева HOLD + лампа, PRESETS вдвое крупнее, режим тоньше; справа OCT−/OCT+ и октава','Котик сидит на траве между блоками, трава не доходит до них на 2 px']],
+ ['GLOBAL «барабан»', 'GLOBAL', globalDrum, ['Значение только в барабане и на кнобе 1, кнобы 2–4 пустые']],
+ ['Меню SEL', 'ACTIONS', selMenu, ['Активный ряд опущен вниз, прямо над полосками кнобов, в их цветах','Остальные ряды сверху, приглушённо; второй подписи нет']],
+ ['EDIT', 'EDIT', edit, ['Название сверху по центру убрано, осталось только крупное']],
+ ['FM-лаборатория', 'FM LAB', fmLab, ['Шесть разных котиков: рыжий, чёрный, белый, серый полосатый, трёхцветный, сиамский','Симметричная сетка 3×2; номер под каждым, справа номер убран','Выбранный голос: свечение за ним или золотой нимб над ним — переключи кнопками ниже','Нижний ряд поёт (его слышно), верхний окрашивает (нить)'], [['Подсветка', [['Свечение сзади',()=>glowMode='back'],['Золотой нимб',()=>glowMode='nimbus']]]]],
+ ['Мастер-фильтр', 'FX · FILTER', masterFx, ['Фильтр нравится, оставляем']],
+ ['Эффекты, новый вид', 'FX', masterFx2, ['Полоса из 9 эффектов, точка под ним = включён','Крупно только имя эффекта, тип — на кнобе 1','RING MOD: типы SINE, SQUARE, TRI, SAW, NOISE, TRACK (за нотой), SHIFT (сдвиг частоты), ENV (частота от громкости)','Мелкий список убран; экран 9 вливается сюда']],
+];
+
+
+const grid=document.getElementById('grid'), ctxs=[];
+SCREENS.forEach(([name,tag,fn,notes,controls],i)=>{
+  const card=document.createElement('article'); card.className='card';
+  card.innerHTML=`<h2>${i+1}. ${name} <small>${tag}</small></h2><canvas width="480" height="480" aria-label="${name}"></canvas><ul>${notes.map(n=>`<li>${n}</li>`).join('')}</ul>`;
+  (controls||[]).forEach(([label,btns],gi)=>{ const row=document.createElement('div'); row.className='ctl'; row.setAttribute('role','group'); row.setAttribute('aria-label',label);
+    btns.forEach(([bl,fnc],bi)=>{ const b=document.createElement('button'); b.id=`c${i}-${gi}-${bi}`; b.textContent=bl; b.setAttribute('aria-pressed',bi===0?'true':'false');
+      b.onclick=()=>{ fnc(); row.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false')); b.setAttribute('aria-pressed','true'); }; row.appendChild(b); });
+    card.appendChild(row); });
+  grid.appendChild(card);
+  const g=card.querySelector('canvas').getContext('2d'); g.scale(2,2); ctxs.push([g,fn]);
+});
+const qcard=document.createElement('article'); qcard.className='card';
+qcard.innerHTML=`<h2>Решения <small>после ответов</small></h2>
+<div class="q"><b>Батарея.</b> Устройство отдаёт только сырое значение АЦП. Чтобы проценты были честными, нужно два замера: полный заряд и почти разряжен. Я покажу сырое число в GLOBAL, ты запишешь. <i>Решено: да.</i></div>
+<div class="q"><b>Сохранение — решено.</b> SAVE → квадратики 1–16 → кноб 1 выбирает слот → SAVE ещё раз = записать.</div>`;
+grid.appendChild(qcard);
+
+function frame(){ ctxs.forEach(([g,fn])=>{ g.fillStyle='#000'; g.fillRect(0,0,240,240); fn(g); }); requestAnimationFrame(frame); }
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+(document.fonts?document.fonts.ready:Promise.resolve()).then(()=>{ if(reduce){ ctxs.forEach(([g,fn])=>{ g.fillStyle='#000'; g.fillRect(0,0,240,240); fn(g); }); } else frame(); });
+</script>
+
+</body></html>

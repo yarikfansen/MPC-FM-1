@@ -9,6 +9,7 @@ struct lfo_cc { uint8_t channel, cc, value; };
 void lfo_init(void);
 unsigned lfo_target_count(void);
 const char *lfo_target_name(unsigned target, char out[12]);
+const char *lfo_target_title(unsigned target, char out[20]); /* full name, e.g. "FILTER CUTOFF" */
 const char *lfo_wave_name(unsigned wave);
 void lfo_rate_name(unsigned rate, char out[12]);
 unsigned lfo_get(unsigned lfo, unsigned param);       /* 0 target, 1 rate, 2 depth (0..126, 63 = 0), 3 wave */

@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FM-1: чистка эффектов, посылов, MIXER и LFO</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#141217;color:#ddd;font:14px/1.45 system-ui,sans-serif}main{max-width:900px;margin:0 auto;padding:16px}
+h2{color:#fff;margin:26px 0 6px}h3{color:#ffb347;margin:18px 0 4px;font-size:15px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin:6px 0 4px}
+canvas{width:100%;max-width:380px;aspect-ratio:1;border-radius:4px;background:#000;display:block;margin:0 auto}
+.cap{text-align:center;font-size:13px;color:#cfc8d6;margin:2px 0 4px}.now b{color:#ff8a8a}.new b{color:#3ee07a}
+ul,ol{color:#bbb;font-size:13px}.box{background:#1c1a21;border-radius:6px;padding:8px 12px;margin:8px 0;font-size:13px}
+.tr{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.tr pre{margin:0;background:#0c0b09;border:1px solid #3a3540;border-radius:6px;padding:8px;font:12.5px/1.5 ui-monospace,Consolas,monospace;color:#ddd;white-space:pre-wrap}
+</style></head><body><main>
+<h1 style="color:#fff;font-size:20px">Чистка эффектов, посылов, MIXER и LFO — круг 11 (эскиз, код не менялся)</h1>
+<ul><li>Вид 1:1 как в <code>FM1-v12-screens.html</code>: шрифт Barlow Condensed, размеры, цвета, сетка. В центре экранов нет мелкого текста — пояснения вынесены в подписи под картинкой.</li>
+<li>Решения пользователя учтены: <b>два реверба остаются</b>; на TRACK FX страница 1 — DRIVE / CHORUS / FILTER дорожки; на DELAY К3 = TONE; посылы с эффектами дорожки и без них; точка в MIXER в прежнем цвете.</li></ul>
+
+<h2>НОВОЕ — MIXER: номер дорожки в квадрате сам мигает, зелёных и красных полосок нет</h2>
+<p style="color:#bbb;font-size:13px">Правила: <b>играет нота</b> — квадрат с номером вспыхивает; <b>дорожка заглушена (MUTE) или громкость 0 — вся серая</b> (квадрат, цифра, имя, полоска громкости). Слева полоски активности больше нет. Буквы S / M / L / R и значение К4 STATE — как согласовано (SOLO жёлтый, MUTE красный). Дорожка 4 — громкость 0, дорожка 5 — MUTE, играют 1, 3, 4 (серая дорожка не вспыхивает), 6.</p>
+<div class="row"><div class="now"><div class="cap"><b>СТАРЫЙ</b> · слева бегущий столбик цвета движка, квадрат с цветной заливкой</div><canvas id="m1"></canvas></div>
+<div class="new"><div class="cap"><b>ВАРИАНТ A (выбран)</b> · квадрат есть всегда: простой — рамка и цветная цифра, играет — заливка цвета движка и чёрная цифра</div><canvas id="m2"></canvas></div></div>
+
+<h2>НОВОЕ — 303: вернуть страницу ENV (в общем стиле)</h2>
+<p style="color:#bbb;font-size:13px">Сейчас кнопка ENV открывает страницу только на DX7 (<code>screen.c:6890-6892</code>, отключено в v7). Предложение для 303: К1 ENVMOD, К2 DECAY, К3 ACC DECAY, К4 ACCENT (CUTOFF с К4 ушёл, как согласовано). Те же ручки остаются и на EDIT-страницах FILTER / OSC / DRIVE: все 12 параметров 303 доступны и сейчас. Окно — как последний утверждённый стиль эффектов: одна зелёная линия 2,5 px, без заливок, без горизонтальных полосок, один фон. (Две полоски «низ / середина / верх» из круга 3 пользователь потом убрал, поэтому их здесь нет.) Верхняя строка «EDIT / ENV».</p>
+<div class="row"><div class="new"><div class="cap"><b>ПРЕДЛОЖЕНИЕ</b> · 303 ENV: длина спада = DECAY, высота = ENVMOD</div><canvas id="env1"></canvas></div></div>
+<div class="box"><b>Не просили (для справки, <code>tone_parameter</code>):</b> те же ENV-страницы можно открыть для PLUCK {0, 3, 1, –}, SAMPLER {2, 3, –, –}, PSG {3, –, –, –} и 808 (Decay, Attack, Tone, Tune по партиям); экранов для них не рисовал.</div>
+<details><summary style="cursor:pointer;color:#ffb347;margin:18px 0">Раньше утверждено, без изменений (развернуть)</summary>
+<h2>0. Где сейчас есть анимация (<code>app/screen.c</code>)</h2>
+<div class="box">
+<b>Перерисовка 10 раз в секунду:</b> MASTER FX — CHORUS, PHASER, RING MOD, REVERB и «SENDS» (общий реверб); LFO — точка по волне; BINAURAL — две волны L/R; MIXER — столбик активности в плитке дорожки.<br>
+<b>Один раз / по событию (не трогаем):</b> заставка, курсор шага при игре, светодиоды клавиш. <b>Уже убраны:</b> SCOPE и кот. FILTER, DRIVE, EQ, COMP, DELAY статичны.
+</div>
+
+<h2>1. MASTER FX: анимированные страницы → статичные картинки</h2>
+<p style="color:#bbb;font-size:13px">Картинка перерисовывается только при повороте ручки. CHORUS — две копии волны со сдвигом (DEPTH = сдвиг, RATE = число волн), PHASER — провалы (FEEDBK = глубина), RING — волна, «порезанная» второй (FREQ = частота реза), REVERB — гладкий хвост (DECAY = длина, PREDELAY = пауза перед ним).</p>
+<div class="row"><div class="now"><div class="cap"><b>СЕЙЧАС</b> · REVERB: зернистый хвост «дышит» 10 к/с</div><canvas id="a1"></canvas></div>
+<div class="new"><div class="cap"><b>ПРЕДЛОЖЕНИЕ</b> · REVERB: гладкий хвост, не движется</div><canvas id="a2"></canvas></div></div>
+<div class="row"><div class="now"><div class="cap"><b>СЕЙЧАС</b> · RING MOD: волна бежит 10 к/с</div><canvas id="b1"></canvas></div>
+<div class="new"><div class="cap"><b>ПРЕДЛОЖЕНИЕ</b> · RING MOD: застывший кадр, FREQ меняет частоту реза</div><canvas id="b2"></canvas></div></div>
+<div class="row"><div class="new"><div class="cap"><b>ПРЕДЛОЖЕНИЕ</b> · CHORUS</div><canvas id="c2"></canvas></div>
+<div class="new"><div class="cap"><b>ПРЕДЛОЖЕНИЕ</b> · PHASER</div><canvas id="d2"></canvas></div></div>
+
+<h2>2. Структура: два реверба, у каждого своё имя и своё место</h2>
+<div class="tr">
+<div><h3>Сейчас — путаница</h3><pre>MASTER FX (10 пунктов, вся сумма)
+ FILTER DRIVE CHORUS PHASER RING
+ REVERB  ← вставка, ручка MIX
+ EQ
+ DELAY   ← TIME FEEDBK RETURN
+ SENDS   ← DECAY RETURN (без картинки)
+ COMP
+TRACK FX (дорожка)
+ REV SEND DLY SEND TRK VOL ALL RET
+SHARED FX (общие)
+ REV TIME DLY TIME FEEDBACK RETURN
+
+«REVERB» и «SENDS» оба реверб, но
+называются по-разному. RETURN в трёх
+местах (DELAY/SENDS, SHARED FX,
+ALL RET). Дилей в трёх местах.</pre></div>
+<div><h3>Предложение</h3><pre>MASTER FX (10 пунктов, как сейчас)
+ стр.1 FILTER DRIVE CHORUS PHASER RING
+ стр.2 REVERB · EQ · COMP ·
+       REV SEND · DLY SEND
+ REVERB = вставка на сумму: MIX
+ REV SEND   = общий реверб для
+   посылов: DECAY, RETURN
+ DLY SEND    = общий дилей:
+   TIME FEEDBK TONE RETURN
+TRACK FX (дорожка)
+ стр.1 OWN   — DRIVE CHORUS FILTER
+ стр.2 SENDS — REV / DLY ПОСЛЕ эффектов
+               и ДО эффектов дорожки
+SHARED FX — страница убрана
+ (ручки ушли на REV SEND / DLY SEND)
+
+RETURN — только на SEND-страницах.</pre></div></div>
+
+<h2>3. MASTER FX: страница 2 и SEND-страницы</h2>
+<div class="row"><div class="now"><div class="cap"><b>СЕЙЧАС</b> · стр. 2: REVERB EQ DELAY SENDS COMP; выбран DELAY</div><canvas id="e1"></canvas></div>
+<div class="new"><div class="cap"><b>ПРЕДЛОЖЕНИЕ</b> · стр. 2: REVERB EQ COMP REV SEND DLY SEND; на «SEND» значок-стрелка в углу плитки</div><canvas id="e2"></canvas></div></div>
+<div class="row"><div class="new"><div class="cap"><b>ПРЕДЛОЖЕНИЕ</b> · REV SEND: своя картинка (хвост), ручки DECAY и RETURN</div><canvas id="f1"></canvas></div>
+<div class="new"><div class="cap"><b>ПРЕДЛОЖЕНИЕ</b> · DLY SEND: TIME FEEDBK <b>TONE</b> RETURN; эхо статичны, спад по FEEDBK</div><canvas id="f2"></canvas></div></div>
+
+<h2>4. TRACK FX: свои эффекты дорожки + посылы до и после них</h2>
+<p style="color:#bbb;font-size:13px">Утверждено: <b>ALL RET</b> остаётся на странице 1 (OWN) на К4; <b>TRK VOL</b> уходит (громкость есть в MIXER). Страница 2 SENDS: верхние два — после эффектов дорожки (+FX), нижние два — до них (DRY).</p>
+<div class="row"><div class="now"><div class="cap"><b>СЕЙЧАС</b> · TRACK FX, SELECT = TRACK / SHARED</div><canvas id="g1"></canvas></div>
+<div class="new"><div class="cap"><b>ПРЕДЛОЖЕНИЕ</b> · стр.1 OWN: эффекты дорожки (у дорожки без своих эффектов страницы нет)</div><canvas id="g2"></canvas></div></div>
+<div class="row"><div class="new"><div class="cap"><b>ПРЕДЛОЖЕНИЕ</b> · стр.2 SENDS: два верхних канала — после эффектов (+FX), два нижних — до них (DRY)</div><canvas id="g3"></canvas></div>
+<div class="now"><div class="cap"><b>СЕЙЧАС</b> · SHARED FX (исчезает: ручки уходят на REV SEND / DLY SEND)</div><canvas id="g4"></canvas></div></div>
+
+<h2>6. LFO: имя цели, точка меньше, волна короче</h2>
+<div class="row"><div class="now"><div class="cap"><b>СЕЙЧАС</b> · по центру «LFO 1», точка 4 px, до середины (красная черта)</div><canvas id="l1"></canvas></div>
+<div class="new"><div class="cap"><b>ПРЕДЛОЖЕНИЕ</b> · по центру цель «FILTER CUTOFF», точка 2,5 px, линия зелёная 2,5 px как у всех рисунков эффектов, один период на всю ширину; точка добегает до правого края</div><canvas id="l2"></canvas></div></div>
+
+<h2>7. MASTER FX FILTER: CUTOFF и RESO на К1 / К2</h2>
+<p style="color:#bbb;font-size:13px">Причина: на других экранах К1 / К2 — это срез / резонанс или громкость, и при переходе из других меню фильтр легко задеть. Предложение: К1 = CUTOFF, К2 = RESO, <b>К3 = TYPE</b>, <b>К4 = MIX</b> (MIX остаётся на К4 как у всех эффектов; TYPE уезжает на К3).</p>
+<div class="row"><div class="now"><div class="cap"><b>СЕЙЧАС</b> · TYPE CUTOFF RESO MIX</div><canvas id="h1"></canvas></div>
+<div class="new"><div class="cap"><b>ПРЕДЛОЖЕНИЕ</b> · CUTOFF RESO TYPE MIX</div><canvas id="h2"></canvas></div></div>
+<h3>Похожие ловушки (нашёл в <code>master_fx.c</code>, <code>screen.c</code>, <code>bass303.h</code>)</h3>
+<div class="box">
+<b>1. 303, страница ENV — не ловушка, а мёртвый код:</b> кнопка ENV открывает страницу только на DX7 (<code>screen.c:6892</code>), ветка для 303 (<code>tone_parameter</code>, массив <code>bass[]</code> с CUTOFF на К4) недостижима. Достижимы три страницы 303: FILTER (CUTOFF, RESO, ENVMOD, DECAY), OSC (ACCENT, WAVE, TUNE, <b>VOLUME на К4 — без изменений</b>), DRIVE (DRIVE, DRVTYPE, SLIDE, ACCDEC). Эту ветку можно удалить вместе с мёртвой страницей.<br>
+<b>2. (снято)</b> 303 OSC: VOLUME на К4 остаётся.<br>
+<b>3. MIXER К2 = FILTER</b> дорожки (303 срез в Гц, MICRO D срез, DX7 BRIGHT, 808 TONE), а MASTER FILTER К2 был CUTOFF: одна ручка — два разных фильтра. После правки (CUTOFF на К1) остаётся пересечение MIXER К2 и MASTER К1; лечится только переименованием MIXER К2 (например «TRK FLT»).<br>
+<b>4. MASTER FX:</b> К4 = MIX у всех, кроме EQ (К4 = HIGH), REV SEND / DLY SEND (К4 = RETURN); на COMP К1 = THRESH, на EQ К1 = MID HZ (частота вместо уровня).
+</div>
+<h2>9. SAVE: занятые слоты и точка LFO</h2>
+<div class="row"><div class="now"><div class="cap"><b>СЕЙЧАС</b> · занятый слот: тёмный фон 0x1081 и бледная кайма — почти не видно</div><canvas id="s1"></canvas></div>
+<div class="new"><div class="cap"><b>ПРЕДЛОЖЕНИЕ</b> · занятый = зелёная заливка + светло-зелёная кайма; загруженный — янтарь; курсор — янтарная рамка</div><canvas id="s2"></canvas></div></div>
+<p style="color:#bbb;font-size:13px">Точка LFO: сейчас светло-серая (<code>MX_H</code> 0xdfdb), на волне почти не видна; предложение — красная (см. раздел 6, обе картинки).</p>
+
+<h2>10. SEQ: размер, цвет и скругление как сейчас; сильные доли заметнее</h2>
+<p style="color:#bbb;font-size:13px">Размеры, цвета и углы всех шагов — как в прошивке сейчас (16 колонок, шаг 14,375 px, высота 22, углы радиуса 1, горящий шаг изумрудный #50c878). <b>Предложение:</b> только шаги 1, 5, 9, 13: горящий — светлее изумруда и с белой рамкой в 1 px, пустой — светлая рамка и чуть светлее фон. Остальные шаги без изменений. Реальные пиксели и 4× (колонки 1–8, строка 1).</p>
+<div class="cap"><b>СЕЙЧАС</b></div><canvas id="q0" style="max-width:720px;image-rendering:pixelated"></canvas>
+<div class="cap"><b>ПРЕДЛОЖЕНИЕ</b></div><canvas id="qa" style="max-width:720px;image-rendering:pixelated"></canvas>
+<div class="cap">4×: сверху СЕЙЧАС, ниже ПРЕДЛОЖЕНИЕ</div><canvas id="qz" style="max-width:720px;image-rendering:pixelated"></canvas>
+
+<h2>11. Рисунки эффектов, фильтров и огибающих — один стиль</h2>
+<p style="color:#bbb;font-size:13px">Предложение для всех страниц: <b>одна линия</b> (2,5 px, один цвет), <b>без заливок и градиентов</b>, <b>один фон</b> окна; горизонтальных полосок нет. Слева «сейчас»: заливка под кривой, разный цвет линий (зелёный / янтарный / розовый / белый), у EQ цветные зоны. Страницы: FILTER, DRIVE, CHORUS, PHASER, RING MOD, REVERB, EQ, COMP, DELAY, REV SEND, а также 303 FILTER, MICRO D BRIGHT, MICRO D SHAPE.</p>
+<div id="effgrid" class="tr" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px"></div>
+
+</details>
+<h2>Записано (экраны не нужны)</h2>
+<div class="box"><b>KEY:</b> только выбор тональности в GLOBAL задаёт её для всего проекта и подсвечивает клавиши на всех экранах, кроме дорожки 808.<br>
+<b>808:</b> 16 клавиш = 16 шагов секвенсера 808, как на драм-машинах — быстро вводить и стирать паттерны.</div>
+
+<h2>Открытые вопросы</h2>
+<p style="color:#bbb;font-size:13px">Нет: MIXER утверждён как вариант A (серая дорожка не вспыхивает, буква M красная).</p>
+</main>
+<script>function drawAllFx(){
+const F=p=>'700 '+p+'px "Barlow Condensed","Arial Narrow",sans-serif',TX='#f2eef5',DIM='#8b8494',FT='#4a4552',K=['#ff7eb3','#3ee07a','#ffd23f','#2fd8c8'],GRN='#3ee07a',RED='#ff4b4b',AM='#ffb347',CR='#f2e8d0',WB='#0c0b09',WE='#4a4436',MDP='#0c0b09';
+const MXG='#3ee07a',MXD='#0f2a18',AMD='#2a1d0c';
+function ctx(id){const c=document.getElementById(id);c.width=720;c.height=720;const g=c.getContext('2d');g.setTransform(3,0,0,3,0,0);g.fillStyle='#000';g.fillRect(0,0,240,240);return g;}
+function rr(g,x,y,w,h,r,f,s,lw=1){g.beginPath();g.roundRect(x,y,w,h,r);if(f){g.fillStyle=f;g.fill();}if(s){g.strokeStyle=s;g.lineWidth=lw;g.stroke();}}
+function T(g,s,x,y,p,c,a='left'){g.font=F(p);g.fillStyle=c;g.textAlign=a;g.textBaseline='top';g.fillText(s,x,y);}
+function TM(g,s,x,y,p,c,a='center'){g.font=F(p);g.fillStyle=c;g.textAlign=a;g.textBaseline='middle';g.fillText(s,x,y);}
+function line(g,pts,c,w=2){g.strokeStyle=c;g.lineWidth=w;g.lineJoin='round';g.lineCap='round';g.beginPath();pts.forEach((p,i)=>i?g.lineTo(...p):g.moveTo(...p));g.stroke();}
+function circ(g,x,y,r,f,s,lw=1){g.beginPath();g.arc(x,y,r,0,7);if(f){g.fillStyle=f;g.fill();}if(s){g.strokeStyle=s;g.lineWidth=lw;g.stroke();}}
+function tri(g,x,y,s,c){g.fillStyle=c;g.beginPath();g.moveTo(x,y);g.lineTo(x+s,y+s/2);g.lineTo(x,y+s);g.fill();}
+/* --- v12 chrome, copied 1:1 --- */
+function fa(g){['F','A','S','L'].forEach((l,i)=>{const x=5+(i%2)*18,y=27+Math.floor(i/2)*18,on=[1,1,1,0][i];rr(g,x,y,16,16,2,on?[TX,GRN,RED,K[3]][i]:null,on?null:FT);T(g,l,x+8,y+1,15,on?'#000':FT,'center');});}
+function bar(g,t,col=TX,p=20){T(g,'120',5,3,22,TX);T(g,'BPM',38,11,13,GRN);if(t)T(g,t,120,p>20?0:3,p,col,'center');tri(g,181,8,11,GRN);T(g,'100',224,3,22,TX,'right');rr(g,228,7,6,13,1,null,TX);}
+function chain(g,cx,cy,c){rr(g,cx-12,cy-4,14,8,4,null,c,1.8);rr(g,cx-2,cy-4,14,8,4,null,c,1.8);}
+function statePlate(g,big,sub){rr(g,200,27,35,34,3,'#15110a',AM);T(g,big,217.5,sub?29:36,sub?22:24,TX,'center');if(sub==='chain')chain(g,217,55,AM);else if(sub)T(g,sub,217.5,48,12,DIM,'center');}
+function plate(g,n,on,draw,dim){const x=44+n*39;rr(g,x,27,35,34,3,on?AM:'#15131a',on?null:'#3a3540');if(draw)draw(g,x+17.5,44,on?'#000':(dim?DIM:TX));}
+function winv(g,title,col=AM,p=30){rr(g,6,66,228,124,5,MDP,WE);T(g,title,120,73,p,col,'center');}
+function fitSz(g,t,sizes,lim=56){for(const z of sizes){g.font=F(z);if(g.measureText(t).width<=lim)return z;}return sizes[sizes.length-1];}
+function knobs(g,l){l.forEach((k,i)=>{const x=i*60;g.fillStyle=K[i];g.fillRect(x+6,197,48,2);const lz=k[0].length<=6?fitSz(g,k[0],[16,13,12]):fitSz(g,k[0],[13,12]),vz=fitSz(g,k[1],[24,20,16,13]);T(g,k[0],x+30,lz==16?202:203,lz,k[0]=='-'?FT:TX,'center');T(g,k[1],x+30,vz==24?216:218,vz,k[0]=='-'?FT:(k[2]||K[i]),'center');});}
+const TI={
+ trk:(g,x,y,c)=>{line(g,[[x-6,y-11],[x-6,y+11]],c,2);line(g,[[x+6,y-11],[x+6,y+11]],c,2);rr(g,x-10,y-4,8,6,1,c);rr(g,x+2,y+3,8,6,1,c);},
+ lfo:(g,x,y,c)=>{g.strokeStyle=c;g.lineWidth=2;g.beginPath();for(let k=0;k<=24;k++){const xx=x-13+k,yy=y-Math.sin(k/24*Math.PI*2)*8;k?g.lineTo(xx,yy):g.moveTo(xx,yy);}g.stroke();}};
+const MI={
+ FILTER:(g,x,y,c)=>line(g,[[x-12,y+3],[x-3,y+3],[x,y-8],[x+4,y+3],[x+12,y+10]],c,2),
+ DRIVE:(g,x,y,c)=>line(g,[[x-12,y+9],[x-4,y+9],[x+3,y-9],[x+12,y-9]],c,2.2),
+ CHORUS:(g,x,y,c)=>{g.strokeStyle=c;g.lineWidth=2;g.beginPath();for(let k=0;k<=26;k++){const xx=x-13+k,yy=y-Math.sin(k/26*Math.PI*3)*7;k?g.lineTo(xx,yy):g.moveTo(xx,yy);}g.stroke();},
+ PHASER:(g,x,y,c)=>{g.strokeStyle=c;g.lineWidth=2;g.beginPath();for(let a=0;a<12;a+=.1){const r=1+a;const xx=x+r*Math.cos(a),yy=y+r*Math.sin(a);a?g.lineTo(xx,yy):g.moveTo(xx,yy);}g.stroke();},
+ RING:(g,x,y,c)=>{circ(g,x-5,y,8,null,c,2);circ(g,x+5,y,8,null,c,2);},
+ REVERB:(g,x,y,c)=>{for(let i=0;i<3;i++){g.strokeStyle=c;g.lineWidth=2;g.beginPath();g.arc(x-8,y+9,6+i*6,-1.1,-0.05);g.stroke();}},
+ EQ:(g,x,y,c)=>{[[-8,2],[0,-6],[8,-1]].forEach(([dx,dy])=>{line(g,[[x+dx,y-11],[x+dx,y+11]],c,1.5);rr(g,x+dx-4,y+dy,8,5,1,c);});},
+ DELAY:(g,x,y,c)=>{rr(g,x-13,y-8,9,16,1,c);rr(g,x-1,y-6,7,12,1,c);rr(g,x+9,y-4,4,8,1,c);},
+ SENDS:(g,x,y,c)=>{line(g,[[x-12,y],[x-4,y]],c,2);line(g,[[x-4,y],[x+3,y-8],[x+12,y-8]],c,2);line(g,[[x-4,y],[x+3,y+8],[x+12,y+8]],c,2);},
+ COMP:(g,x,y,c)=>{line(g,[[x,y-11],[x,y-3]],c,2);line(g,[[x-4,y-6],[x,y-2],[x+4,y-6]],c,2);line(g,[[x,y+11],[x,y+3]],c,2);line(g,[[x-4,y+6],[x,y+2],[x+4,y+6]],c,2);line(g,[[x-12,y],[x+12,y]],c,1.5);}
+};
+/* MASTER FX plates: list=[name,on,send]; send = small arrow in the corner of the plate */
+function mfxPlates(g,list,sel){list.forEach(([n,on,snd],i)=>{plate(g,i,i==sel,MI[n],!on);
+  if(snd){const x=44+i*39;tri(g,x+26,30,6,i==sel?'#000':AM);}});}
+function fillCurve(g,pts,y0,c,f){g.fillStyle=f;g.beginPath();g.moveTo(pts[0][0],y0);pts.forEach(p=>g.lineTo(...p));g.lineTo(pts[pts.length-1][0],y0);g.fill();line(g,pts,c,2.5);}
+function tail(g,len,pre,grain,c=AM,f=AMD){const pts=[];for(let x=0;x<=212;x++){const u=x/212;let v=u<pre?0:Math.exp(-(u-pre)*4/len);const gr=grain?1+.25*Math.sin(x*1.3+grain)*Math.sin(x*.47+grain*.7):1;pts.push([14+x,184-70*Math.min(1,v*gr)]);}
+ if(grain){for(let i=0;i<70;i++){const x=14+((i*97)%212),y=112+((i*53)%70);rr(g,x,y,2,2,0,'#7a5a28');}}fillCurve(g,pts,184,c,f);}
+function ringPic(g,fr){const pts=[];for(let x=0;x<=212;x++){pts.push([14+x,148-34*Math.sin(x/212*Math.PI*6)*Math.sin(x/212*Math.PI*2*fr)]);}
+ line(g,[[14,148],[226,148]],'#2a251c',1);line(g,pts,MXG,2);}
+function chorusPic(g){line(g,[[14,148],[226,148]],'#2a251c',1);const a=[],b=[];for(let x=0;x<=212;x++){a.push([14+x,148-26*Math.sin(x/212*Math.PI*4)]);b.push([14+x,148-26*Math.sin(x/212*Math.PI*4-.9)]);}line(g,a,'#2c6b45',2);line(g,b,MXG,2.5);}
+function phaserPic(g){const pts=[];for(let x=0;x<=212;x++){const u=x/212;let v=0;[.2,.5,.8].forEach(c=>v+=Math.exp(-Math.pow((u-c)*14,2)));pts.push([14+x,118+Math.min(1,v)*60]);}
+ line(g,[[14,118],[226,118]],'#2a251c',1);fillCurve(g,pts,184,MXG,MXD);}
+function echoPic(g,fb,sp){let h=60;for(let x=24;x<226&&h>2;x+=sp,h*=fb)rr(g,x,184-h,5,h,1,K[2]);}
+/* ===== section 1 ===== */
+const p1=['FILTER','DRIVE','CHORUS','PHASER','RING'];
+const P2=(sel)=>[['REVERB',1],['EQ',1],['COMP',1],['REVERB',1,1],['DELAY',1,1]];
+{const g=ctx('a1');bar(g,'MASTER FX');mfxPlates(g,[['REVERB',1],['EQ',1],['DELAY',1],['SENDS',1],['COMP',1]],0);winv(g,'REVERB');tail(g,.5,.05,1.3);knobs(g,[['TYPE','HALL'],['DECAY','60'],['PREDELAY','20'],['MIX','50']]);}
+{const g=ctx('a2');bar(g,'MASTER FX');mfxPlates(g,P2(),0);winv(g,'REVERB');tail(g,.5,.05,0);knobs(g,[['TYPE','HALL'],['DECAY','60'],['PREDELAY','20'],['MIX','50']]);}
+{const g=ctx('b1');bar(g,'MASTER FX');mfxPlates(g,p1.map(n=>[n,1]),4);winv(g,'RING MOD');ringPic(g,3.4);knobs(g,[['WAVE','SINE'],['FREQ','60'],['SPREAD','30'],['MIX','50']]);}
+{const g=ctx('b2');bar(g,'MASTER FX');mfxPlates(g,p1.map(n=>[n,1]),4);winv(g,'RING MOD');ringPic(g,3.4);knobs(g,[['WAVE','SINE'],['FREQ','60'],['SPREAD','30'],['MIX','50']]);}
+{const g=ctx('c2');bar(g,'MASTER FX');mfxPlates(g,p1.map(n=>[n,1]),2);winv(g,'CHORUS');chorusPic(g);knobs(g,[['TYPE','CHORUS'],['RATE','40'],['DEPTH','60'],['MIX','50']]);}
+{const g=ctx('d2');bar(g,'MASTER FX');mfxPlates(g,p1.map(n=>[n,1]),3);winv(g,'PHASER');phaserPic(g);knobs(g,[['STAGES','6'],['RATE','40'],['FEEDBK','60'],['MIX','50']]);}
+/* ===== section 3 ===== */
+{const g=ctx('e1');bar(g,'MASTER FX');mfxPlates(g,[['REVERB',1],['EQ',1],['DELAY',1],['SENDS',1],['COMP',1]],2);winv(g,'DELAY');knobs(g,[['TIME','1/8'],['FEEDBK','45'],['-',''],['RETURN','30']]);}
+{const g=ctx('e2');bar(g,'MASTER FX');mfxPlates(g,P2(),4);winv(g,'DLY SEND');echoPic(g,.7,30);knobs(g,[['TIME','1/8'],['FEEDBK','45'],['TONE','60'],['RETURN','30']]);}
+{const g=ctx('f1');bar(g,'MASTER FX');mfxPlates(g,P2(),3);winv(g,'REV SEND');tail(g,.7,.08,0,K[0],'#2a1020');knobs(g,[['-',''],['DECAY','80'],['-',''],['RETURN','40']]);}
+{const g=ctx('f2');bar(g,'MASTER FX');mfxPlates(g,P2(),4);winv(g,'DLY SEND');echoPic(g,.6,26);knobs(g,[['TIME','1/4'],['FEEDBK','60'],['TONE','50'],['RETURN','45']]);}
+/* ===== section 4: TRACK FX ===== */
+function tabs(g,labels,sel){labels.forEach((n,k)=>{const x=44+k*39,c=k==sel?'#000':DIM;rr(g,x,27,35,34,3,k==sel?AM:'#15131a',k==sel?null:'#3a3540');
+  if(n==='TRK')TI.trk(g,x+17.5,44,c);
+  if(n==='OWN')MI.DRIVE(g,x+17.5,44,c);
+  if(n==='SEND')MI.SENDS(g,x+17.5,44,c);
+  if(n==='SHR')MI.REVERB(g,x+17.5,44,c);});}
+function pipe(g,x0,x1,y,f,c,h=12){rr(g,x0,y-h/2,x1-x0,h,2,'#18140f',WE);rr(g,x0,y-h/2,(x1-x0)*f,h,2,c);tri(g,x1-1,y-h/2,h-1,c);}
+function sendsOld(g,f){const ec=K[1];rr(g,8,108,26,76,3,'#101810',ec);TM(g,'6',21,146,22,ec);
+ pipe(g,34,194,118,f[2],K[2]);
+ [[1,f[0],K[0],MI.REVERB],[2,f[1],K[1],MI.DELAY]].forEach(([i,fv,c,ic])=>{const y=118+i*28;pipe(g,34,100,y,fv,c);rr(g,102,y-14,32,28,3,'#0c0b09',c);ic(g,118,y,c);pipe(g,134,194,y,f[3],K[3]);});
+ rr(g,196,108,30,76,3,'#101010',TX);circ(g,211,146,11,null,TX,1.5);}
+/* new: track box, FX box (the track's own effects); POST pipes leave after the FX box, PRE pipes before it */
+function sendsNew(g,f){const ec=K[1];rr(g,8,108,26,76,3,'#101810',ec);TM(g,'6',21,146,22,ec);
+ rr(g,60,108,36,40,3,'#15110a',AM);MI.DRIVE(g,78,128,AM);pipe(g,34,60,128,.9,TX,10);pipe(g,96,194,128,.9,TX,10);
+ rr(g,196,108,30,76,3,'#101010',TX);circ(g,211,146,11,null,TX,1.5);
+ [[f[0],K[0],'REV',96,132],[f[1],K[1],'DLY',96,146],[f[2],K[2],'REV',34,162],[f[3],K[3],'DLY',34,176]].forEach(([v,c,n,x0,y])=>{pipe(g,x0,150,y,v,c,10);rr(g,152,y-6,40,12,3,'#0c0b09',c);TM(g,n,172,y,12,c);});}
+{const g=ctx('g1');bar(g,'TRACK FX');tabs(g,['TRK','SHR'],0);statePlate(g,'16','chain');winv(g,'TRACK FX');sendsOld(g,[.6,.4,.8,.5]);knobs(g,[['REV SEND','60'],['DLY SEND','40'],['TRK VOL','100'],['ALL RET','50']]);}
+{const g=ctx('g2');bar(g,'TRACK FX');tabs(g,['OWN','SEND'],0);statePlate(g,'16','chain');winv(g,'OWN FX');
+ [['DRIVE',1,.5],['CHORUS',0,.3],['FILTER',1,.7]].forEach(([n,on,v],i)=>{const y=108+i*26;rr(g,16,y,208,22,3,on?'#15110a':MDP,on?AM:'#2a2730');MI[n](g,34,y+11,on?AM:DIM);T(g,n,52,y+2,19,on?TX:DIM);rr(g,120,y+8,96,7,3,'#18140f',WE);if(on)rr(g,120,y+8,96*v,7,3,K[i]);});
+ knobs(g,[['DRIVE','50'],['CHORUS','0'],['FILTER','70'],['ALL RET','50']]);}
+{const g=ctx('g3');bar(g,'TRACK FX');tabs(g,['OWN','SEND'],1);statePlate(g,'16','chain');winv(g,'SENDS');sendsNew(g,[.6,.4,.3,.5]);knobs(g,[['REV +FX','60'],['DLY +FX','40'],['REV DRY','30'],['DLY DRY','50']]);}
+{const g=ctx('g4');bar(g,'SHARED FX');tabs(g,['TRK','SHR'],1);statePlate(g,'16','chain');winv(g,'SHARED FX');tail(g,.6,.08,0,K[0],'#2a1020');knobs(g,[['REV TIME','60'],['DLY TIME','1/8'],['FEEDBACK','40'],['RETURN','50']]);}
+/* ===== section 5: MIXER (v12 mixer, the activity strip x+3..x+6 keeps its place and colour) ===== */
+const EC={'MICRO D':'#ffa000','DX7':'#3ee07a','303':'#a6ff00','808':'#ff7a00','PSG':'#ff4fa3','PLUCK':'#2f8fff','SAMPLER':'#ffc800','BINAURAL':'#a05aff'};
+function mixer(id,mode){const g=ctx(id);bar(g,'MIXER');fa(g);const GR='#6b6674';
+ rr(g,44,27,34,34,3,null,'#a6ff00',1.5);line(g,[[47.5,50.3],[53.8,37.7],[53.8,50.3],[61,37.7],[61,50.3],[68.2,37.7],[68.2,50.3],[74.5,37.7]],'#a6ff00',1.8);T(g,'303 ACID',86,36,24,'#a6ff00');statePlate(g,'16','chain');
+ /* firmware geometry (app/screen.c tracks_draw): columns 1-4 | 5-8, cells 108 x 28 at x = 6 + col*120, y = 66 + row*32 */
+ const names=['MICRO D','DX7 EP','303 ACID','808 KIT','PSG','PLUCK','SAMPLER','BINAURAL'],eng=['MICRO D','DX7','303','808','PSG','PLUCK','SAMPLER','BINAURAL'],st=['','','S','','M','','L','R'],vol=[.9,.7,.8,0,.5,.85,.4,.7],act=[.9,.15,.6,.8,.3,.8,0,.5],lit=[1,0,1,1,0,1,0,0],mute=[0,0,0,0,1,0,0,0];
+ for(let t=0;t<8;t++){const x=6+(t>>2)*120,y=66+(t&3)*32,sel=t==2,grey=mode&&(mute[t]||vol[t]==0),ec=grey?GR:EC[eng[t]],on=lit[t]&&!grey;
+  rr(g,x,y,108,28,2,'#0c0b09',WE);
+  let tx;
+  if(!mode){ /* now: activity bar 3 x 22 at x+3, number box 19 x 22 at x+8, name / volume at x+31 */
+   rr(g,x+3,y+3,3,22,1,'#2a2730');if(act[t])rr(g,x+3,y+3+22*(1-act[t]),3,22*act[t],1,ec);
+   rr(g,x+8,y+3,19,22,2,ec);TM(g,String(t+1),x+17.5,y+14,20,'#000');tx=x+31;}
+  else{ /* proposed: no activity bar; square 22 x 22 with 3 px to the left, top and bottom; name / volume keep the 4 px gap */
+   if(on){rr(g,x+3,y+3,22,22,2,ec);TM(g,String(t+1),x+14,y+14,20,'#000');}
+   else{rr(g,x+3.75,y+3.75,20.5,20.5,2,null,ec,1.5);TM(g,String(t+1),x+14,y+14,20,ec);}
+   tx=x+29;}
+  T(g,names[t],tx,y+2,16,st[t]=='M'||grey?DIM:ec);
+  rr(g,tx,y+21,50,5,2,'#2a2730');if(vol[t])rr(g,tx,y+21,50*vol[t],5,2,mode&&grey?GR:ec);
+  if(st[t])TM(g,st[t],x+97,y+14,20,mode?(st[t]=='S'?K[2]:st[t]=='M'?'#ff0000':K[3]):(st[t]=='S'?K[2]:st[t]=='M'?'#ff8a8a':K[3]));
+  if(sel)rr(g,x,y,108,28,5,null,mode?'#ff0000':AM,2);}
+ knobs(g,[['TRACK','3'],['SOUND','-'],['VOL','80'],['STATE','SOLO',mode?K[2]:undefined]]);}
+mixer('m1',0);mixer('m2','A');
+/* ===== section 6: LFO (v12 layout: wave 14..226, baseline y 148, amplitude 30) ===== */
+function lfoScr(id,newer){const g=ctx(id);bar(g,'LFO');fa(g);
+ plate(g,0,1,TI.lfo);plate(g,1,0,TI.lfo);statePlate(g,'16','chain');
+ winv(g,newer?'FILTER CUTOFF':'LFO 1',newer?K[0]:K[0]);
+ line(g,[[14,148],[226,148]],'#2a251c',1);const per=newer?212:106.5,pts=[];for(let x=0;x<=212;x++)pts.push([14+x,148-Math.sin(x/per*Math.PI*2)*30]);line(g,pts,newer?MXG:AM,2.5);
+ const ux=newer?.37*212:.37*106.5;circ(g,14+ux,148-Math.sin(ux/per*Math.PI*2)*30,newer?2.5:4,newer?RED:CR);
+ if(!newer)line(g,[[14+106.5,112],[14+106.5,184]],'#5a2a2a',1);
+ knobs(g,[['TARGET','FLT'],['RATE','2.5'],['DEPTH','40'],['WAVE','SINE']]);}
+
+/* ===== round 3 ===== */
+function filterScr(id,kn){const g=ctx(id);bar(g,'MASTER FX');mfxPlates(g,p1.map(n=>[n,1]),0);winv(g,'FILTER');
+ const pts=[...Array(213)].map((_,x)=>{const u=x/212;return[14+x,176-70/Math.sqrt(1+Math.pow(u/.4,6))];});fillCurve(g,pts,186,AM,AMD);knobs(g,kn);}
+filterScr('h1',[['TYPE','SEM'],['CUTOFF','2.4K'],['RESO','40'],['MIX','100']]);
+filterScr('h2',[['CUTOFF','2.4K'],['RESO','40'],['TYPE','SEM'],['MIX','100']]);
+function saveScr(id,newer){const g=ctx(id);bar(g,'SAVE');fa(g);statePlate(g,'5','SLOT');TM(g,'ACID JAM',120,44,30,K[2]);
+ rr(g,6,66,228,124,2,MDP,WE);const used=[0,1,2,4,5,8,9,11],cur=2,cs=4;
+ for(let i=0;i<16;i++){const x=14+(i%8)*27,y=72+Math.floor(i/8)*19,u=used.includes(i),on=i==cur;
+  rr(g,x,y,24,16,2,on?AM:u?(newer?'#1d6b3c':'#101008'):MDP,u||on?(newer?GRN:'#8b6829'):WE);}
+ {const x=14+(cs%8)*27,y=72+Math.floor(cs/8)*19;rr(g,x-1,y-1,26,18,3,null,AM,1.5);}
+ T(g,'ACID JAM',120,112,30,TX,'center');g.fillStyle=K[1];g.fillRect(120-53,143,12,3);T(g,'SAVE = WRITE',120,168,17,K[1],'center');
+ knobs(g,[['0-9','A'],['A-M','C'],['N-Z','-'],['ACTION','SAVE']]);}
+saveScr('s1',0);saveScr('s2',1);
+/* SEQ grid at real pixels: x = 5 + (i*115+4)/8, w = x(i+1) - x(i) - 3, rows at 93 + 25 r, height 22 */
+function sx(i){return 5+Math.floor((i*115+4)/8);}
+const ONS=new Set([0,3,6,8,10,13,16,20,22,24,27,30,32,35,38,40,43,45,47,52,55,57,59,62]);
+function cellRect(i,v){return[sx(i),0,sx(i+1)-sx(i)-3,22];}
+function rcell(g,x,y,w,h,fill,stroke){g.fillStyle=stroke||fill;g.fillRect(x,y,w,h);if(stroke){g.fillStyle=fill;g.fillRect(x+1,y+1,w-2,h-2);}
+ g.fillStyle='#000';g.fillRect(x,y,1,1);g.fillRect(x+w-1,y,1,1);g.fillRect(x,y+h-1,1,1);g.fillRect(x+w-1,y+h-1,1,1);}
+function seqPx(c,v){const g=c.getContext('2d');g.imageSmoothingEnabled=false;g.fillStyle='#000';g.fillRect(0,0,c.width,c.height);
+ for(let r=0;r<4;r++)for(let i=0;i<16;i++){const [x,y,w,h]=cellRect(i,v),yy=93+r*25-88,on=ONS.has(r*16+i),strong=i%4==0;
+  if(on)strong&&v?rcell(g,x,yy,w,h,'#7ae8a2','#ffffff'):rcell(g,x,yy,w,h,'#50c878');
+  else strong&&v?rcell(g,x,yy,w,h,'#2e2819','#d9c99a'):rcell(g,x,yy,w,h,'#18140f',strong?'#6b6152':'#4a4552');}}
+[['q0',0],['qa','A']].forEach(([id,v])=>{const c=document.getElementById(id);c.width=240;c.height=105;seqPx(c,v);});
+{const z=document.getElementById('qz');z.width=480;z.height=240;const g=z.getContext('2d');g.imageSmoothingEnabled=false;g.fillStyle='#000';g.fillRect(0,0,480,240);
+ [0,'A'].forEach((v,k)=>{const t=document.createElement('canvas');t.width=240;t.height=105;seqPx(t,v);g.drawImage(t,5,5,120,26,0,k*120,480,104);});}
+/* ===== round 4: all effect pictures, now vs proposed ===== */
+const U=x=>x/212, PX=(f)=>[...Array(213)].map((_,x)=>[14+x,f(U(x))]);
+const CURV={
+ FILTER:()=>PX(u=>184-66/Math.sqrt(1+Math.pow(u/.4,6))),
+ DRIVE:()=>PX(u=>148-34*Math.tanh(3*(2*u-1))),
+ CHORUS:()=>PX(u=>148-26*Math.sin(u*Math.PI*4)),
+ PHASER:()=>PX(u=>{let v=0;[.2,.5,.8].forEach(c=>v+=Math.exp(-Math.pow((u-c)*14,2)));return 116+Math.min(1,v)*58;}),
+ RING:()=>PX(u=>148-34*Math.sin(u*Math.PI*6)*Math.sin(u*Math.PI*6.8)),
+ REVERB:()=>PX(u=>184-66*(u<.05?0:Math.exp(-(u-.05)*4/.5))),
+ EQ:()=>PX(u=>148-22*Math.exp(-Math.pow((u-.12)*6,2))+18*Math.exp(-Math.pow((u-.5)*7,2))-20*Math.exp(-Math.pow((u-.88)*6,2))),
+ COMP:()=>PX(u=>u<.45?184-132*u*1.1:184-132*(.495+(u-.45)*.35)),
+ DELAY:()=>null,
+ REVSEND:()=>PX(u=>184-66*(u<.08?0:Math.exp(-(u-.08)*4/.7))),
+ F303:()=>PX(u=>{const w=u/.35;return 184-52/Math.sqrt(1+Math.pow(w,6))*(1+.5*Math.exp(-Math.pow((u-.35)*14,2)));}),
+ MDB:()=>PX(u=>{const w=20*Math.pow(2,u*10)/900,den=Math.sqrt((1-w*w)**2+.15*w*w);return Math.max(112,Math.min(184,160-28*Math.log10(1/den)));}),
+ MDS:()=>[[16,184],[60,116],[108,148],[184,148],[224,184]]
+};
+/* what the firmware draws now: [line colour, fill colour|null, zones] */
+const NOW={FILTER:['#ff7eb3','#3a1228'],DRIVE:[MXG,MXD],CHORUS:[MXG,MXD],PHASER:[MXG,MXD],RING:[MXG,MXD],REVERB:[AM,AMD],EQ:[TX,null,1],COMP:[AM,AMD],DELAY:[AM,AMD],REVSEND:[AM,AMD],F303:['#a6ff00','#1c2a06'],MDB:[AM,AMD],MDS:[AM,null]};
+const EFX=[['FILTER','FILTER',0,[['TYPE','SEM'],['CUTOFF','2.4K'],['RESO','40'],['MIX','100']]],['DRIVE','DRIVE',1,[['TYPE','SOFT'],['DRIVE','60'],['TONE','50'],['MIX','100']]],['CHORUS','CHORUS',2,[['TYPE','CHORUS'],['RATE','40'],['DEPTH','60'],['MIX','50']]],['PHASER','PHASER',3,[['STAGES','6'],['RATE','40'],['FEEDBK','60'],['MIX','50']]],['RING','RING MOD',4,[['WAVE','SINE'],['FREQ','60'],['SPREAD','30'],['MIX','50']]],
+ ['REVERB','REVERB',5,[['TYPE','HALL'],['DECAY','60'],['PREDELAY','20'],['MIX','50']]],['EQ','EQ',6,[['MID HZ','1K'],['LOW','0'],['MID','0'],['HIGH','0']]],['COMP','COMP',7,[['THRESH','-12'],['RATIO','4:1'],['SPEED','MED'],['MIX','100']]],['DELAY','DLY SEND',8,[['TIME','1/8'],['FEEDBK','45'],['TONE','60'],['RETURN','30']]],['REVSEND','REV SEND',9,[['-',''],['DECAY','80'],['-',''],['RETURN','40']]],
+ ['F303','FILTER',-1,[['CUTOFF','1.5K'],['RESO','80'],['ENVMOD','60'],['DECAY','40']]],['MDB','BRIGHT',-2,[['BRIGHT','570'],['PEAK','20'],['MOVE','12'],['DIRT','10']]],['MDS','SHAPE',-2,[['START','215'],['FALL','680'],['HOLD','100'],['RESTART','OFF']]]];
+const MFXL=[['FILTER',1],['DRIVE',1],['CHORUS',1],['PHASER',1],['RING',1]], MFXR=[['REVERB',1],['EQ',1],['COMP',1],['REVERB',1,1],['DELAY',1,1]];
+function effPic(g,k,newer){const [key,title,pl]=EFX.find(e=>e[0]==k);
+ const pts=CURV[k]();const nw=NOW[k];
+ if(newer){
+  if(k=='DELAY'){let h=60;for(let x=24;x<226&&h>2;x+=28,h*=.7)line(g,[[x,184],[x,184-h]],MXG,2.5);}
+  else line(g,pts,MXG,2.5);
+ }else{
+  if(k=='EQ'){['#2a1020','#10201a','#201a10'].forEach((c,i)=>{g.fillStyle=c;g.fillRect(14+i*71,108,71,78);});}
+  if(k=='DELAY'){let h=60;for(let x=24;x<226&&h>2;x+=28,h*=.7)rr(g,x,184-h,5,h,1,AM);}
+  else{if(nw[1]){g.fillStyle=nw[1];g.beginPath();g.moveTo(pts[0][0],186);pts.forEach(q=>g.lineTo(...q));g.lineTo(pts[pts.length-1][0],186);g.fill();}line(g,pts,nw[0],2.5);
+   if(k=='MDS')[1,2,3].forEach(i=>circ(g,pts[i][0],pts[i][1],4.5,K[i-1]));}
+ }}
+EFX.forEach(([k,title,pl,kn])=>{
+ const wrap=document.getElementById('effgrid');
+ [0,1].forEach(newer=>{const d=document.createElement('div');d.innerHTML='<div class="cap"><b style="color:'+(newer?'#3ee07a':'#ff8a8a')+'">'+(newer?'ПРЕДЛОЖЕНИЕ':'СЕЙЧАС')+'</b> · '+title+(k=='F303'?' (303)':k.startsWith('MD')?' (MICRO D)':'')+'</div><canvas id="ef_'+k+newer+'"></canvas>';wrap.appendChild(d);
+  const g=ctx('ef_'+k+newer);
+  if(pl>=0){bar(g,'MASTER FX');const list=pl<5?MFXL:MFXR,idx=k=='REVERB'?0:k=='EQ'?1:k=='COMP'?2:k=='DELAY'?4:k=='REVSEND'?3:pl;mfxPlates(g,list,idx%5);}
+  else{bar(g,pl==-1?'303':'MICRO D');fa(g);}
+  rr(g,6,66,228,124,newer?5:5,newer?MDP:(k=='REVERB'||k=='COMP'||k=='DELAY'||k=='REVSEND'?'#0c0b09':'#0a0c0a'),WE);T(g,title,120,73,30,pl==-1?'#a6ff00':AM,'center');
+  effPic(g,k,newer);knobs(g,kn);});});
+/* text fit check: every string drawn at 240-px scale is measured and reported to the console if wider than its slot */
+window.__fit=[];['REV SEND','DLY SEND','FILTER CUTOFF','REVERB','PREDELAY','RESTART','ACTION','CUTOFF','RING MOD'].forEach(t=>{const c=document.createElement('canvas').getContext('2d');c.font=F(30);const w30=c.measureText(t).width;c.font=F(16);const w16=c.measureText(t).width;window.__fit.push([t,Math.round(w30),Math.round(w16)]);});
+
+/* ===== round 11: 303 ENV page ===== */
+{const g=ctx('env1'),C='#a6ff00';bar(g,'EDIT / ENV');fa(g);rr(g,44,27,34,34,3,null,C,1.5);line(g,[[50,50],[56,38],[56,50],[63,38],[63,50],[72,38]],C,1.8);T(g,'303 ACID',86,36,24,C);statePlate(g,'16','chain');
+ winv(g,'ENVELOPE',C);const pts=[[14,184]];for(let x=0;x<=212;x++){const u=x/212,a=u<.05?u/.05:Math.exp(-(u-.05)*4.2);pts.push([14+x,184-66*a]);}line(g,pts,MXG,2.5);
+ knobs(g,[['ENVMOD','60'],['DECAY','40'],['ACC DECAY','30'],['ACCENT','70']]);}
+lfoScr('l1',0);lfoScr('l2',1);
+}
+{let done=0;const go=()=>{if(done)return;done=1;drawAllFx();};try{document.fonts.load('700 12px "Barlow Condensed"').then(go,go);}catch(e){go();}setTimeout(go,1200);}
+</script></body></html>

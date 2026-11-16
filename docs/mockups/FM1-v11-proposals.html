@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FM-1 v11 эскизы</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#141217;color:#ddd;font:14px/1.45 system-ui,sans-serif}
+main{max-width:1060px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:6px 0 2px}h2{font-size:16px;margin:0 0 10px;color:#fff}
+.lead{color:#aaa;margin:0 0 14px}
+.card{background:#1d1a21;border:1px solid #2c2932;border-radius:10px;padding:12px 14px;margin-bottom:16px}
+canvas{width:480px;height:480px;image-rendering:pixelated;border-radius:4px;display:block;background:#000;max-width:100%;height:auto;aspect-ratio:1}
+.row{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-bottom:8px}
+.cap{text-align:center;font-size:12px;color:#9a93a3;margin-bottom:4px}
+p,ul{margin:6px 0 0;color:#bbb;font-size:13px}ul{padding-left:18px}li{margin:2px 0}
+b{color:#e8e2ec}
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:2px 0 8px}
+.chips span{font-size:12px;padding:3px 8px;border-radius:12px;background:#26222b;color:#8b8494;border:1px solid #38333f;transition:.1s}
+.chips span.on{background:#ffd23f;color:#000;border-color:#ffd23f}
+code{background:#26222b;padding:0 4px;border-radius:3px;color:#ddd}
+.q{border-left:3px solid #ffd23f;padding-left:10px}
+</style></head><body><main>
+<h1>FM-1 v11 — эскизы (черновик Sonnet, проверено и доведено Opus)</h1>
+<p class="lead">Экраны 240×240, показаны ×2 (image-rendering: pixelated). Всё, что движется, анимировано: бегущий огонёк, поворот ручек, мигание курсора, таймер, переключение страниц. Подписи экранов по-английски (в прошивке есть и русский режим), пояснения — по-русски. Стиль и цвета — как в v10 (чёрный фон, ручки розовая / зелёная / жёлтая / бирюзовая, цвета движков). Прошивка не менялась. Тема ORGANIC — это проход по готовым пикселям, поэтому эскизы нарисованы в базовой палитре.</p>
+
+<div class="card"><h2>1. F A S L крупнее на всех страницах</h2>
+<div class="row"><div><div class="cap">было (v10): ячейки 11 px, блок 24×24</div><canvas id="s1a"></canvas></div><div><div class="cap">стало: ячейки 15 px, блок 32×32</div><canvas id="s1b"></canvas></div><div><div class="cap">стало: длинное имя + окно INFO справа (STEP)</div><canvas id="s1c"></canvas></div></div>
+<ul><li>F A S L: ячейка 15 px (было 11), щель 2 px, блок 32×32 в строках y 28..60 — занимает всё место между «120 BPM» и областью CHAIN / шагов; шрифт букв 12.</li>
+<li>Значок движка: рамка 32×32 на x 44..76 — зазор до F A S L = <b id="g1">7</b> px (был 19 px), поэтому не касается; имя звука начинается с x 82 и сокращается («…») до окна справа.</li>
+<li>Миксер: F A S L там строкой — теперь тоже ячейки 15 px, y 27..42 (экраны 5, 6).</li></ul></div>
+
+<div class="card"><h2>2. SEQ: правый верхний угол в стиле v10</h2>
+<div class="row"><div><div class="cap">как сейчас на устройстве (старый угол): STEPS / CHAIN вместо батареи</div><canvas id="s2a"></canvas></div><div><div class="cap">стало: PLAY + батарея, под ними окно STEPS / CHAIN</div><canvas id="s2b"></canvas></div></div>
+<ul><li>Верхняя строка угла такая же, как на всех страницах: треугольник PLAY, «100», значок батареи. Под ней окно info: STEPS 64 и лампа CHAIN (ON — зелёная, OFF — красная). Бегущий огонёк на сетке — текущий шаг.</li>
+<li>Что именно у «старого угла» на устройстве — я нарисовал по v9 (лампы вместо батареи); если там иначе, поправить «до».</li></ul></div>
+
+<div class="card"><h2>3. FX: название эффекта крупно и по центру</h2>
+<div class="row"><div><div class="cap">сейчас: мелко и сбоку</div><canvas id="s3a"></canvas></div><div><div class="cap">стало: 30 px по центру экрана, меняется при повороте SELECT</div><canvas id="s3b"></canvas></div></div>
+<div class="chips" id="c3"></div>
+<ul><li>Название в строке F A S L по центру экрана (x = 120), шрифт 30; самое длинное «RING MOD» ~100 px — до F A S L остаётся запас. Ниже без изменений: вкладки, кривая эффекта, 4 ручки. Анимация: эффекты листаются, кривая и ручки меняются.</li></ul></div>
+
+<div class="card"><h2>4. SAVE: новое управление</h2>
+<div class="row"><div><div class="cap">анимация: пошагово показано, какая ручка что делает</div><canvas id="s4"></canvas></div></div>
+<div class="chips" id="c4"></div>
+<ul><li><b>SELECT</b> — слот (крупно «SLOT 04» + 16 клеток двумя рядами по 8), <b>ALGORITHM</b> — курсор в имени, <b>KNOB 1</b> — цифры 0–9, <b>KNOB 2</b> — буквы A–M, <b>KNOB 3</b> — N–Z, <b>KNOB 4</b> — действие SAVE ⇄ LOAD.</li>
+<li>Выполняет аппаратная кнопка <b>SAVE</b>. Розовая плашка SAVE (или бирюзовая LOAD) — название действия; слева нарисована кнопка-подсказка, справа зажигается галочка после выполнения. Кнопка не переименована в LOAD: меняется только действие на KNOB 4.</li>
+<li>Всё симметрично по центру; самое крупное — имя (40 px) и номер слота. Под ручками: диапазон и последний выбранный символ.</li></ul></div>
+
+<div class="card"><h2>5. MIXER: бегущий огонёк по краю экрана</h2>
+<div class="row"><div><div class="cap">игра: огонёк — один круг за такт (2 с при 120 BPM)</div><canvas id="s5a"></canvas></div><div><div class="cap">стоп: тусклая рамка, огонёк стоит в углу</div><canvas id="s5b"></canvas></div></div>
+<ul><li>Огонёк с хвостом идёт по часовой стрелке от левого верхнего угла; один круг = 16 шагов (1 такт), поэтому скорость следует темпу. Рамка 1,5 px от края — до заголовка и батареи ≥ 4 px.</li>
+<li>При остановке — тусклая рамка без движения. Предлагаю выключаемую опцию в GLOBAL (в эскизе не показана).</li></ul></div>
+
+<div class="card"><h2>6. MIXER: имя звука выбранной дорожки сверху</h2>
+<div class="row"><div><div class="cap">стало: имя цветом движка, SELECT ходит по дорожкам</div><canvas id="s6"></canvas></div></div>
+<div class="chips" id="c6"></div>
+<ul><li>Между F A S L, заголовком MIXER и первой строкой: x 78..235 по центру, шрифт 20, цвет — цвет движка выбранной дорожки (303 — зелёный, 808 — оранжевый, DX7 — небесный…). Остальное не сдвинулось: строки дорожек остаются на y 46..190.</li>
+<li>ALGORITHM меняет пресет — имя меняется сразу.</li></ul></div>
+
+<div class="card"><h2>7. ENGINES: выбор движка (PRESETS на миксере)</h2>
+<div class="row"><div><div class="cap">анимация: миксер → поворот PRESETS → страница ENGINES → обратно</div><canvas id="s7a"></canvas></div><div><div class="cap">было (v10): значок высоко, полоски нет</div><canvas id="s7b"></canvas></div></div>
+<div class="chips" id="c7"></div>
+<ul><li>Поворот PRESETS на миксере открывает страницу; дальше PRESETS (или SELECT) выбирает движок, цветная рамка и полоса показывают цвет. Значки опущены: центр на 34 px от верха ячейки, полоса снизу — зазор 4 px (раньше значок был в 14 px от верха).</li>
+<li>HOME или пауза 2 с — возврат на миксер; ALGORITHM на миксере по-прежнему меняет пресет звука текущего движка. 4×2 клетки: восьмая — запас под будущий движок.</li></ul></div>
+
+<div class="card"><h2>8. INFO → FAQ: крупный текст, кнопки картинками</h2>
+<div class="row"><div><div class="cap">анимация: SELECT листает страницы 1/9 → 2/9 → 3/9</div><canvas id="s8a"></canvas></div><div><div class="cap">русский вариант, страница 1</div><canvas id="s8b"></canvas></div></div>
+<ul><li>Окно текста: x 6..234, y 64..234 — всё свободное место под F A S L и окном info (на FAQ нижние подписи ручек не нужны). Шрифт 17 вместо мелкого; 5 строк на страницу, шаг 31 px.</li>
+<li>Кнопки — серые клавиши FM-1 со скруглением и подписью, за ними — что делают. Страница 3 — энкодеры и ручки кружками. Счётчик страницы «1/9» — в окне info под батареей. SELECT листает, HOME — назад в INFO.</li>
+<li>Русский: капитальные буквы шире, поэтому описания короче («ГЛАВНЫЙ ЭКРАН», «ПРАВКА ЗВУКА»); клавиши подписаны как на корпусе.</li></ul></div>
+
+<div class="card"><h2>9. MICRO D: полоса пути сигнала = высоте нового F A S L</h2>
+<div class="row"><div><div class="cap">было: полоса 23 px, F A S L 24 px</div><canvas id="s9b"></canvas></div><div><div class="cap">стало: полоса 32 px (y 28..60), точка бежит по пути</div><canvas id="s9a"></canvas></div></div>
+<ul><li>Полоса WAVES → THICK → BRIGHT → SHAPE → MOVE: 5 ячеек 35×32, щель 4, x 44..235; верх и низ ровно по F A S L (y 28..60). Значок 14 px и подпись 10 px; текущая ячейка янтарная. Анимация: страницы идут по кругу, по полосе бежит точка-сигнал, волна движется.</li></ul></div>
+
+<div class="card"><h2>10. BINAURAL: значки вместо надписей, большой таймер</h2>
+<div class="row"><div><div class="cap">анимация: волны L/R, таймер идёт, ручки подсвечиваются по очереди</div><canvas id="s10"></canvas></div></div>
+<div class="chips" id="c10"></div>
+<ul><li>Правый верх: большой таймер сессии 28 px (обратный отсчёт 20:00 → 00:00, двоеточие мигает); ALPHA, 3D и PLAY убраны. Батарея стала маленькой под таймером.</li>
+<li>Ручки без слов, только значки + значение: KNOB 1 «мозговая волна» (ритм α/θ/δ/β/FOCUS, значок — волна нужной частоты), KNOB 2 ухо (несущая, Гц), KNOB 3 таймер (длительность, мин), KNOB 4 динамик (громкость шума).</li>
+<li>Тело: крупно «α 10 Hz» (греческая буква вместо имени пресета), две волны L (розовая) и R (бирюзовая), полоска прогресса сессии.</li></ul></div>
+
+<div class="card"><h2>11. GLOBAL: BINAURAL и 3D SOUND — свои строки</h2>
+<div class="row"><div><div class="cap">анимация: SELECT листает список, строки со страницей кончаются на «&gt;»</div><canvas id="s11"></canvas></div></div>
+<div class="chips" id="c11"></div>
+<ul><li>Строки BINAURAL &gt; и 3D SOUND &gt; открываются ALGORITHM (поворот вправо), как BLUETOOTH, SCOPE, INFO. Строки без страницы (SWING, THEME, KEYS LATCH …) стрелки не имеют, значение крутится ручкой. Справа тонкий бегунок прокрутки, в окне info «ROW n/14».</li></ul></div>
+
+<div class="card"><h2>12. 3D SOUND: значки на ручках, крупные значения</h2>
+<div class="row"><div><div class="cap">анимация: источник звука ходит по кругу, ручки подсвечиваются</div><canvas id="s12"></canvas></div></div>
+<div class="chips" id="c12"></div>
+<ul><li>KNOB 1 наушники — режим (OFF / XFEED / ROOM), KNOB 2 стрелки — ширина, KNOB 3 круг с указателем — азимут, KNOB 4 два круга — микс. В центре вид сверху: голова, ушки и источник звука по орбите; режим крупно сверху, ширина и микс по бокам 30 px, азимут крупно под головой.</li>
+<li>Расстояния: орбита 36 px, голова 24 px, надписи ≥ 6 px от всего.</li></ul></div>
+
+<div class="card"><h2>13. LATCH клавиатуры: включение и маркер</h2>
+<div class="row"><div><div class="cap">включение: GLOBAL → KEYS LATCH, KNOB 1 (анимация)</div><canvas id="s13a"></canvas></div><div><div class="cap">маркер LATCH в шапке (худший случай: длинное «SEQUENCER»)</div><canvas id="s13b"></canvas></div></div>
+<ul><li><b>Предлагаю: строка GLOBAL «KEYS LATCH» (ON/OFF, KNOB 1).</b> Почему: видно и подписано; нет конфликта — зажатые OCT− + OCT+ обычно значат «сброс октавы в 0», а удержание легко сделать случайно во время игры; состояние сохраняется как остальные настройки.</li>
+<li>На экране: жёлтая плашка «LATCH» 26×11 в первой строке шапки справа от заголовка, зазоры: до заголовка <b id="g13a">–</b> px, до треугольника PLAY <b id="g13b">–</b> px. Длинный заголовок при LATCH ужимается с 20 до ~17 px. Плашка — только на страницах, где шапка есть.</li></ul></div>
+
+<div class="card"><h2>14. Пик CPU между запусками</h2>
+<div class="row"><div><div class="cap">A (рекомендую): INFO, плитка PEAK</div><canvas id="s14a"></canvas></div><div><div class="cap">B: служебная строка внизу GLOBAL</div><canvas id="s14b"></canvas></div></div>
+<ul><li>A: INFO 2×2: CPU NOW (живое, дрожит), PEAK 97% (LAST RUN) — красный, если &gt; 90 %, под ним мелко «THIS RUN»; FLASH FREE, RAM FREE. Батарея и так в шапке, её плитку убрал.</li>
+<li>B: в GLOBAL на строке INFO, где и сейчас служебная строка CPU (ручки 2–4 пустые): вторая строка «LAST RUN PEAK 97%». Список не теряет строк. Лучше A — INFO и так «про память и процессор».</li></ul></div>
+
+<div class="card"><h2>15. Забытое из прошлых эскизов (нашла проверка документов)</h2><ul>
+<li><b>MIXER — бегущий огонёк</b> (v9, п. 6): точка без хвоста, шаг на долю, 64 шага по краю экрана (16 на сторону). В прошивке нет — делается вместе с экраном 5.</li>
+<li><b>SEQ — STEPS в окошке-лампе</b> такого же размера, как CHAIN [ON], правые края на одной линии (v9). Сейчас STEPS простым текстом — экран 2.</li>
+<li><b>FX — имя эффекта</b> отдельной крупной строкой по центру экрана (x = 120), а не в общей строке шапки — экран 3.</li>
+<li><b>INFO</b> (v10, п. 4): номер сборки (commit) и ссылка Ko-fi (QR) — не сделаны; добавить на плитку INFO (экран 14 A).</li>
+<li><b>STEP EDIT — LENGTH</b> (v10, п. 1): ручка должна показывать «N STEPS», а не TIE / %.</li>
+<li><b>Бесконечные ручки</b> (v9, п. 14): стрелка-кольцо у края списка, когда список идёт по кругу — сейчас круг есть, значка нет.</li>
+<li>Матрица: портреты Neo / Morpheus / Trinity и моноширинный шрифт (v9, п. 8, 10) не сделаны; живой фон матрицы убран по вашей просьбе.</li></ul></div>
+
+<div class="card q"><h2>Решено при проверке (Opus)</h2><ul>
+<li>GLOBAL нарисован «барабаном», как в прошивке: выбранная строка крупно в рамке, по две соседние сверху и снизу; строк стало 18 (+ BINAURAL &gt;, 3D SOUND &gt;, KEYS LATCH). Стрелка «&gt;» только у строк со своей страницей.</li>
+<li>SAVE: одна плашка, всегда с названием кнопки «SAVE» (её нажимают), действие SAVE / LOAD — на ручке 4. Ручки 1–3 показывают символ под курсором.</li>
+<li>ENGINES: открывается поворотом PRESETS на миксере, закрывается HOME или сама через 3 с без вращения; восьмая клетка пустая (место под будущий движок).</li>
+<li>Пик CPU пишется во флеш только вместе с обычным сохранением (SAVE / автосохранение после остановки) — лишнего износа нет.</li>
+<li>Огонёк MIXER: один круг на такт, отдельный выключатель не нужен.</li>
+<li>Тема: эскизы в базовой палитре; в прошивке поверх ложится ORGANIC (мох) — раскладка та же.</li></ul></div>
+
+<div class="card q"><h2>Вопросы вам</h2><ul>
+<li>LATCH: плашка «LATCH» в шапке между заголовком и PLAY (экран 13) — годится?</li>
+<li>BINAURAL: разность частот и тип шума ушли с ручек — менять их пресетом (PRESETS) достаточно?</li>
+<li>BINAURAL: справа вверху таймер вместо «PLAY / батарея» — ок?</li></ul></div>
+</main>
+<script>
+const TX='#f2eef5',DIM='#8b8494',FT='#4a4552',K=['#ff7eb3','#3ee07a','#ffd23f','#2fd8c8'],GRN='#3ee07a',RED='#ff4b4b',YEL='#ffd23f',AM='#f0a830',PNL='#0b0a0d',EDG='#2a2730';
+const ENG={dx7:'#6cb6ff','303':'#b6f03c','808':'#ff8a3d',psg:'#b58cff',pluck:'#ffc94d',smp:'#2fd8c8',md:'#e8743b'};
+const F=p=>'700 '+p+'px "Barlow Condensed","Arial Narrow",sans-serif';
+function rr(g,x,y,w,h,r,f,s,lw=1){g.beginPath();g.roundRect(x,y,w,h,r);if(f){g.fillStyle=f;g.fill();}if(s){g.strokeStyle=s;g.lineWidth=lw;g.stroke();}}
+function T(g,s,x,y,p,c,a='left'){g.font=F(p);g.fillStyle=c;g.textAlign=a;g.textBaseline='top';g.fillText(s,Math.round(x),Math.round(y));}
+function TW(g,s,p){g.font=F(p);return g.measureText(s).width;}
+function fit(g,s,p,maxw,minp=13){while(p>minp&&TW(g,s,p)>maxw)p--;if(TW(g,s,p)>maxw){while(s.length>1&&TW(g,s+'…',p)>maxw)s=s.slice(0,-1);s+='…';}return[s,p];}
+function line(g,pts,c,w=2){g.strokeStyle=c;g.lineWidth=w;g.lineJoin='round';g.lineCap='round';g.beginPath();pts.forEach((p,i)=>i?g.lineTo(...p):g.moveTo(...p));g.stroke();}
+function circ(g,x,y,r,f,s,lw=1){g.beginPath();g.arc(x,y,r,0,7);if(f){g.fillStyle=f;g.fill();}if(s){g.strokeStyle=s;g.lineWidth=lw;g.stroke();}}
+const ease=u=>u<0?0:u>1?1:u*u*(3-2*u);
+
+/* ---- scenes & chips ---- */
+const S=[];let fontsOk=false;
+function scene(id,draw,anim){const el=document.getElementById(id);el.width=240;el.height=240;const s={id,el,g:el.getContext('2d'),draw,anim:!!anim,vis:false,done:false};S.push(s);return s;}
+const chipEl={},chipCur={};
+function mkChips(id,labels){const d=document.getElementById(id);chipEl[id]=labels.map(l=>{const s=document.createElement('span');s.textContent=l;d.appendChild(s);return s;});}
+function hot(id,i){if(chipCur[id]===i)return;chipCur[id]=i;chipEl[id].forEach((e,k)=>e.classList.toggle('on',k===i));}
+
+/* ---- engine icons (as v10) ---- */
+function icon(g,k,cx,cy,s,c){const h=s/2;g.save();g.strokeStyle=c;g.fillStyle=c;g.lineWidth=1.8;g.lineJoin='round';g.lineCap='round';g.beginPath();
+ if(k=='dx7'){for(let j=0;j<3;j++){const yy=cy-h*.5+j*h*.5;for(let i=0;i<=16;i++){const x=cx-h+i*s/16,y=yy+Math.sin(i/16*Math.PI*2*(j+1))*h*.18;i?g.lineTo(x,y):g.moveTo(x,y);}}g.stroke();}
+ else if(k=='303'){[[-1,.6],[-.3,-.6],[-.3,.6],[.4,-.6],[.4,.6],[1,-.6]].forEach(([x,y],i)=>i?g.lineTo(cx+x*h,cy+y*h):g.moveTo(cx+x*h,cy+y*h));g.stroke();}
+ else if(k=='808'){g.arc(cx,cy,h*.8,0,7);g.stroke();g.beginPath();g.arc(cx,cy,h*.3,0,7);g.fill();}
+ else if(k=='psg'){[[-1,.5],[-1,-.5],[-.33,-.5],[-.33,.5],[.33,.5],[.33,-.5],[1,-.5],[1,.5]].forEach(([x,y],i)=>i?g.lineTo(cx+x*h,cy+y*h):g.moveTo(cx+x*h,cy+y*h));g.stroke();}
+ else if(k=='pluck'){for(let i=0;i<=24;i++){const u=i/24,x=cx-h+u*s,y=cy-Math.sin(u*Math.PI*6)*h*.8*Math.exp(-u*2.5);i?g.lineTo(x,y):g.moveTo(x,y);}g.stroke();}
+ else if(k=='smp'){for(let i=0;i<=12;i++){const x=cx-h+i*s/12,a=(.3+.7*Math.abs(Math.sin(i*1.3)))*h*.8;g.moveTo(x,cy-a);g.lineTo(x,cy+a);}g.stroke();}
+ else {[0,1].forEach(j=>{g.globalAlpha=j?1:.5;g.beginPath();for(let i=0;i<3;i++){const x0=cx-h+i*h*.66+(j?2:-2),y0=cy+(j?2:-2);g.moveTo(x0,y0+h*.5);g.lineTo(x0+h*.66,y0-h*.5);g.lineTo(x0+h*.66,y0+h*.5);}g.stroke();});}
+ g.restore();}
+/* UI glyphs for knob icons */
+function gl(g,k,cx,cy,s,c,ph=0){const h=s/2;g.save();g.strokeStyle=c;g.fillStyle=c;g.lineWidth=2;g.lineCap='round';g.lineJoin='round';
+ const P=()=>g.beginPath();
+ if(k=='brain'){P();g.ellipse(cx,cy,h,h*.82,0,0,7);g.stroke();P();for(let i=0;i<=20;i++){const x=cx-h*.72+i*h*1.44/20,y=cy+Math.sin(i/20*Math.PI*4+ph)*h*.34;i?g.lineTo(x,y):g.moveTo(x,y);}g.stroke();}
+ else if(k=='ear'){P();g.moveTo(cx-h*.6,cy+h*.1);g.arc(cx,cy-h*.1,h*.6,Math.PI,2*Math.PI);g.bezierCurveTo(cx+h*.6,cy+h*.6,cx+h*.5,cy+h*.9,cx,cy+h*.9);g.stroke();P();g.moveTo(cx-h*.2,cy+h*.15);g.arc(cx,cy-h*.05,h*.2,Math.PI,Math.PI*2.4);g.stroke();}
+ else if(k=='timer'){P();g.arc(cx,cy+h*.12,h*.74,0,7);g.stroke();line(g,[[cx-h*.25,cy-h*.82],[cx+h*.25,cy-h*.82]],c,2);line(g,[[cx,cy+h*.12],[cx,cy-h*.42]],c,2);line(g,[[cx,cy+h*.12],[cx+h*.35,cy+h*.3]],c,2);}
+ else if(k=='vol'){P();[[-1,-.3],[-.45,-.3],[.05,-.75],[.05,.75],[-.45,.3],[-1,.3]].forEach(([x,y],i)=>i?g.lineTo(cx+x*h,cy+y*h):g.moveTo(cx+x*h,cy+y*h));g.closePath();g.stroke();P();g.arc(cx+h*.05,cy,h*.5,-.9,.9);g.stroke();P();g.arc(cx+h*.05,cy,h*.95,-.9,.9);g.stroke();}
+ else if(k=='phones'){P();g.arc(cx,cy+h*.1,h*.78,Math.PI,2*Math.PI);g.stroke();rr(g,cx-h*1.0,cy+h*.1,h*.42,h*.8,2,c);rr(g,cx+h*.58,cy+h*.1,h*.42,h*.8,2,c);}
+ else if(k=='width'){line(g,[[cx-h,cy],[cx+h,cy]],c,2);line(g,[[cx-h,cy],[cx-h*.5,cy-h*.45]],c,2);line(g,[[cx-h,cy],[cx-h*.5,cy+h*.45]],c,2);line(g,[[cx+h,cy],[cx+h*.5,cy-h*.45]],c,2);line(g,[[cx+h,cy],[cx+h*.5,cy+h*.45]],c,2);}
+ else if(k=='azim'){P();g.arc(cx,cy,h*.8,0,7);g.stroke();const a=-Math.PI/4+ph;circ(g,cx+Math.cos(a)*h*.8,cy+Math.sin(a)*h*.8,2.6,c);line(g,[[cx,cy],[cx+Math.cos(a)*h*.6,cy+Math.sin(a)*h*.6]],c,2);}
+ else if(k=='mix'){P();g.arc(cx-h*.38,cy,h*.62,0,7);g.stroke();P();g.arc(cx+h*.38,cy,h*.62,0,7);g.stroke();}
+ g.restore();}
+
+/* ---- header (v10 style, new sizes) ---- */
+const FQ=15,FG=2,FS=2*FQ+FG;
+function fasl(g,st,old){const q=old?11:FQ,gp=2,fs=old?10:12;['F','A','S','L'].forEach((l,i)=>{const x=5+(i%2)*(q+gp),y=28+Math.floor(i/2)*(q+gp),on=st[i];
+ rr(g,x,y,q,q,old?2.5:3,on?[TX,GRN,RED,K[3]][i]:null,on?null:FT);T(g,l,x+q/2,y+(old?1:Math.round((q-fs)/2)),fs,on?'#000':FT,'center');});}
+function faslRow(g){['F','A','S','L'].forEach((l,i)=>{const x=5+i*(FQ+FG),on=i<3;rr(g,x,27,FQ,FQ,3,on?[TX,GRN,RED][i]:null,on?null:FT);T(g,l,x+FQ/2,29,12,on?'#000':FT,'center');});}
+function pill(g,x,y,w,h,s,bg=YEL){rr(g,x,y,w,h,3,bg);T(g,s,x+w/2,y+1,9,'#000','center');}
+function infoWin(g,label,value){const lw=TW(g,label,12),vw=TW(g,value,22);T(g,label,235,27,12,DIM,'right');T(g,value,235,37,22,TX,'right');return 235-Math.max(lw,vw);}
+function lamp(g,cy,label,txt,bg,ink){const lw=TW(g,label,12),x=235-(lw+4+24);T(g,label,x,cy-6,12,DIM);rr(g,x+lw+4,cy-6,24,12,3,bg);T(g,txt,x+lw+16,cy-5,10,ink,'center');return x;}
+function lv(g,cy,label,val){const vw=TW(g,val,17);T(g,val,235,cy-8,17,TX,'right');T(g,label,235-vw-4,cy-6,12,DIM,'right');return 235-vw-4-TW(g,label,12);}
+function hdr(g,o){
+ T(g,o.bpm||'120',5,3,22,TX);T(g,'BPM',38,11,11,GRN);
+ let tp=20;if(o.latch)while(120+TW(g,o.title,tp)/2>148&&tp>16)tp--;
+ T(g,o.title,120,4+(20-tp)*.5,tp,TX,'center');
+ if(o.latch)pill(g,155,3,26,11,'LATCH');
+ if(!o.custom){if(o.play!==false){g.fillStyle=GRN;g.beginPath();g.moveTo(183,9);g.lineTo(192,14.5);g.lineTo(183,20);g.fill();}T(g,'100',224,3,22,TX,'right');rr(g,228,7,6,13,1.5,null,TX);}
+ if(o.row)faslRow(g);else if(!o.noFasl)fasl(g,o.st||[1,1,1,0],o.old);
+ let right=235;
+ if(o.info)right=infoWin(g,o.info[0],o.info[1])-6;
+ if(o.seqCorner){const a=lv(g,36,'STEPS','64'),b=lamp(g,52,'CHAIN',o.chain?'ON':'OFF',o.chain?GRN:RED,'#000');right=Math.min(a,b)-6;}
+ if(o.eng){const [k,name]=o.eng;if(o.old){rr(g,48,28,26,24,4,null,ENG[k],1.5);icon(g,k,61,40,18,ENG[k]);T(g,name,80,31,19,ENG[k]);}
+  else{rr(g,44,28,FS,FS,5,null,ENG[k],1.5);icon(g,k,60,44,24,ENG[k]);const [n,p]=fit(g,name,19,right-82,14);T(g,n,82,28+(FS-p)/2-1,p,ENG[k]);}}
+ return right;}
+function knobs(g,l,hl=-1){l.forEach((k,i)=>{const x=i*60;if(hl===i)rr(g,x+3,195,54,45,4,'#1c1a21');g.fillStyle=K[i];g.fillRect(x+6,197,48,hl===i?3:2);let p=16;while(p>11&&Math.max(TW(g,k[0],p),TW(g,k[1],p))>56)p--;T(g,k[0],x+30,202+(16-p)/2,p,TX,'center');T(g,k[1],x+30,219+(16-p)/2,p,K[i],'center');});}
+function knobsIc(g,l,hl=-1,ph=0){l.forEach((k,i)=>{const x=i*60;if(hl===i)rr(g,x+3,195,54,45,4,'#1c1a21');g.fillStyle=K[i];g.fillRect(x+6,197,48,hl===i?3:2);gl(g,k[0],x+30,210,20,K[i],ph);T(g,k[1],x+30,220,20,TX,'center');});}
+function knobsMix(g,l,hl=-1){l.forEach((k,i)=>{const x=i*60;if(hl===i)rr(g,x+3,195,54,45,4,'#1c1a21');g.fillStyle=K[i];g.fillRect(x+6,197,48,2);T(g,k[0],x+30,201,14,TX,'center');T(g,k[1],x+30,216,20,K[i],'center');});}
+function edgePos(p,i=1.5){const L=240-2*i,u=(((p%1)+1)%1)*4*L,s=Math.floor(u/L),d=u-s*L;return s==0?[i+d,i]:s==1?[240-i,i+d]:s==2?[240-i-d,240-i]:[i,240-i-d];}
+function runLight(g,p,run){g.strokeStyle='#26260f';g.lineWidth=1;g.strokeRect(1.5,1.5,237,237);
+ if(!run){circ(g,1.5,1.5,2,YEL);return;}
+ const n=22,tail=.09;for(let k=n;k>=1;k--){const a=1-k/n,[x,y]=edgePos(p-k*tail/n);g.globalAlpha=a*a*.9;circ(g,x,y,1.6,YEL);}g.globalAlpha=1;const [x,y]=edgePos(p);circ(g,x,y,2.4,'#fff');}
+
+/* ---- SEQ ---- */
+const SQ_ON=[0,8,16,20,27,40,44,52];
+function seqGrid(g,t,y0=78){const X=s=>5+s*14+Math.floor(s/4)*3,st=Math.floor(t/125)%16;
+ for(let i=0;i<16;i++)rr(g,10+i*14,64,10,8,2,i==0?YEL:null,i==0?null:'#5a4f22');
+ for(let r=0;r<4;r++)for(let s=0;s<16;s++){const i=r*16+s,x=X(s),y=y0+r*29,on=SQ_ON.includes(i);rr(g,x,y,11,23,3,on?GRN:'#101013',on?null:(s%4==0?'#45404c':EDG));if(s==st)rr(g,x-1,y-1,13,25,4,null,'#fff',1.2);}}
+const SEQ_KN=[['VELOCITY','100'],['GATE','75%'],['PROB','100%'],['NOTE','A2']];
+function drawS1(o){return(g,t)=>{if(o.mode=='c'){hdr(g,{title:'EDIT',eng:['md','MICRO D BASS LEAD 12'],info:['STEP','5']});
+  rr(g,6,66,228,122,4,PNL,EDG);const q=[['TONE',['CHOIR','5'],['FDBK','6'],['TRANS','+0'],['LEVEL','99']]];
+  for(let i=0;i<4;i++){T(g,q[0][i+1][0],36+i*56,76,13,DIM,'center');T(g,q[0][i+1][1],36+i*56,96,24,K[i],'center');}
+  T(g,'ENV',12,134,12,DIM);for(let i=0;i<4;i++){T(g,['ATTACK','DECAY','SUSTAIN','RELEASE'][i],36+i*56,146,13,DIM,'center');T(g,['12','40','70','35'][i],36+i*56,164,22,K[i],'center');}
+  knobs(g,[['CHOIR','5'],['FDBK','6'],['TRANS','+0'],['LEVEL','99']]);return;}
+ hdr(g,{title:'SEQUENCER',eng:['303','ACID BASS 2'],old:o.old,seqCorner:!o.old,custom:false,chain:true,...(o.old?{info:['STEP','5']}:{})});
+ seqGrid(g,t);knobs(g,SEQ_KN);};}
+scene('s1a',drawS1({old:true}),true);scene('s1b',drawS1({}),true);scene('s1c',drawS1({mode:'c'}));
+
+/* ---- 2 ---- */
+scene('s2a',(g,t)=>{hdr(g,{title:'SEQUENCER',custom:true,eng:['303','ACID BASS 2']});
+ lamp(g,12,'STEPS','64','#26222c',TX);lamp(g,28,'CHAIN','ON',GRN,'#000');seqGrid(g,t);knobs(g,SEQ_KN);},true);
+scene('s2b',(g,t)=>{hdr(g,{title:'SEQUENCER',eng:['303','ACID BASS 2'],seqCorner:true,chain:true});seqGrid(g,t);knobs(g,SEQ_KN);},true);
+
+/* ---- 3 FX ---- */
+const FXN=['FILTER','DRIVE','CHORUS','PHASER','RING MOD','REVERB','EQ','DELAY','SEND'],FXT=['FLT','DRV','CHO','PHA','RNG','REV','EQ','DLY','SND'];
+const FXK=[[['TYPE','ACID'],['CUTOFF','1.5K'],['RESO','80'],['MIX','127']],[['TYPE','TUBE'],['DRIVE','60'],['TONE','50'],['MIX','100']],[['RATE','0.8'],['DEPTH','40'],['VOICES','3'],['MIX','50']],[['RATE','0.4'],['DEPTH','70'],['FDBK','45'],['MIX','60']],[['FREQ','440'],['TONE','50'],['DRIVE','0'],['MIX','40']],[['SIZE','70'],['DECAY','2.4S'],['DAMP','40'],['MIX','25']],[['LOW','+2'],['MID','-3'],['HIGH','+4'],['FREQ','2K']],[['TIME','1/8'],['FDBK','40'],['TONE','60'],['MIX','30']],[['REVERB','25'],['DELAY','40'],['CHORUS','0'],['TO','MIX']]];
+function fxCurve(g,k,t){const x0=10,w=220,y0=84,h=100,cy=y0+h/2;g.strokeStyle=GRN;g.fillStyle=GRN;g.lineWidth=2;g.lineJoin='round';
+ const poly=f=>{g.beginPath();for(let i=0;i<=w;i+=2){const y=f(i/w);i?g.lineTo(x0+i,y):g.moveTo(x0,y);}g.stroke();};
+ if(k==0)poly(u=>{const wc=.28+.12*Math.sin(t/900);return y0+h-8-(h-24)/Math.sqrt(1+Math.pow(u/wc,6))*(1+.5*Math.exp(-Math.pow((u-wc)*14,2)))*.8;});
+ else if(k==1)poly(u=>cy-(h/2-8)*Math.tanh((u-.5)*(5+3*Math.sin(t/800))));
+ else if(k==2){poly(u=>cy-Math.sin(u*Math.PI*4+t/400)*28);g.globalAlpha=.5;poly(u=>cy-Math.sin(u*Math.PI*4+t/400+1.1)*28);g.globalAlpha=1;}
+ else if(k==3)poly(u=>y0+14+(h-34)*Math.pow(Math.abs(Math.sin(u*9+t/600)),.5));
+ else if(k==4){for(let i=0;i<14;i++){const a=(.3+.7*Math.abs(Math.sin(i*2.1+t/500)))*(h-16);g.fillRect(x0+8+i*15,y0+h-a,9,a);}}
+ else if(k==5){for(let i=0;i<44;i++){const a=(h-14)*Math.exp(-i/16)*(.45+.55*Math.abs(Math.sin(i*3.7)));g.fillRect(x0+4+i*5,y0+h-a,3,a);}}
+ else if(k==6)poly(u=>cy-30*Math.sin(u*Math.PI*2.5+t/1200)*(.4+.6*u));
+ else if(k==7){for(let i=0;i<6;i++){const a=(h-14)*Math.pow(.62,i);g.fillRect(x0+10+i*34,y0+h-a,12,a);}}
+ else{[0,1,2].forEach(i=>{const a=(.3+.6*Math.abs(Math.sin(t/900+i*2)))*(h-16);g.fillRect(x0+22+i*66,y0+h-a,40,a);});}}
+function fxPage(g,k,t){hdr(g,{title:'FX'});
+ const nm=FXN[k];let p=30;while(TW(g,nm,p)>150)p--;T(g,nm,120,29,p,K[0],'center');
+ rr(g,6,64,228,122,4,PNL,EDG);const cw=224/9;FXT.forEach((s,i)=>{const cx=8+cw*(i+.5);T(g,s,cx,68,12,i==k?K[0]:DIM,'center');if(i==k){const w=TW(g,s,12);g.fillStyle=K[0];g.fillRect(cx-w/2,81,w,2);}});
+ fxCurve(g,k,t);knobs(g,FXK[k]);}
+scene('s3a',(g,t)=>{hdr(g,{title:'FX'});T(g,'FILTER',84,36,15,K[0]);rr(g,6,64,228,122,4,PNL,EDG);FXT.forEach((s,i)=>T(g,s,8+224/9*(i+.5),68,12,i==0?K[0]:DIM,'center'));fxCurve(g,0,t);knobs(g,FXK[0]);},true);
+scene('s3b',(g,t)=>{const k=Math.floor(t/2200)%9;fxPage(g,k,t);hot('c3',k%2);},true);
+mkChips('c3',['SELECT (поворот) — следующий эффект','ручки — параметры эффекта']);
+
+/* ---- 4 SAVE ---- */
+const SV=[{slot:3,cur:0,name:'ACID JAM',chip:0,hl:-1},{slot:4,cur:0,name:'ACID JAM',chip:0,hl:-1},{slot:4,cur:7,name:'ACID JAM',chip:1,hl:-1},
+ {slot:4,cur:7,name:'ACID JA3',chip:2,hl:0,v:['3','K','S']},{slot:4,cur:7,name:'ACID JAK',chip:3,hl:1,v:['3','K','S']},{slot:4,cur:7,name:'ACID JAS',chip:4,hl:2,v:['3','K','S']},
+ {slot:4,cur:7,name:'ACID JAS',chip:5,hl:3,act:'LOAD',v:['3','K','S']},{slot:4,cur:7,name:'ACID JAS',chip:5,hl:3,act:'SAVE',v:['3','K','S']},{slot:4,cur:7,name:'ACID JAS',chip:6,hl:-1,act:'SAVE',done:1,v:['3','K','S']}];
+function keycap(g,x,y,s,fs=14,h=22){const w=Math.round(TW(g,s,fs))+12;rr(g,x,y+2,w,h,5,'#2b2b30');const gr=g.createLinearGradient(0,y,0,y+h);gr.addColorStop(0,'#b4b4bb');gr.addColorStop(1,'#7c7c85');rr(g,x,y,w,h-1,5,gr,'#c9c9cf',1);T(g,s,x+w/2,y+(h-fs)/2-1,fs,'#15151a','center');return w;}
+scene('s4',(g,t)=>{const i=Math.floor(t/1700)%SV.length,s=SV[i],lt=(t%1700)/1700;hot('c4',s.chip);
+ hdr(g,{title:'SAVE'});
+ const sl=TW(g,'SLOT',20),nw=TW(g,String(s.slot).padStart(2,'0'),34),x0=120-(sl+6+nw)/2;T(g,'SLOT',x0,70,20,DIM);T(g,String(s.slot).padStart(2,'0'),x0+sl+6,62,34,YEL);
+ for(let k=0;k<16;k++){const x=120-4*15+(k%8)*15+1,y=100+Math.floor(k/8)*11,used=k<6;rr(g,x,y,12,8,2,k==s.slot-1?YEL:used?'#7a6a2a':null,k==s.slot-1?null:used?null:'#5a4f22');}
+ const cw=19,nx=120-cw*4;for(let k=0;k<8;k++){const cx=nx+k*cw+cw/2,cur=k==s.cur,on=cur&&Math.sin(t/160)>0;T(g,s.name[k]==' '?'':s.name[k],cx,122,40,cur?(on?GRN:'#2d8f50'):TX,'center');if(cur){g.fillStyle=GRN;g.fillRect(cx-8,160,16,3);}}
+ const act=s.act||'SAVE',ac=act=='SAVE'?K[0]:K[3];rr(g,75,166,90,26,13,ac);T(g,'SAVE',120,168,22,'#000','center');
+ if(s.done){line(g,[[184,180],[192,189],[208,171]],GRN,5);}else{line(g,[[184,180],[192,189],[208,171]],'#26332a',5);}
+ const vv=s.v||['·','·','·'];knobs(g,[['0-9',vv[0]],['A-M',vv[1]],['N-Z',vv[2]],['ACTION',act]],s.hl);},true);
+mkChips('c4',['SELECT · слот','ALGORITHM · курсор','KNOB 1 · цифры','KNOB 2 · A–M','KNOB 3 · N–Z','KNOB 4 · SAVE ⇄ LOAD','кнопка SAVE · выполнить']);
+
+/* ---- mixer ---- */
+const TR0=[['303 SAW','303'],['808 KIT','808'],['SOFT LEAD','dx7'],['PLUCK','pluck'],['SAMPLER','smp'],['PSG YM','psg'],['MICRO D BASS','md'],['E.PIANO 1','dx7']];
+function mixer(g,t,o){const tr=o.tr||TR0,sel=o.sel||0,st=Math.floor(t/125)%16;
+ hdr(g,{title:'MIXER',row:true});
+ if(o.name){const [k,n]=[tr[sel][1],o.nm||tr[sel][0]];const [s,p]=fit(g,n,20,154,14);T(g,s,157,25,p,ENG[k],'center');}
+ tr.forEach(([n,k],i)=>{const y=46+i*18,sl=i==sel;if(sl){g.fillStyle=TX;g.fillRect(2,y+2,2,13);}
+  T(g,String(i+1),13,y+2,13,sl?TX:DIM,'center');const [s,p]=fit(g,n,13,62,10);T(g,s,22,y+2+(13-p)/2,p,sl?(o.name?ENG[k]:TX):DIM);
+  for(let q=0;q<16;q++){const on=(q*(i+3))%5==0,x=88+q*9,c=ENG[k];rr(g,x,y+4,6,11,1.5,on?c:'#101013',on?null:EDG);if(q==st)rr(g,x-1,y+3,8,13,2,null,'#fff',1);}});
+ knobsMix(g,[['VOL','100'],['FILT','64'],['SEND','20'],['STATE','ON']],o.hl);
+ if(o.run)runLight(g,o.p,o.play);}
+scene('s5a',(g,t)=>mixer(g,t,{run:1,play:1,p:(t%2000)/2000}),true);
+scene('s5b',(g,t)=>mixer(g,0,{run:1,play:0,p:0}));
+scene('s6',(g,t)=>{const sel=Math.floor(t/1800)%8;hot('c6',(Math.floor(t/900)%2));mixer(g,t,{sel,name:1,hl:-1});},true);
+mkChips('c6',['SELECT — следующая дорожка','ALGORITHM — другой пресет']);
+
+/* ---- 7 ENGINES ---- */
+const ENL=[['dx7','DX7'],['303','303'],['808','808'],['psg','PSG'],['pluck','PLUCK'],['smp','SAMPLER'],['md','MICRO D']];
+function enginesPage(g,sel,old){hdr(g,{title:'ENGINES',info:['TRACK','3']});
+ for(let i=0;i<8;i++){const x=6+(i%4)*57,y=66+Math.floor(i/4)*62,w=54,h=58;
+  if(i>=7){rr(g,x,y,w,h,6,null,'#2a2730',1);continue;}
+  const [k,n]=ENL[i],c=ENG[k],on=i==sel;
+  if(old){rr(g,x,y,w,h,6,PNL,c,on?2.5:1);icon(g,k,x+w/2,y+19,22,c);T(g,n,x+w/2,y+34,13,c,'center');continue;}
+  rr(g,x,y,w,h,6,on?'#16201a':PNL,on?c:EDG,on?2.5:1);T(g,n,x+w/2,y+4,13,on?c:DIM,'center');icon(g,k,x+w/2,y+33,22,c);rr(g,x+7,y+49,w-14,5,2,c);}
+ knobsMix(g,[['VOL','100'],['FILT','64'],['SEND','20'],['STATE','ON']]);}
+scene('s7a',(g,t)=>{const c=t%9000,tr=TR0.map(a=>a.slice());let page=c>=1800&&c<7000;
+ if(c>=7000){tr[2]=['808 KIT','808'];}
+ if(page){const s=c-1800,sel=Math.min(2,Math.max(0,Math.floor(s/1300)));const ss=[0,1,2][Math.min(2,Math.floor(s/1300))];enginesPage(g,ss);hot('c7',s<500?0:s<4000?0:2);}
+ else{mixer(g,t,{tr,sel:2,name:1});hot('c7',c<1800?(c>1000?0:-1):1);}},true);
+scene('s7b',(g,t)=>enginesPage(g,1,true));
+mkChips('c7',['PRESETS · открыть / выбрать движок','ALGORITHM · пресет на миксере','HOME · назад']);
+
+/* ---- 8 FAQ ---- */
+const FAQ=[[['cap',['HOME'],'BACK / MAIN SCREEN','ГЛАВНЫЙ ЭКРАН'],['cap',['SAVE'],'SAVE OR LOAD','СОХРАНИТЬ'],['cap',['PLAY'],'START / STOP','СТАРТ / СТОП'],['cap',['REC'],'RECORD LIVE','ЗАПИСЬ'],['cap',['SEQ'],'STEP SEQUENCER','СЕКВЕНСОР']],
+ [['cap',['OCT-','OCT+'],'OCTAVE DOWN / UP','ОКТАВА ВНИЗ / ВВЕРХ'],['cap',['ARP'],'ARPEGGIATOR','АРПЕДЖИАТОР'],['cap',['FX'],'EFFECTS','ЭФФЕКТЫ'],['cap',['EDIT'],'EDIT THE SOUND','ПРАВКА ЗВУКА'],['cap',['GLO'],'GLOBAL SETTINGS','ОБЩИЕ НАСТРОЙКИ']],
+ [['enc','SELECT','PICK ROW OR STEP','ВЫБОР СТРОКИ',-1],['enc','ALGORITHM','OPEN / CHANGE','ОТКРЫТЬ / МЕНЯТЬ',-1],['enc','PRESETS','SOUND AND ENGINE','ЗВУК И ДВИЖОК',-1],['enc','KNOB 1-4','VALUES AT THE BOTTOM','ЗНАЧЕНИЯ ВНИЗУ',4]]];
+function faqBody(g,pg,ru,dx){const items=FAQ[pg];g.save();g.translate(dx,0);
+ items.forEach((it,i)=>{const y=70+i*32;
+  if(it[0]=='cap'){let x=14;it[1].forEach(c=>{x+=keycap(g,x,y,c,14)+4;});let [s,p]=fit(g,ru?it[3]:it[2],17,234-98-4,12);T(g,s,98,y+(22-p)/2-1,p,TX);}
+  else{const c=it[4]==4?null:'#6d6d75';if(it[4]==4){[0,1,2,3].forEach(j=>circ(g,13+(j%2)*13,y+5+Math.floor(j/2)*12,5,K[j]));}else{circ(g,26,y+11,11,'#2b2b30','#9a9aa2',1.5);line(g,[[26,y+11],[26,y+3]],'#e8e8ee',2);}
+   T(g,it[1],44,y-1,17,TX);const [s,p]=fit(g,ru?it[3]:it[2],14,234-44-4,11);T(g,s,44,y+15,p,DIM);}});g.restore();}
+function faqPage(g,pg,ru,dx=0,cnt){hdr(g,{title:'FAQ',info:['PAGE',cnt]});rr(g,6,64,228,170,5,PNL,EDG);g.save();g.beginPath();g.rect(7,65,226,168);g.clip();faqBody(g,pg,ru,dx);g.restore();}
+scene('s8a',(g,t)=>{const c=t%9600,i=Math.floor(c/3200),l=c%3200,pr=ease((l-2800)/400);const n=(i+1)%3;
+ if(pr<=0)faqPage(g,i,0,0,(i+1)+'/9');else{hdr(g,{title:'FAQ',info:['PAGE',(pr>.5?n+1:i+1)+'/9']});rr(g,6,64,228,170,5,PNL,EDG);g.save();g.beginPath();g.rect(7,65,226,168);g.clip();faqBody(g,i,0,-pr*228);faqBody(g,n,0,(1-pr)*228);g.restore();}},true);
+scene('s8b',(g,t)=>faqPage(g,0,1,0,'1/9'));
+
+/* ---- 9 MICRO D ---- */
+const MDS=['WAVES','THICK','BRIGHT','SHAPE','MOVE'],MDK=[[['SAW','100'],['SHARK','0'],['SQR','0'],['TRI','0']],[['DETUNE','20'],['VOICES','4'],['MODE','PARA'],['GLIDE','0']],[['CUTOFF','64'],['RESO','30'],['DRIVE','10'],['KEY','50']],[['ATTACK','12'],['DECAY','40'],['SUSTAIN','70'],['AMOUNT','60']],[['RATE','2.4'],['DEPTH','30'],['WAVE','TRI'],['DEST','FILT']]];
+function mdIcon(g,i,cx,cy,s,c){const h=s/2;if(i==0)line(g,[[cx-h,cy+h*.5],[cx-h*.2,cy-h*.5],[cx-h*.2,cy+h*.5],[cx+h*.6,cy-h*.5],[cx+h*.6,cy+h*.5]],c,1.6);
+ if(i==1){line(g,[[cx-h,cy+h*.4],[cx-h*.1,cy-h*.5],[cx-h*.1,cy+h*.4],[cx+h*.8,cy-h*.5]],c,1.6);line(g,[[cx-h*.8,cy+h*.6],[cx+h*.1,cy-h*.3],[cx+h*.1,cy+h*.6],[cx+h,cy-h*.3]],c,1);}
+ if(i==2)line(g,[[cx-h,cy-h*.2],[cx,cy-h*.2],[cx+h*.3,cy-h*.6],[cx+h*.5,cy+h*.1],[cx+h,cy+h*.6]],c,1.6);
+ if(i==3)line(g,[[cx-h,cy+h*.6],[cx-h*.5,cy-h*.6],[cx,cy-h*.1],[cx+h*.5,cy-h*.1],[cx+h,cy+h*.6]],c,1.6);
+ if(i==4){g.strokeStyle=c;g.lineWidth=1.6;g.beginPath();for(let k=0;k<=20;k++){const x=cx-h+k*s/20,y=cy-Math.sin(k/20*Math.PI*2)*h*.5;k?g.lineTo(x,y):g.moveTo(x,y);}g.stroke();}}
+function mdStrip(g,cur,sig,old){const y=old?29:28,h=old?23:FS,x0=old?34:44,w=old?37:35,gap=old?3:4;MDS.forEach((s,i)=>{const x=x0+i*(w+gap),on=i==cur;rr(g,x,y,w,h,4,on?AM:'#15131a',on?null:'#3a3540');mdIcon(g,i,x+w/2,y+(old?8:11),14,on?'#000':DIM);T(g,s,x+w/2,y+(old?14:19),old?9:10,on?'#000':DIM,'center');
+  if(i<4){g.fillStyle=on?AM:'#5a5560';g.beginPath();g.moveTo(x+w,y+h/2-3);g.lineTo(x+w+gap,y+h/2);g.lineTo(x+w,y+h/2+3);g.fill();}});
+ if(sig!=null){const px=x0+sig*(5*w+4*gap-4)+2;circ(g,px,y+h-4,2.4,'#fff');}}
+function mdBody(g,cur,t){rr(g,6,66,228,124,4,'#0c0b09','#4a4436');T(g,MDS[cur],120,70,20,AM,'center');const x0=14,w=212,cy=138;g.strokeStyle=K[3];g.lineWidth=2;g.beginPath();
+ for(let i=0;i<=w;i++){const u=i/w,ph=(u*3+t/1500)%1;let y;if(cur==0)y=cy-(ph*2-1)*30;else if(cur==1)y=cy-((ph*2-1)*20+(((u*3+t/1500+.1)%1)*2-1)*20);else if(cur==2)y=cy+28-56/Math.sqrt(1+Math.pow(u/.45,6));else if(cur==3){const e=u<.2?u/.2:u<.5?1-(u-.2)/.3*.4:.6*Math.exp(-(u-.5)*3);y=cy+26-e*52;}else y=cy-Math.sin((u*3+t/1500)*Math.PI*2)*28;i?g.lineTo(x0+i,y):g.moveTo(x0,y);}g.stroke();}
+scene('s9a',(g,t)=>{const cur=Math.floor(t/2400)%5,sig=(t%1200)/1200;hdr(g,{title:'MICRO D'});mdStrip(g,cur,sig,false);mdBody(g,cur,t);knobs(g,MDK[cur]);},true);
+scene('s9b',(g,t)=>{const cur=2;hdr(g,{title:'MICRO D',old:true});mdStrip(g,cur,null,true);mdBody(g,cur,0);knobs(g,MDK[cur]);});
+
+/* ---- 10 BINAURAL ---- */
+function binHdr(g,t){T(g,'120',5,3,22,TX);T(g,'BPM',38,11,11,GRN);T(g,'BINAURAL',120,4,20,TX,'center');
+ const rem=1200-Math.floor(t/1000)%1200,mm=String(Math.floor(rem/60)).padStart(2,'0'),ss=String(rem%60).padStart(2,'0'),col=Math.floor(t/500)%2?':':' ';
+ g.font=F(28);const mw=TW(g,mm,28),sw=TW(g,ss,28),cw=TW(g,':',28);T(g,ss,235,0,28,YEL,'right');T(g,col,235-sw,0,28,YEL,'right');T(g,mm,235-sw-cw,0,28,YEL,'right');
+ fasl(g,[1,1,1,0]);rr(g,206,38,22,11,2,null,TX);g.fillStyle=TX;g.fillRect(228,41,2,5);g.fillStyle=GRN;g.fillRect(208,40,18,7);T(g,'100',200,36,13,DIM,'right');}
+scene('s10',(g,t)=>{binHdr(g,t);const hl=Math.floor(t/1500)%4;hot('c10',hl);
+ T(g,'α',60,64,36,K[0],'center');T(g,'10',120,64,36,YEL,'center');T(g,'Hz',165,72,24,DIM,'left');
+ for(const [y,c,ph] of [[114,K[0],0],[142,K[3],.6]]){g.strokeStyle=c;g.lineWidth=2;g.beginPath();for(let i=0;i<=220;i+=2){const yy=y+Math.sin(i/220*Math.PI*8+t/260+ph)*10;i?g.lineTo(10+i,yy):g.moveTo(10,yy);}g.stroke();}
+ T(g,'L',3,106,13,K[0]);T(g,'R',3,134,13,K[3]);
+ const prog=((Math.floor(t/1000))%1200)/1200;rr(g,10,166,220,8,4,'#101013',EDG);rr(g,10,166,Math.max(8,220*prog),8,4,YEL);
+ T(g,'L 250 / R 260 Hz',120,178,13,DIM,'center');
+ knobsIc(g,[['brain','α 10'],['ear','250'],['timer','20m'],['vol','20']],hl,t/260);},true);
+mkChips('c10',['KNOB 1 · ритм (мозговая волна)','KNOB 2 · несущая (ухо)','KNOB 3 · таймер','KNOB 4 · громкость шума']);
+
+/* ---- 11 GLOBAL ---- */
+const GL=[['OUTPUT','0DB'],['BPM','120'],['SWING','0%'],['CLICK','OFF'],['COUNT IN','OFF'],['CLOCK','INT'],['LOW CUT','OFF'],['BLUETOOTH','OFF',1],['MIDI OUT','LOCAL'],['MIDI SYNC','ON'],['TRACK ROLE','T1 NORMAL'],['SCOPE','',1],['BINAURAL','OFF',1],['3D SOUND','OFF',1],['KEYS LATCH','OFF'],['LANGUAGE','ENGLISH'],['THEME','ORGANIC'],['INFO','',1]];
+/* the firmware GLOBAL drum: chosen row large in a box, two neighbours each side (13/17/24 px fonts) */
+function glDrum(g,sel){const ys=[66,86,112,144,168],ps=[15,19,27,19,15],cs=['#6a6a72','#a8a8b0',TX,'#a8a8b0','#6a6a72'];rr(g,8,108,224,32,4,'#1c1a21');
+ for(let d=-2;d<=2;d++){const r=GL[(sel+d+GL.length)%GL.length];let txt=r[0]+(r[1]?'  '+r[1]:'')+(r[2]?'  >':''),p=ps[d+2];while(TW(g,txt,p)>216&&p>13)p--;T(g,txt,120,ys[d+2]+(ps[d+2]-p)/2,p,cs[d+2],'center');}}
+function glList(g,top,sel,rowsVis,fl){const rh=26,y0=64;g.save();g.beginPath();g.rect(0,y0,240,rowsVis*rh);g.clip();
+ GL.forEach((r,i)=>{const y=y0+(i-top)*rh;if(y<y0-rh||y>y0+rowsVis*rh)return;const on=i==sel;if(on)rr(g,6,y+1,224,rh-2,5,'#1c1522',K[0],1.5);
+  T(g,r[0],16,y+3,19,on?TX:DIM);const ar=r[2];if(ar)T(g,'>',226,y+3,19,on?K[0]:DIM,'right');if(r[1])T(g,r[1],ar?212:226,y+3,19,on?K[1]:DIM,'right');});g.restore();
+ const th=rowsVis*rh*rowsVis/GL.length,ty=y0+(rowsVis*rh-th)*top/(GL.length-rowsVis);g.fillStyle='#3a3540';g.fillRect(236,Math.round(ty),2,Math.round(th));}
+function glKnobs(g,sel){const r=GL[sel];if(r[2])return knobs(g,[['STATE',r[1]||'—'],['',''],['',''],['','']].map((a,i)=>i==0&&!r[1]?['',''] :a));
+ const m={'TRACK ROLE':[['ROLE','SYNTH'],['IN CH','1'],['',''],['','']]};knobs(g,m[r[0]]||[[r[0].length>9?r[0].slice(0,8):r[0],r[1]],['',''],['',''],['','']]);}
+scene('s11',(g,t)=>{const seq=[10,11,12,13,14],n=Math.floor(t/1500),i=seq[n%5],pi=seq[(n+4)%5],l=(t%1500)/1500;
+ const tg=s=>Math.min(Math.max(s-2,0),GL.length-5),top=tg(pi)+(tg(i)-tg(pi))*ease(l*4);if(n%5==0&&l<.3)hot('c11',0);hot('c11',l<.3?0:(GL[i][2]&&l>.7?1:-1));
+ hdr(g,{title:'GLOBAL',info:['ROW',(i+1)+'/18']});glDrum(g,i);glKnobs(g,i);},true);
+mkChips('c11',['SELECT · строка','ALGORITHM · открыть страницу (только у строк с «>»)']);
+
+/* ---- 12 3D ---- */
+scene('s12',(g,t)=>{const az=Math.sin(t/2200)*90,hl=Math.floor(t/1800)%4,mode=['OFF','XFEED','ROOM'][Math.floor(t/3600)%3];hot('c12',hl);
+ hdr(g,{title:'3D SOUND',info:['STATE','ON']});
+ T(g,mode,120,62,26,K[0],'center');
+ const cx=120,cy=128,R=36;g.setLineDash([2,3]);circ(g,cx,cy,R,null,'#3a3540',1);g.setLineDash([]);
+ circ(g,cx,cy,22,'#15131a',TX,2);line(g,[[cx-5,cy-22],[cx,cy-29],[cx+5,cy-22]],TX,2);rr(g,cx-26,cy-6,5,12,2,TX);rr(g,cx+21,cy-6,5,12,2,TX);
+ const a=(az-90)*Math.PI/180,sx=cx+Math.cos(a)*R,sy=cy+Math.sin(a)*R;line(g,[[cx,cy],[sx,sy]],'#6a5a1a',1.5);circ(g,sx,sy,6,YEL);
+ const wv=60,mx=80;T(g,'WIDTH',34,94,12,DIM,'center');T(g,String(wv),34,106,30,K[1],'center');T(g,'MIX',206,94,12,DIM,'center');T(g,String(mx),206,106,30,K[3],'center');
+ const as=(az>=0?'+':'')+Math.round(az)+'°';T(g,as,120,164,26,YEL,'center');
+ knobsIc(g,[['phones',mode],['width',String(wv)],['azim',as],['mix',String(mx)]],hl,a+Math.PI/4);},true);
+mkChips('c12',['KNOB 1 · режим','KNOB 2 · ширина','KNOB 3 · азимут','KNOB 4 · микс']);
+
+/* ---- 13 LATCH ---- */
+scene('s13a',(g,t)=>{const c=t%6000,on=c>2000&&c<5000,hl=c>1600&&c<2600?0:-1;
+ GL[14][1]=on?'ON':'OFF';hdr(g,{title:'GLOBAL',info:['ROW','15/18'],latch:on});glDrum(g,14);knobs(g,[['LATCH',on?'ON':'OFF'],['',''],['',''],['','']],hl);},true);
+scene('s13b',(g,t)=>{hdr(g,{title:'SEQUENCER',latch:true,eng:['303','ACID BASS 2'],seqCorner:true,chain:true});seqGrid(g,t);knobs(g,SEQ_KN);},true);
+
+/* ---- 14 INFO ---- */
+function tile(g,x,y,lab,val,col,sub){rr(g,x,y,110,58,5,PNL,EDG);T(g,lab,x+55,y+4,12,DIM,'center');T(g,val,x+55,y+17,28,col,'center');if(sub)T(g,sub,x+55,y+44,11,DIM,'center');}
+scene('s14a',(g,t)=>{hdr(g,{title:'INFO',info:['PAGE','1/1']});const now=Math.round(44+16*Math.sin(t/700)+6*Math.sin(t/230)),tp=Math.max(61,now);
+ tile(g,8,66,'CPU NOW',now+'%',GRN,'');tile(g,122,66,'PEAK · LAST RUN','97%',RED,'THIS RUN '+Math.round(tp)+'%');tile(g,8,128,'FLASH FREE','176 KB',K[2],'');tile(g,122,128,'RAM FREE','41 KB',K[3],'');
+ const bw=Math.round(now/100*220);rr(g,10,190-4,220,3,1,'#101013');g.fillStyle=GRN;g.fillRect(10,186,bw,3);g.fillStyle=RED;g.fillRect(10+Math.round(.97*220)-1,184,2,7);
+ knobs(g,[['LANGUAGE','ENGLISH'],['',''],['',''],['KO-FI','QR']]);},true);
+scene('s14b',(g,t)=>{hdr(g,{title:'GLOBAL',info:['ROW','18/18']});glDrum(g,17);knobs(g,[['INFO','>'],['',''],['',''],['','']]);T(g,'CPU 34%  PEAK 61%',70,202,13,DIM);T(g,'LAST RUN PEAK 97%',70,219,13,RED);},true);
+
+/* ---- loop ---- */
+function render(s,now){const g=s.g;g.setTransform(1,0,0,1,0,0);g.fillStyle='#000';g.fillRect(0,0,240,240);g.textBaseline='top';g.save();s.draw(g,now);g.restore();}
+const io=new IntersectionObserver(es=>es.forEach(e=>{const s=S.find(x=>x.el===e.target);s.vis=e.isIntersecting;}),{rootMargin:'100px'});
+S.forEach(s=>io.observe(s.el));
+function frame(now){if(fontsOk)for(const s of S){if(!s.vis)continue;if(!s.anim&&s.done)continue;render(s,now);s.done=true;}requestAnimationFrame(frame);}
+function measures(){const c=document.createElement('canvas').getContext('2d');
+ document.getElementById('g1').textContent=44-(5+FS);
+ let tp=20;while(120+TW(c,'SEQUENCER',tp)/2>148&&tp>16)tp--;const tr=120+TW(c,'SEQUENCER',tp)/2;
+ document.getElementById('g13a').textContent=(155-tr).toFixed(1);document.getElementById('g13b').textContent=(183-181);}
+Promise.race([document.fonts.load('700 20px "Barlow Condensed"'),new Promise(r=>setTimeout(r,2500))]).catch(()=>{}).then(()=>{fontsOk=true;S.forEach(s=>s.done=false);measures();});
+requestAnimationFrame(frame);
+</script></body></html>

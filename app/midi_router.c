@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: GPL-3.0-only WITH GPL-3.0-linking-exception */
 #include "instrument.h"
 #include "fm1_engine_control.h"
+#include "micro_d.h"
+#ifndef FM1_HOST_TEST
+#include "fm1_device.h"
+#endif
 #include <string.h>
 #ifdef FM1_HOST_TEST
 #include <stdatomic.h>
@@ -27,6 +31,7 @@ static uint32_t clock_seen, clock_phase;
 static uint32_t resume_phase;
 static unsigned clock_first, resume_first, master_running;
 static uint32_t dropped;
+static uint8_t live_held[GROOVE_TRACKS][16]; /* live notes MICRO D got (live_micro_d) */
 /* Boards with independent held-key state discard its old MIDI ownership when
  * routing changes. FM1's common panel already retries released keys itself. */
 extern void groove_midi_panel_reset(void) __attribute__((weak));
@@ -40,8 +45,11 @@ static FM1_AUDIO_CODE void barrier(void)
 }
 static unsigned size(unsigned status) { return status >= 0xf8 ? 1 : (status & 0xe0U) == 0xc0U ? 2 : 3; }
 static unsigned channel(unsigned track) { return (config.channel[track >> 1] >> (4U * (track & 1U))) & 15U; }
+static unsigned user_mode(unsigned track) { return (config.mode[track >> 2] >> (2U * (track & 3U))) & 3U; }
+/* A MICRO D track runs its silent host in MIDI-only mode: the instrument
+ * sequences it and hands every note to groove_midi_note below. */
 FM1_AUDIO_CODE unsigned groove_midi_mode(unsigned track)
-{ return (config.mode[track >> 2] >> (2U * (track & 3U))) & 3U; }
+{ return micro_d_owns(track) ? 2U : (config.mode[track >> 2] >> (2U * (track & 3U))) & 3U; }
 void groove_midi_defaults(struct groove_midi_config *c)
 {
     static const uint8_t channels[4] = {0x10, 0x32, 0x54, 0x96};
@@ -92,14 +100,14 @@ void groove_midi_clock_reset(void)
 }
 void groove_midi_init(void)
 {
-    memset(events, 0, sizeof events); memset(output, 0, sizeof output);
+    memset(events, 0, sizeof events); memset(output, 0, sizeof output); memset(live_held, 0, sizeof live_held);
     groove_midi_defaults(&config);
     ready_seen = dropped = clock_seen = 0; groove_midi_clock_reset();
 }
 unsigned groove_midi_setting(unsigned track, unsigned parameter)
 {
     switch (parameter) {
-    case 0: return groove_midi_mode(track);
+    case 0: return user_mode(track);
     case 1: return channel(track);
     case 2: return config.flags & 7U;
     case 3: return !(config.flags & LOCAL_OFF);
@@ -120,8 +128,31 @@ static FM1_AUDIO_CODE void enqueue(unsigned lane, unsigned owner, unsigned ports
     q->data[w & (QUEUE - 1)] = status | (a << 8) | (b << 16) | (owner << 24) | (ports << 29);
     barrier(); q->write = w + 1U;
 }
+/* SEQ FOLLOW (rework C2, page 3 K3), MICRO D tracks only: the control task sets the shift of the held key
+ * (-6..+6, 0 = none); every generated note-on MICRO D gets is moved by it, and the shift it got is kept per source
+ * note (4 bits: shift + 8, 0 = none) so the note-off ends the same note even when the key changed meanwhile. */
+static volatile int8_t follow_shift[GROOVE_TRACKS];
+static uint8_t follow_held[GROOVE_TRACKS][64];
+void groove_midi_follow(unsigned track, int shift)
+{
+    if (track < GROOVE_TRACKS) follow_shift[track] = (int8_t)(shift < -7 ? -7 : shift > 7 ? 7 : shift);
+}
+static FM1_AUDIO_CODE unsigned follow_note(unsigned track, unsigned note, unsigned velocity)
+{
+    if (note > 127) return note;
+    uint8_t *b = &follow_held[track][note >> 1];
+    unsigned at = (note & 1U) * 4U, was = (*b >> at) & 15U;
+    *b = (uint8_t)(*b & ~(15U << at));
+    if (!velocity) return was ? note + was - 8U : note;
+    int n = (int)note + follow_shift[track];
+    if (n < 0 || n > 127) n = (int)note; /* past the ends: unshifted */
+    if (was && note + was - 8U != (unsigned)n) micro_d_note(track, note + was - 8U, 0); /* a retrigger with a new shift */
+    *b = (uint8_t)(*b | (unsigned)(n - (int)note + 8) << at);
+    return (unsigned)n;
+}
 FM1_AUDIO_CODE void groove_midi_note(unsigned track, unsigned note, unsigned velocity)
 {
+    if (micro_d_owns(track)) { micro_d_note(track, follow_note(track, note, velocity), velocity); return; } /* not sent out */
     if (!groove_midi_mode(track)) return;
     unsigned ch = (config.channel[track >> 1] >> (4U * (track & 1U))) & 15U;
     enqueue(track & 1U, track, config.flags & 7U, (velocity ? 0x90U : 0x80U) | ch, note, velocity);
@@ -272,6 +303,84 @@ void groove_midi_poll(void)
         if (!found) break;
     }
 }
+/* Keys and our arpeggiator reach a MICRO D track here (its host only
+ * sequences in MIDI-only mode); the instrument's own arpeggiator, when on,
+ * plays it through groove_midi_note instead.
+ * live_held marks the live notes MICRO D got here. A note off goes to exactly
+ * those, even when the ARP or LOCAL OFF was switched on while the key was
+ * held (else the note would hang), and never to a note MICRO D did not get
+ * (in MONO / UNISON a stray note off would retrigger the held note).
+ * Two writers (control task, MIDI routing task): the bit is changed with
+ * interrupts held, as micro_d_live does for its queue. Returns the old bit. */
+static unsigned live_mark(unsigned track, unsigned note, unsigned on)
+{
+#ifndef FM1_HOST_TEST
+    uint32_t irq = fm1_device_irq_save();
+#endif
+    uint8_t *b = &live_held[track][note >> 3], bit = (uint8_t)(1U << (note & 7U));
+    unsigned was = (*b & bit) != 0;
+    if (on) *b |= bit; else *b &= (uint8_t)~bit;
+#ifndef FM1_HOST_TEST
+    fm1_device_irq_restore(irq);
+#endif
+    return was;
+}
+static void live_micro_d(const uint8_t *m, size_t n, unsigned targets, unsigned local)
+{
+    if (n != 3 || (m[0] & 0xe0U) != 0x80U) return;
+    unsigned on = (m[0] & 0xf0U) == 0x90U && m[2];
+    if (on && local && (config.flags & LOCAL_OFF)) return;
+    for (unsigned t = 0; t < GROOVE_TRACKS; ++t) {
+        if (!(targets & (1U << t))) continue;
+        if (!micro_d_track(t)) { /* its slot is gone (or never was): forget the key, no lock unless marked */
+            if (live_held[t][m[1] >> 3] & (1U << (m[1] & 7U))) (void)live_mark(t, m[1], 0);
+            continue;
+        }
+        if (on) {
+            if (groove_arp_enabled(t)) continue;
+            (void)live_mark(t, m[1], 1);
+            micro_d_live(t, m[1], m[2]);
+        } else if (live_mark(t, m[1], 0)) micro_d_live(t, m[1], 0);
+    }
+}
+/* A MICRO D track's PSG host is silent, yet a live note on still starts its
+ * voices: they cost render time on the host's core and count against the
+ * instrument's voice budget. So when every target of the channel is a MICRO D
+ * track with the instrument's ARP off and nothing records, a live note on
+ * reaches the instrument as a note off of the same key: no voice starts, and
+ * the instrument still counts the note as MIDI activity (track MIDI light,
+ * autosave rest). The ARP needs the note to play the track, recording needs it
+ * for the take, a mixed channel needs it for its other tracks. Note offs and
+ * every other message pass unchanged, so whoever got a note on gets its off. */
+static unsigned host_skip(const uint8_t *m, size_t n, unsigned targets)
+{
+    if (n != 3 || (m[0] & 0xf0U) != 0x90U || !m[2] || !targets || groove_edit_recording()) return 0;
+    for (unsigned t = 0; t < GROOVE_TRACKS; ++t)
+        if ((targets & (1U << t)) && (!micro_d_track(t) || groove_arp_enabled(t))) return 0;
+    return 1;
+}
+static int post_live(const uint8_t *m, size_t n, unsigned targets)
+{
+    if (!host_skip(m, n, targets)) return fm1_midi_post(m, n);
+    const uint8_t off[3] = {(uint8_t)(0x80U | (m[0] & 15U)), m[1], 0};
+    return fm1_midi_post(off, 3);
+}
+/* DIN / USB / BLE input on a channel whose every target is a MICRO D track: the silent PSG host would obey
+ * the controllers (CC 7 makes it audible, program change picks a PSG wave, CC 74 / 72 / 10 / 11 / 91 / 121,
+ * bank select, pitch bend and pressure reach the PSG voice), so MICRO D sounded like PSG (device 11.11).
+ * Only what MICRO D's host needs goes to the instrument: notes (post_live), CC 64 sustain, CC 120 / 123 all
+ * sound / notes off. System messages have no targets and always pass; a mixed channel is not filtered (its
+ * other tracks need the controllers; micro_d_host_guard silences the host again). MIDI Thru is not changed. */
+static unsigned host_drop(const uint8_t *m, size_t n, unsigned targets)
+{
+    if (!targets || m[0] >= 0xf0U) return 0;
+    for (unsigned t = 0; t < GROOVE_TRACKS; ++t)
+        if ((targets & (1U << t)) && !micro_d_track(t)) return 0;
+    unsigned type = m[0] & 0xf0U;
+    if (type == 0x80U || type == 0x90U) return 0;
+    if (type == 0xb0U && n == 3 && (m[1] == 64 || m[1] == 120 || m[1] == 123)) return 0;
+    return 1;
+}
 int groove_midi_local(const uint8_t *m, size_t n)
 {
     if (!m || !n || n > 3 || m[0] < 0x80 || (n > 1 && m[1] >= 128) || (n > 2 && m[2] >= 128)) return -1;
@@ -286,7 +395,8 @@ int groove_midi_local(const uint8_t *m, size_t n)
     /* An Off/unmapped channel is intentionally silent, not a queue failure.
      * The panel interprets failure as a lost key and performs a global reset. */
     if (!targets) return 0;
-    int result = (config.flags & LOCAL_OFF) ? 0 : fm1_midi_post(m, n);
+    live_micro_d(m, n, targets, 1);
+    int result = (config.flags & LOCAL_OFF) ? 0 : post_live(m, n, targets);
     if (result) { groove_midi_panic(); return result; }
     if (!(config.flags & LIVE_OUT)) return 0;
     unsigned note = (m[0] & 0xe0U) == 0x80U;
@@ -321,7 +431,13 @@ void fm1_app_midi_received(unsigned source, const uint8_t *m, size_t n)
     if (source >= 3 || !m || !n || n > 3) return;
     unsigned clock = m[0] == 0xf8 || m[0] == 0xfa || m[0] == 0xfb || m[0] == 0xfc || m[0] == 0xf2;
     if (clock && !groove_midi_clock_accept(source, m[0])) return;
-    (void)fm1_midi_post(m, n);
+    unsigned targets = 0;
+    if (m[0] < 0xf0) {
+        for (unsigned t = 0; t < GROOVE_TRACKS; ++t)
+            if (groove_track_role(t) != GROOVE_TRACK_OFF && groove_midi_input_channel(t) == (m[0] & 15U)) targets |= 1U << t;
+        live_micro_d(m, n, targets, 0);
+    }
+    if (!host_drop(m, n, targets)) (void)post_live(m, n, targets);
     if (m[0] == 0xff) enqueue(2, 0, (config.flags | config.thru) & 7U, 0xff, 0, 0);
     if (((config.thru >> 3) & 3U) == source && m[0] != 0xff && (m[0] < 0xf0 || clock)) {
         unsigned ports = config.thru & 7U & ~(1U << source) & fm1_midi_output_ports();

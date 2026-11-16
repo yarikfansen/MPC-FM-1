@@ -362,7 +362,12 @@ SECTIONS
     } > ram0
     _HEAP_BEGIN = ALIGN(., 32);
     PROVIDE(HEAP_BEGIN = _HEAP_BEGIN);
-    _HEAP_END = 0x1c00000 + RAM0_SIZE - 32;
+    /* Black box (app/blackbox.c): 32 bytes that the start-up code neither
+     * clears nor loads. The heap ends 64 bytes lower than in the stock layout
+     * and keeps its own 32 bytes above HEAP_END; the top 32 bytes of ram0
+     * stay unused as before. */
+    fm1_blackbox_ram = 0x1c00000 + RAM0_SIZE - 64;
+    _HEAP_END = fm1_blackbox_ram - 32;
     PROVIDE(HEAP_END = _HEAP_END);
     _MALLOC_SIZE = _HEAP_END - _HEAP_BEGIN;
     PROVIDE(MALLOC_SIZE = _HEAP_END - _HEAP_BEGIN);

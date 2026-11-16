@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FM-1 v12 эскизы эффектов</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#141217;color:#ddd;font:14px/1.45 system-ui,sans-serif}
+main{max-width:1060px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:6px 0 2px}h2{font-size:16px;margin:0 0 10px;color:#fff}
+.lead{color:#aaa;margin:0 0 14px}
+.card{background:#1d1a21;border:1px solid #2c2932;border-radius:10px;padding:12px 14px;margin-bottom:16px}
+canvas{width:480px;image-rendering:pixelated;border-radius:4px;display:block;background:#000;max-width:100%;height:auto;aspect-ratio:1}
+.row{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-bottom:8px}
+.cap{text-align:center;font-size:12px;color:#9a93a3;margin-bottom:4px}
+p,ul{margin:6px 0 0;color:#bbb;font-size:13px}ul{padding-left:18px}li{margin:2px 0}
+b{color:#e8e2ec}
+code{background:#26222b;padding:0 4px;border-radius:3px;color:#ddd}
+.q{border-left:3px solid #ffd23f;padding-left:10px}
+.info{border-left:3px solid #2fd8c8;padding-left:12px}
+table{border-collapse:collapse;font-size:13px;margin-top:8px}td,th{border:1px solid #38333f;padding:4px 8px;text-align:left;color:#ccc}th{color:#fff;background:#26222b}
+</style></head><body><main>
+<h1>FM-1 v12 — эскизы эффектов (только макеты, прошивка не менялась)</h1>
+<p class="lead">Экраны 240×240, показаны ×2 (pixelated), всё движется. Стиль — как v11: чёрный фон, ручки розовая / зелёная / жёлтая / бирюзовая. Подписи на экране — по-английски, пояснения — по-русски. Значки нарисованы пиксель в пиксель на сетке 16×16 (в листе значков — увеличены ×2).</p>
+
+<div class="card"><h2>0. Лист значков (сетка 16×16 px)</h2>
+<div class="row"><div><div class="cap">значки MASTER FX (10 штук, включая COMP) и вкладок TRACK FX (4 штуки)</div><canvas id="s0"></canvas></div></div>
+<ul><li>Один цвет, одна линия толщиной 1 px, без заливок — читаются при 16 px. Фильтр — АЧХ с горбом резонанса; DRIVE — S-кривая ограничения; CHORUS — две волны со сдвигом; PHASER — спираль; RING MOD — два сцепленных кольца; REVERB — облако/комната; EQ — три ползунка; DELAY — затухающие точки эха; SENDS — ветвление сигнала со стрелками; COMP — две стрелки «сжимают» сигнал к линии порога.</li></ul></div>
+
+<div class="card"><h2>1. MASTER FX: значки вместо коротких названий</h2>
+<div class="row"><div><div class="cap">было: строка FLT DRV CHO … (мелкий текст 12 px)</div><canvas id="s1a"></canvas></div><div><div class="cap">стало: значки 16 px; выбранный — цвет ручки 1 и подчёркивание</div><canvas id="s1b"></canvas></div></div>
+<ul><li><b>Правила цвета:</b> эффект ВКЛЮЧЁН — значок белый, ВЫКЛЮЧЕН — тусклый серый; выбранный всегда розовый (в цвет ручки 1) с подчёркиванием 2 px; если выбранный выключен — розовый тёмнее. Значения ВКЛ/ВЫКЛ в эскизе: FLT, DRV, PHA, REV, EQ, SND включены.</li>
+<li>Полное имя эффекта осталось крупно (30 px) по центру шапки и меняется при повороте PRESETS. Ячейки по 25 px (9 значков), значок 16 px — зазор между значками 9 px, не касаются. Кривая эффекта сдвинулась вниз на 10 px (строка значков вместе с подчёркиванием 20 px вместо 17) — ручки и значения без изменений.</li>
+<li>Анимация: PRESETS листает эффекты по кругу, кривая и четыре ручки меняются.</li></ul></div>
+
+<div class="card"><h2>2. TRACK FX: вкладки TRACK / SHARED / DELAY значками</h2>
+<div class="row"><div><div class="cap">было: текстовые вкладки</div><canvas id="s2a"></canvas></div><div><div class="cap">стало: значок 16 px + подпись 11 px под ним</div><canvas id="s2b"></canvas></div></div>
+<ul><li>Тот же приём, что в MASTER FX: белый — страница в работе / тусклый — остальные, выбранная — розовая с подчёркиванием. Подпись остаётся (вкладок мало, места хватает) — значок помогает найти вкладку взглядом, слово — не гадать.</li>
+<li>TRACK: значок двух фейдеров, в теле — отправки REV (зелёная) и DLY (жёлтая) всех 8 дорожек, выбранная дорожка подсвечена. SHARED: значок «много линий в одну» — общий ревербератор. DELAY: значок эха. В шапке сохранены имя звука и окно TRACK 3.</li></ul></div>
+
+<div class="card"><h2>3. КОМПРЕССОР: рекомендую 10-ю строку MASTER FX «COMP»</h2>
+<div class="row"><div><div class="cap">A (рекомендую): 10-й значок в MASTER FX, график передачи + измеритель GR</div><canvas id="s3a"></canvas></div><div><div class="cap">B (запасной): только пресет в GLOBAL → OUTPUT</div><canvas id="s3b"></canvas></div></div>
+<ul><li><b>Почему A:</b> «клей» нужен всему миксу и звучит по-разному в зависимости от того, что стоит до него; на выделенной странице видны порог и сжатие, есть честные ручки и измеритель. Ставим <b>в конец цепи MASTER FX — после EQ, перед выходным лимитером</b>: компрессор сглаживает пики, лимитер только страхует от клиппинга. Новая строка добавляется в конец (десятая), порядок остальных не меняется — мышечная память сохраняется.</li>
+<li>Ручки: <b>THRESH</b> (−36…0 dB), <b>RATIO</b> (1.5 : 1 … 10 : 1), <b>SPEED</b> (одна ручка: SLOW … FAST — задаёт и атаку, и релиз парой; «клеевые» пары вроде 30 мс / 300 мс), <b>MIX</b> (0…100 % — параллельная компрессия, 100 % = обычная). Громкость возмещается автоматически (auto makeup). Слева в боксе — кривая вход/выход с точкой текущего уровня и красным излишком над порогом, посередине — вертикальный измеритель GR, справа — крупное число GR в dB и история сжатия за последние секунды.</li>
+<li><b>Цена по CPU</b> (оценка, не замерено): одна огибающая и одно деление на кадр, заметно дешевле реверба или хоруса. Включается только при состоянии ON — как остальные эффекты.</li>
+<li><b>B:</b> в GLOBAL у строки OUTPUT добавляется «OUTPUT COMP: OFF / LIGHT / GLUE / HARD» — три готовых настройки без ручек, измеритель GR — маленькая полоска в окне info. Проще и без новой страницы, но не видно, что происходит, и нельзя подстроить порог под материал. Годится, если решим не расширять MASTER FX.</li></ul></div>
+
+<div class="card info"><h2>4. TRACK FX: что можно сделать на дорожку (справка)</h2>
+<ul>
+<li><b>Как сейчас.</b> Движок даёт каждой дорожке только громкость и две отправки — в общий <b>REVERB</b> и общий <b>DELAY</b>. Наши мастер-эффекты (FILTER, DRIVE, CHORUS, PHASER, RING MOD, REVERB, EQ, COMP) обрабатывают уже готовую сумму всех дорожек — отдельную дорожку ими не поправить.</li>
+<li><b>Что стоило бы добавить.</b> Вставной эффект (insert) на каждую дорожку: например DRIVE на бочку или срез низа на пэд, не трогая остальные.</li>
+<li><b>Цена.</b> Эффект на дорожке считается столько раз, сколько дорожек (до 8), а не один раз на всю сумму. Пик CPU сегодня около <b>66 %</b>. Поэтому предлагаю <b>не больше одного дешёвого insert-а на дорожку</b>, а не полный набор: DRIVE (один делитель на кадр) или LOW CUT / HIGH CUT (один однополюсный фильтр, самое дешёвое). Оценка: LOW/HIGH CUT на всех 8 дорожках — порядка +3…5 % CPU, DRIVE — порядка +8…12 % (оценка по аудиту, нужно замерить).</li>
+<li><b>Рекомендация:</b> один вставной эффект INSERT с ручкой TYPE: <code>OFF · LOW CUT · HIGH CUT · DRIVE</code> и одной ручкой AMOUNT. Выключенные дорожки ничего не стоят.</li>
+<li><b>Оговорка (открытый вопрос):</b> по аудиту (effects-audit.md, п. 9) отправки на дорожку делает закрытая библиотека движка, «приложение» их не видит. Если и сумма дорожек внутри неё — вставки на дорожки без доступа к буферам не сделать; для собственного движка MICRO D это возможно сразу. Нужно проверить, отдаёт ли движок буфер каждой дорожки до сведения.</li>
+</ul></div>
+
+<div class="card"><h2>5. TRACK FX: четвёртая вкладка «INSERT»</h2><p class="cap" style="color:#f08a5d"><b>Проверка Opus:</b> закрытый движок отдаёт только общую смесь всех дорожек (fm1_engine_render), отдельного звука дорожки нет. Поэтому INSERT возможен только на дорожке MICRO D (его считаем мы сами); для остальных движков — нет. Предлагаю не делать вкладку для всех, а дать MICRO D свой DRIVE/LOW CUT на его странице.</p>
+<div class="row"><div><div class="cap">анимация: вкладки идут по кругу; на INSERT меняются тип и количество</div><canvas id="s5"></canvas></div></div>
+<ul><li>В полосе значков теперь 4 вкладки по 57 px; значок вставки — «труба сквозь коробку» (сигнал входит и выходит). У INSERT: KNOB 1 = TYPE (OFF · LOW CUT · HIGH CUT · DRIVE), KNOB 2 = AMOUNT (0…100). KNOB 3, 4 пустые («-») — места под будущее, например MIX. Выбор дорожки — SELECT, как на остальных вкладках (окно TRACK 3 под батареей).</li>
+<li>В боксе: слева кривая действия (срез или S-кривая насыщения), справа крупно значение AMOUNT; внизу подпись «THIS TRACK ONLY», чтобы было понятно, что это не мастер. Остальные три вкладки без изменений.</li></ul></div>
+
+<div class="card q"><h2>Вопросы вам</h2><ul>
+<li>COMP в конец списка (10-я, после SENDS) или между EQ и DELAY по порядку сигнала? В эскизе — в конце, чтобы не сдвигать остальные.</li>
+<li>INSERT на дорожку — только если движок отдаёт буфер дорожки; делаем сначала проверку, потом код?</li></ul></div>
+</main>
+<script>
+const TX='#f2eef5',DIM='#8b8494',FT='#4a4552',K=['#ff7eb3','#3ee07a','#ffd23f','#2fd8c8'],GRN='#3ee07a',RED='#ff4b4b',YEL='#ffd23f',PNL='#0b0a0d',EDG='#2a2730',OFFC='#5b5564';
+const ENGC={'303':'#b6f03c'};
+const F=p=>'700 '+p+'px "Barlow Condensed","Arial Narrow",sans-serif';
+function rr(g,x,y,w,h,r,f,s,lw=1){g.beginPath();g.roundRect(x,y,w,h,r);if(f){g.fillStyle=f;g.fill();}if(s){g.strokeStyle=s;g.lineWidth=lw;g.stroke();}}
+function T(g,s,x,y,p,c,a='left'){g.font=F(p);g.fillStyle=c;g.textAlign=a;g.textBaseline='top';g.fillText(s,Math.round(x),Math.round(y));}
+function TW(g,s,p){g.font=F(p);return g.measureText(s).width;}
+function fit(g,s,p,maxw,minp=13){while(p>minp&&TW(g,s,p)>maxw)p--;if(TW(g,s,p)>maxw){while(s.length>1&&TW(g,s+'…',p)>maxw)s=s.slice(0,-1);s+='…';}return[s,p];}
+function line(g,pts,c,w=2){g.strokeStyle=c;g.lineWidth=w;g.lineJoin='round';g.lineCap='round';g.beginPath();pts.forEach((p,i)=>i?g.lineTo(...p):g.moveTo(...p));g.stroke();}
+function circ(g,x,y,r,f,s,lw=1){g.beginPath();g.arc(x,y,r,0,7);if(f){g.fillStyle=f;g.fill();}if(s){g.strokeStyle=s;g.lineWidth=lw;g.stroke();}}
+const S=[];let fontsOk=false;
+function scene(id,draw,anim){const el=document.getElementById(id);el.width=240;el.height=240;S.push({id,el,g:el.getContext('2d'),draw,anim:!!anim,vis:false,done:false});}
+
+/* ---- pixel icons, 16x16 grid, 1 px lines ---- */
+function pxl(g,x,y,a){g.globalAlpha=a==null?1:a;g.fillRect(x,y,1,1);}
+function ln(g,ox,oy,x0,y0,x1,y1,a){x0=Math.round(x0);y0=Math.round(y0);x1=Math.round(x1);y1=Math.round(y1);const dx=Math.abs(x1-x0),dy=-Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1;let e=dx+dy;for(;;){pxl(g,ox+x0,oy+y0,a);if(x0==x1&&y0==y1)break;const e2=2*e;if(e2>=dy){e+=dy;x0+=sx;}if(e2<=dx){e+=dx;y0+=sy;}}}
+function pl(g,ox,oy,p,a){for(let i=1;i<p.length;i++)ln(g,ox,oy,p[i-1][0],p[i-1][1],p[i][0],p[i][1],a);}
+function arc(g,ox,oy,cx,cy,r,a0,a1){const n=Math.ceil(r*Math.abs(a1-a0)*3);for(let i=0;i<=n;i++){const a=a0+(a1-a0)*i/n;pxl(g,ox+Math.round(cx+r*Math.cos(a)),oy+Math.round(cy+r*Math.sin(a)));}}
+function bx(g,ox,oy,x,y,w,h,a){g.globalAlpha=a==null?1:a;g.fillRect(ox+x,oy+y,w,h);}
+const ICON={
+flt:(g,o,p)=>pl(g,o,p,[[0,6],[7,6],[9,3],[11,6],[15,14]]),
+drv:(g,o,p)=>{ln(g,o,p,0,8,15,8,.3);ln(g,o,p,8,0,8,15,.3);pl(g,o,p,[[1,14],[4,14],[6,12],[8,8],[10,4],[12,2],[15,2]]);},
+cho:(g,o,p)=>{for(let x=0;x<16;x++){pxl(g,o+x,p+Math.round(4+Math.sin(x/16*Math.PI*3)*2.5));pxl(g,o+x,p+Math.round(11+Math.sin(x/16*Math.PI*3+1.2)*2.5),.65);}},
+pha:(g,o,p)=>{for(let a=0;a<12.6;a+=.07){const r=.8+a*.52;pxl(g,o+Math.round(7.5+r*Math.cos(a)),p+Math.round(7.5+r*Math.sin(a)));}},
+rng:(g,o,p)=>{arc(g,o,p,5.5,7.5,5,0,7);arc(g,o,p,10.5,7.5,5,0,7);},
+rev:(g,o,p)=>{arc(g,o,p,4.5,9.5,3.5,Math.PI*.9,Math.PI*1.55);arc(g,o,p,8,7,4.5,Math.PI*1.1,Math.PI*1.95);arc(g,o,p,11.5,9.5,3.5,Math.PI*1.45,Math.PI*2.1);ln(g,o,p,1,13,14,13);},
+eq:(g,o,p)=>{[[2,9],[7,3],[12,6]].forEach(([x,y])=>{ln(g,o,p,x,1,x,14,.5);bx(g,o,p,x-2,y,5,3);});},
+dly:(g,o,p)=>{bx(g,o,p,0,5,6,6);bx(g,o,p,8,6,4,4,.75);bx(g,o,p,13,7,2,2,.5);},
+snd:(g,o,p)=>{ln(g,o,p,0,8,5,8);pl(g,o,p,[[5,8],[8,3],[13,3]]);pl(g,o,p,[[5,8],[8,13],[13,13]]);pl(g,o,p,[[11,1],[14,3],[11,5]]);pl(g,o,p,[[11,11],[14,13],[11,15]]);},
+cmp:(g,o,p)=>{ln(g,o,p,7,0,7,5);pl(g,o,p,[[5,3],[7,5],[9,3]]);ln(g,o,p,7,15,7,10);pl(g,o,p,[[5,12],[7,10],[9,12]]);ln(g,o,p,1,7,14,7);ln(g,o,p,1,8,14,8);},
+trk:(g,o,p)=>{[[4,4],[11,9]].forEach(([x,y])=>{ln(g,o,p,x,1,x,14,.5);bx(g,o,p,x-2,y,5,3);});},
+shr:(g,o,p)=>{pl(g,o,p,[[0,2],[6,8]]);ln(g,o,p,0,8,6,8);pl(g,o,p,[[0,14],[6,8]]);ln(g,o,p,6,8,14,8);pl(g,o,p,[[11,5],[14,8],[11,11]]);},
+ins:(g,o,p)=>{ln(g,o,p,0,8,3,8);g.globalAlpha=1;pl(g,o,p,[[3,3],[12,3],[12,13],[3,13],[3,3]]);ln(g,o,p,12,8,15,8);pl(g,o,p,[[5,10],[7,6],[7,10],[10,6]]);}
+};
+function ic(g,k,x,y,c,a=1){g.save();g.fillStyle=c;g.globalAlpha=a;ICON[k](g,Math.round(x),Math.round(y));g.restore();}
+
+/* ---- header ---- */
+const FQ=15,FG=2,FS=2*FQ+FG;
+function fasl(g,st){['F','A','S','L'].forEach((l,i)=>{const x=5+(i%2)*(FQ+FG),y=28+Math.floor(i/2)*(FQ+FG),on=st[i];rr(g,x,y,FQ,FQ,3,on?[TX,GRN,RED,K[3]][i]:null,on?null:FT);T(g,l,x+FQ/2,y+1.5,12,on?'#000':FT,'center');});}
+function infoWin(g,label,value){const lw=TW(g,label,12),vw=TW(g,value,22);T(g,label,235,27,12,DIM,'right');T(g,value,235,37,22,TX,'right');return 235-Math.max(lw,vw);}
+function icon303(g,cx,cy,c){g.save();g.strokeStyle=c;g.lineWidth=1.8;g.lineJoin='round';g.beginPath();[[-1,.6],[-.3,-.6],[-.3,.6],[.4,-.6],[.4,.6],[1,-.6]].forEach(([x,y],i)=>i?g.lineTo(cx+x*12,cy+y*12):g.moveTo(cx+x*12,cy+y*12));g.stroke();g.restore();}
+function hdr(g,o){
+ T(g,'120',5,3,22,TX);T(g,'BPM',38,11,11,GRN);
+ T(g,o.title,120,4,20,TX,'center');
+ g.fillStyle=GRN;g.beginPath();g.moveTo(183,9);g.lineTo(192,14.5);g.lineTo(183,20);g.fill();T(g,'100',224,3,22,TX,'right');rr(g,228,7,6,13,1.5,null,TX);
+ fasl(g,[1,1,1,0]);
+ let right=235;if(o.info)right=infoWin(g,o.info[0],o.info[1])-6;
+ if(o.eng){rr(g,44,28,FS,FS,5,null,ENGC['303'],1.5);icon303(g,60,44,ENGC['303']);const [n,p]=fit(g,o.eng,19,right-82,14);T(g,n,82,28+(FS-p)/2-1,p,ENGC['303']);}
+ else if(o.name){let p=30;while(TW(g,o.name,p)>150)p--;T(g,o.name,120,29,p,K[0],'center');}
+ return right;}
+function knobs(g,l,hl=-1){l.forEach((k,i)=>{const x=i*60;if(hl===i)rr(g,x+3,195,54,45,4,'#1c1a21');g.fillStyle=K[i];g.fillRect(x+6,197,48,hl===i?3:2);let p=16;while(p>11&&Math.max(TW(g,k[0],p),TW(g,k[1],p))>56)p--;T(g,k[0],x+30,202+(16-p)/2,p,k[0]=='-'?FT:TX,'center');T(g,k[1],x+30,219+(16-p)/2,p,K[i],'center');});}
+
+/* ---- FX data ---- */
+const IDS=['flt','drv','cho','pha','rng','rev','eq','dly','snd','cmp'];
+const FXN=['FILTER','DRIVE','CHORUS','PHASER','RING MOD','REVERB','EQ','DELAY','SENDS','COMP'],FXT=['FLT','DRV','CHO','PHA','RNG','REV','EQ','DLY','SND','CMP'];
+const ONS=[1,1,0,1,0,1,1,0,1,1];
+const FXK=[[['TYPE','ACID'],['CUTOFF','1.5K'],['RESO','80'],['MIX','127']],[['TYPE','TUBE'],['DRIVE','60'],['TONE','50'],['MIX','100']],[['RATE','0.8'],['DEPTH','40'],['VOICES','3'],['MIX','50']],[['RATE','0.4'],['DEPTH','70'],['FDBK','45'],['MIX','60']],[['FREQ','440'],['TONE','50'],['DRIVE','0'],['MIX','40']],[['SIZE','70'],['DECAY','2.4S'],['DAMP','40'],['MIX','25']],[['LOW','+2'],['MID','-3'],['HIGH','+4'],['FREQ','2K']],[['TIME','1/8'],['FDBK','40'],['TONE','60'],['MIX','30']],[['REVERB','25'],['DELAY','40'],['CHORUS','0'],['TO','MIX']],[['THRESH','-12'],['RATIO','4:1'],['SPEED','MED'],['MIX','100']]];
+function fxCurve(g,k,t,y0,h){const x0=10,w=220,cy=y0+h/2;g.strokeStyle=GRN;g.fillStyle=GRN;g.lineWidth=2;g.lineJoin='round';
+ const poly=f=>{g.beginPath();for(let i=0;i<=w;i+=2){const y=f(i/w);i?g.lineTo(x0+i,y):g.moveTo(x0,y);}g.stroke();};
+ if(k==0)poly(u=>{const wc=.28+.12*Math.sin(t/900);return y0+h-8-(h-24)/Math.sqrt(1+Math.pow(u/wc,6))*(1+.5*Math.exp(-Math.pow((u-wc)*14,2)))*.8;});
+ else if(k==1)poly(u=>cy-(h/2-8)*Math.tanh((u-.5)*(5+3*Math.sin(t/800))));
+ else if(k==2){poly(u=>cy-Math.sin(u*Math.PI*4+t/400)*(h*.28));g.globalAlpha=.5;poly(u=>cy-Math.sin(u*Math.PI*4+t/400+1.1)*(h*.28));g.globalAlpha=1;}
+ else if(k==3)poly(u=>y0+14+(h-34)*Math.pow(Math.abs(Math.sin(u*9+t/600)),.5));
+ else if(k==4){for(let i=0;i<14;i++){const a=(.3+.7*Math.abs(Math.sin(i*2.1+t/500)))*(h-16);g.fillRect(x0+8+i*15,y0+h-a,9,a);}}
+ else if(k==5){for(let i=0;i<44;i++){const a=(h-14)*Math.exp(-i/16)*(.45+.55*Math.abs(Math.sin(i*3.7)));g.fillRect(x0+4+i*5,y0+h-a,3,a);}}
+ else if(k==6)poly(u=>cy-h*.3*Math.sin(u*Math.PI*2.5+t/1200)*(.4+.6*u));
+ else if(k==7){for(let i=0;i<6;i++){const a=(h-14)*Math.pow(.62,i);g.fillRect(x0+10+i*34,y0+h-a,12,a);}}
+ else{[0,1,2].forEach(i=>{const a=(.3+.6*Math.abs(Math.sin(t/900+i*2)))*(h-16);g.fillRect(x0+22+i*66,y0+h-a,40,a);});}}
+
+/* ---- compressor model ---- */
+const THR=-12,RAT=4;
+function lvl(t){return -18+16*Math.sin(t/450)*Math.cos(t/1900);}
+function grOf(i){return Math.max(0,i-THR)*(1-1/RAT);}
+function compBox(g,t){const x0=12,x1=100,yb=184,sz=88,X=d=>x0+(d+48)/48*sz,Y=d=>yb-(d+48)/48*sz;
+ g.strokeStyle=EDG;g.lineWidth=1;g.strokeRect(x0+.5,yb-sz+.5,sz,sz);
+ g.setLineDash([2,3]);g.strokeStyle='#3a3540';g.beginPath();g.moveTo(X(-48),Y(-48));g.lineTo(X(0),Y(0));g.stroke();g.setLineDash([]);
+ g.strokeStyle='#6a5a1a';g.beginPath();g.moveTo(X(THR),yb);g.lineTo(X(THR),yb-sz);g.stroke();
+ const f=d=>d<THR?d:THR+(d-THR)/RAT;
+ g.beginPath();for(let d=-48;d<=0;d+=1){d==-48?g.moveTo(X(d),Y(f(d))):g.lineTo(X(d),Y(f(d)));}g.strokeStyle=GRN;g.lineWidth=2;g.stroke();
+ const i=lvl(t),gr=grOf(i);line(g,[[X(i),yb],[X(i),Y(f(i))]],'#4a4552',1);circ(g,X(i),Y(f(i)),3.5,gr>0?YEL:TX);
+ T(g,'IN',x0+2,yb-sz+2,11,DIM);T(g,'OUT',x0+sz-2,yb-sz+2,11,DIM,'right');
+ /* GR meter */
+ const mx=108,mw=14,my=96,mh=88;rr(g,mx,my,mw,mh,2,'#101013',EDG);const fh=Math.min(1,gr/12)*mh;g.fillStyle=gr>6?RED:YEL;g.fillRect(mx+1,my+1,mw-2,Math.max(0,fh-1));
+ for(let d=0;d<=12;d+=3){g.fillStyle='#3a3540';g.fillRect(mx+mw+2,my+d/12*mh-(d==12?1:0),3,1);}
+ T(g,'GR',mx+mw/2,my-0,11,DIM,'center');
+ /* number + history */
+ T(g,'GAIN REDUCTION',231,96,12,DIM,'right');const v=(gr>0?'-':'')+gr.toFixed(1);T(g,v,196,108,34,gr>6?RED:gr>0?YEL:TX,'right');T(g,'dB',200,122,16,DIM);
+ const hx=136,hy=146,hw=94,hh=38;rr(g,hx-2,hy-2,hw+4,hh+4,3,'#101013',EDG);
+ for(let j=0;j<hw/3;j++){const gg=grOf(lvl(t-(hw/3-1-j)*60)),bh=Math.min(1,gg/12)*hh;g.fillStyle=gg>6?RED:YEL;g.fillRect(hx+j*3,hy,2,bh);}}
+
+/* ---- MASTER FX page ---- */
+function masterFx(g,t,o){const n=o.n,k=Math.floor(t/1800)%n,cw=224/n;
+ hdr(g,{title:'MASTER FX',name:FXN[k]});
+ rr(g,6,64,228,122,4,PNL,EDG);
+ if(o.old){FXT.slice(0,n).forEach((s,i)=>{const cx=8+cw*(i+.5);T(g,s,cx,68,12,i==k?K[0]:DIM,'center');if(i==k){const w=TW(g,s,12);g.fillStyle=K[0];g.fillRect(cx-w/2,81,w,2);}});fxCurve(g,k,t,84,100);}
+ else{IDS.slice(0,n).forEach((id,i)=>{const cx=Math.round(8+cw*(i+.5)),sel=i==k,on=ONS[i];
+   ic(g,id,cx-8,69,sel?K[0]:on?TX:OFFC,sel&&!on?.6:1);if(sel){g.fillStyle=K[0];g.fillRect(cx-9,88,18,2);}});
+  if(k==9)compBox(g,t);else fxCurve(g,k,t,94,90);}
+ knobs(g,FXK[k]);}
+scene('s1a',(g,t)=>masterFx(g,t,{n:9,old:1}),true);
+scene('s1b',(g,t)=>masterFx(g,t,{n:9}),true);
+
+/* ---- icon sheet ---- */
+scene('s0',(g)=>{const all=[['flt','FILTER'],['drv','DRIVE'],['cho','CHORUS'],['pha','PHASER'],['rng','RING MOD'],['rev','REVERB'],['eq','EQ'],['dly','DELAY'],['snd','SENDS'],['cmp','COMP'],['trk','TRACK'],['shr','SHARED'],['dly','DELAY'],['ins','INSERT']];
+ all.forEach(([k,n],i)=>{const c=i%5,r=Math.floor(i/5),x=c*48+8,y=10+r*76;g.save();g.translate(x,y);g.scale(2,2);g.fillStyle=i==9||i>9?K[0]:TX;ICON[k](g,0,0);g.restore();g.globalAlpha=1;T(g,n,x+16,y+38,12,DIM,'center');});
+ T(g,'MASTER FX',120,230,11,FT,'center');});
+
+/* ---- TRACK FX page ---- */
+const TABS=[['trk','TRACK'],['shr','SHARED'],['dly','DELAY'],['ins','INSERT']];
+const REVS=[3,0,4,2,6,1,0,5],DLYS=[0,2,2,5,0,3,1,0];
+function insCurve(g,type,amt,t,x0,y0,w,h){g.strokeStyle=GRN;g.lineWidth=2;g.lineJoin='round';g.beginPath();
+ for(let i=0;i<=w;i+=2){const u=i/w;let y;
+  if(type==1){const fc=.1+.6*amt/100,r=Math.pow(u/Math.max(fc,.02),3);y=y0+h-8-(h-16)*r/(1+r);}
+  else if(type==2){const fc=1-.1-.6*amt/100,r=Math.pow(u/Math.max(fc,.02),3);y=y0+8+(h-16)*r/(1+r);}
+  else if(type==3){const gn=1+amt/12;y=y0+h/2-(h/2-8)*Math.tanh((u-.5)*gn*4);}
+  i?g.lineTo(x0+i,y):g.moveTo(x0,y);}g.stroke();}
+function trackFx(g,t,o){const nt=o.n,tab=Math.floor(t/(o.n==4?2600:2000))%nt,cw=228/nt,TYP=['LOW CUT','HIGH CUT','DRIVE'];
+ hdr(g,{title:'TRACK FX',info:['TRACK','3'],eng:'ACID BASS 2'});rr(g,6,64,228,122,4,PNL,EDG);
+ TABS.slice(0,nt).forEach(([id,nm],i)=>{const cx=Math.round(6+cw*(i+.5)),sel=i==tab;
+  if(o.old){T(g,nm,cx,68,12,sel?K[0]:DIM,'center');if(sel){const w=TW(g,nm,12);g.fillStyle=K[0];g.fillRect(cx-w/2,81,w,2);}}
+  else{ic(g,id,cx-8,68,sel?K[0]:TX);T(g,nm,cx,86,11,sel?K[0]:DIM,'center');if(sel){const w=Math.max(TW(g,nm,11),16);g.fillStyle=K[0];g.fillRect(cx-w/2,99,w,2);}}});
+ const by=o.old?88:106,bh=186-by-4;
+ let kn;
+ if(tab==0){const sel=2;for(let i=0;i<8;i++){const x=14+i*27;if(i==sel)rr(g,x-3,by,26,bh,3,'#16201a',null);
+   const h1=REVS[i]/7*(bh-18),h2=DLYS[i]/7*(bh-18);g.fillStyle=GRN;g.fillRect(x,by+bh-14-h1,9,h1+1);g.fillStyle=YEL;g.fillRect(x+11,by+bh-14-h2,9,h2+1);T(g,String(i+1),x+10,by+bh-13,11,i==sel?TX:DIM,'center');}
+  kn=[['VOLUME','100'],['REV SEND','4'],['DLY SEND','2'],['-','']];}
+ else if(tab==1){fxCurve(g,5,t,by,bh);kn=[['REV TIME','60'],['RETURN','80'],['-',''],['-','']];}
+ else if(tab==2){fxCurve(g,7,t,by,bh);kn=[['TIME','1/8'],['FDBK','40'],['SYNC','ON'],['RETURN','80']];}
+ else{const ty=Math.floor(t/1300)%3,am=Math.round(50+45*Math.sin(t/700));insCurve(g,ty+1,am,t,12,by,120,bh);
+  T(g,'AMOUNT',200,by+0,12,DIM,'center');T(g,String(am),200,by+12,42,K[1],'center');T(g,'THIS TRACK ONLY',120,by+bh-2,11,DIM,'center');
+  kn=[['TYPE',TYP[ty]],['AMOUNT',String(am)],['-',''],['-','']];}
+ knobs(g,kn,o.old?-1:(tab==3?0:-1));}
+scene('s2a',(g,t)=>trackFx(g,t,{n:3,old:1}),true);
+scene('s2b',(g,t)=>trackFx(g,t,{n:3}),true);
+scene('s5',(g,t)=>trackFx(g,t,{n:4}),true);
+
+/* ---- comp screens ---- */
+scene('s3a',(g,t)=>{
+ hdr(g,{title:'MASTER FX',name:'COMP'});rr(g,6,64,228,122,4,PNL,EDG);
+ IDS.forEach((id,i)=>{const cw=224/10,cx=Math.round(8+cw*(i+.5)),sel=i==9;ic(g,id,cx-8,69,sel?K[0]:ONS[i]?TX:OFFC);if(sel){g.fillStyle=K[0];g.fillRect(cx-9,88,18,2);}});
+ compBox(g,t);knobs(g,FXK[9]);},true);
+scene('s3b',(g,t)=>{const gr=grOf(lvl(t));
+ hdr(g,{title:'GLOBAL',info:['GR',(gr>0?'-':'')+gr.toFixed(1)]});
+ const rows=[['LOW CUT','OFF'],['OUTPUT BOOST','+6 dB'],['OUTPUT COMP','GLUE'],['LANGUAGE','ENGLISH'],['THEME','ORGANIC']];
+ [0,1,3,4].forEach(i=>{const ty=i==0?70:i==1?94:i==3?158:176;T(g,rows[i][0]+'  '+rows[i][1],120,ty,15,FT,'center');});
+ rr(g,14,116,212,38,5,'#16201a',GRN,2);T(g,'OUTPUT COMP  GLUE',120,121,20,TX,'center');
+ const bw=150,bx=45;g.fillStyle='#101013';g.fillRect(bx,143,bw,5);g.fillStyle=gr>6?RED:YEL;g.fillRect(bx,143,Math.min(1,gr/12)*bw,5);T(g,'GR',36,139,11,DIM,'center');
+ knobs(g,[['COMP','GLUE'],['-',''],['-',''],['-','']],0);},true);
+
+/* ---- loop ---- */
+function render(s,now){const g=s.g;g.setTransform(1,0,0,1,0,0);g.globalAlpha=1;g.fillStyle='#000';g.fillRect(0,0,240,240);g.textBaseline='top';g.save();s.draw(g,now);g.restore();}
+const io=new IntersectionObserver(es=>es.forEach(e=>{const s=S.find(x=>x.el===e.target);s.vis=e.isIntersecting;}),{rootMargin:'100px'});
+S.forEach(s=>io.observe(s.el));
+function frame(now){if(fontsOk)for(const s of S){if(!s.vis)continue;if(!s.anim&&s.done)continue;render(s,now);s.done=true;}requestAnimationFrame(frame);}
+Promise.race([document.fonts.load('700 20px "Barlow Condensed"'),new Promise(r=>setTimeout(r,2500))]).catch(()=>{}).then(()=>{fontsOk=true;S.forEach(s=>s.done=false);});
+requestAnimationFrame(frame);
+</script></body></html>

@@ -1,0 +1,876 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FM-1 нагрузочный тест</title>
+<style>
+  :root { --bg:#111; --fg:#eee; --dim:#9a9a9a; --card:#1c1c1c; --line:#333; --ok:#5fd17a; --bad:#ff5a4f; --warn:#ffb340; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:20px/1.35 system-ui, "Segoe UI", sans-serif; }
+  main { max-width:1000px; margin:0 auto; padding:16px; }
+  h1 { font-size:28px; margin:0 0 8px; }
+  #conn { font-size:26px; font-weight:700; padding:12px 16px; border-radius:10px; background:var(--card); margin:8px 0 12px; }
+  #conn.none { color:var(--warn); } #conn.ok { color:var(--ok); } #conn.err { color:var(--bad); }
+  #ports { display:none; gap:12px; flex-wrap:wrap; margin-bottom:12px; font-size:18px; }
+  select, input[type=number], textarea { font-size:18px; padding:4px; background:#222; color:var(--fg); border:1px solid var(--line); border-radius:4px; }
+  input[type=number] { width:64px; }
+  input[type=checkbox] { width:22px; height:22px; vertical-align:middle; }
+  section { background:var(--card); border-radius:10px; padding:10px 16px; margin-bottom:12px; }
+  h2 { font-size:20px; color:var(--dim); margin:4px 0 6px; font-weight:600; }
+  ol, ul { margin:4px 0; padding-left:26px; }
+  li { margin:3px 0; }
+  .row { display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:6px 8px; border-bottom:1px solid var(--line); border-radius:6px; }
+  .row:last-child { border-bottom:none; }
+  .row .v { font-size:26px; font-weight:700; text-align:right; white-space:nowrap; }
+  .row .v small { font-size:18px; font-weight:400; color:var(--dim); }
+  .row.alarm { background:#5a1512; }
+  .note { font-size:18px; color:var(--warn); }
+  .dim { color:var(--dim); font-size:17px; }
+  .good { color:var(--ok); } .bad { color:var(--bad); }
+  button { font-size:20px; padding:10px 18px; border-radius:8px; border:1px solid var(--line); background:#2a2a2a; color:var(--fg); cursor:pointer; }
+  button:disabled { opacity:.4; cursor:default; }
+  #startBtn { background:#1d4d2a; font-weight:700; }
+  #stopBtn { background:#b3221a; color:#fff; font-size:30px; font-weight:800; padding:18px 40px; border:3px solid #ff8a80; }
+  .bar { display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  table { border-collapse:collapse; width:100%; font-size:17px; }
+  th, td { border-bottom:1px solid var(--line); padding:4px 6px; text-align:right; white-space:nowrap; }
+  th { color:var(--dim); font-weight:600; }
+  td.l, th.l { text-align:left; white-space:normal; }
+  tr.badrow td { background:#3a1512; }
+  .scroll { overflow-x:auto; }
+  #now { font-size:24px; font-weight:700; }
+  #setup { width:100%; height:110px; box-sizing:border-box; }
+  #selftest { font:14px Consolas, monospace; color:var(--dim); margin-top:12px; }
+  #selftest.ok { color:var(--ok); } #selftest.fail { color:var(--bad); }
+  #storeMsg.bad { color:var(--bad); font-weight:700; }
+</style>
+</head>
+<body>
+<main>
+<h1>FM-1: нагрузочный тест (страница сама играет ноты)</h1>
+<div id="conn" class="none">Синтезатор не найден</div>
+<div id="ports">
+  <label>Вход: <select id="inSel"></select></label>
+  <label>Выход: <select id="outSel"></select></label>
+</div>
+
+<section>
+  <h2>Перед началом — на синтезаторе</h2>
+  <ol>
+    <li>Лучше всего выключите и включите синтезатор: пики нагрузки — это рекорды с момента включения (подробно ниже).</li>
+    <li>Остановите секвенсор: ни одна партия не должна играть.</li>
+    <li>Выключите ARP на всех дорожках — иначе синтезатор сам переиграет наши ноты по-своему.</li>
+    <li>Нота с канала попадает на дорожку, у которой <b>IN CH</b> равен этому каналу и <b>ROLE</b> не OFF
+        (SEQ → страница 8/8 TRACK ROLE). Заводские каналы: дорожки 1–7 = каналы 1–7, дорожка 8 = канал 10.
+        Если вы их меняли — поправьте каналы в таблице ниже.</li>
+    <li>LOCAL (GLOBAL → MIDI → MIDI SYNC) на тест не влияет: он отключает только клавиши самого синтезатора.</li>
+    <li>Убавьте громкость: будут звучать аккорды.</li>
+    <li>Не сворачивайте эту вкладку и не переключайтесь на другую: браузер замедляет скрытые вкладки,
+        поэтому тест тогда сам остановится.</li>
+    <li>Закройте страницу диагностики (fm1-diag.html): у синтезатора один «почтовый ящик» для запросов,
+        две страницы мешали бы друг другу. Эта страница читает те же счётчики сама.</li>
+  </ol>
+</section>
+
+<section>
+  <h2>Дорожки</h2>
+  <div class="scroll"><table id="trackTable">
+    <thead><tr><th class="l">Дорожка</th><th class="l">Играть</th><th class="l">MIDI-канал (IN CH)</th><th class="l">Барабаны (808)</th></tr></thead>
+    <tbody></tbody>
+  </table></div>
+  <p class="dim">«Барабаны»: таким дорожкам идут ноты пэдов 808: 36, 38, 41, 45, 48, 37, 39, 42 (из кода синтезатора).
+     Для SAMPLER номера пэдов спрятаны в закрытой части прошивки — не проверено, какие ноты он играет.
+     Остальным дорожкам идут ноты в середине клавиатуры (до первой октавы и рядом), сила нажатия 90.</p>
+  <h2>Шаги</h2>
+  <div id="kindBoxes" class="bar"></div>
+  <p class="dim">Каждый шаг звучит 8 с, затем 3 с тишины. Арпеджио: 4 ноты шестнадцатыми при 160 ударах в минуту
+     (нота каждые 94 мс). Перед первым шагом 3 с только читаем счётчики.</p>
+</section>
+
+<section>
+  <h2>План теста</h2>
+  <div id="planTotal" style="font-size:22px;font-weight:700"></div>
+  <ol id="planList" class="dim"></ol>
+</section>
+
+<section>
+  <h2>Что стоит на каждой дорожке (впишите сами: движок, эффекты вкл / выкл)</h2>
+  <textarea id="setup" placeholder="например: 1 DX7 + reverb, 2 MICRO D, 3 PSG, ... MASTER FX: FILTER вкл"></textarea>
+  <p class="dim">Страница не может прочитать настройки синтезатора. Этот текст попадает в оба файла журнала.
+     Тест берёт текст при СТАРТЕ и правки во время теста; когда тест кончился, его текст больше не меняется.
+     То, что вы пишете после теста, пойдёт в следующий тест.</p>
+</section>
+
+<section>
+  <div class="bar">
+    <button id="startBtn" disabled>СТАРТ</button>
+    <button id="stopBtn">СТОП</button>
+  </div>
+  <p class="dim">СТОП выключает каждую ноту, которую включила страница, и шлёт «все ноты выкл» (CC 123) на все её каналы.
+     Если тест не идёт, СТОП просто шлёт «все ноты выкл» на каналы из таблицы. То же самое — при закрытии страницы
+     и при любой ошибке.</p>
+  <div id="now" class="dim">Тест не идёт</div>
+</section>
+
+<section>
+  <h2>Сейчас</h2>
+  <div class="row"><span>Расчёт звука движком сейчас<br><small class="dim">% от срока движка (deadline_ticks)</small></span><span class="v" id="v_render">—</span></div>
+  <div class="row" id="r_irq"><span>Пиковая нагрузка звука<br><small class="dim">рекорд с включения, % от блока 928 419 тиков</small></span><span class="v" id="v_irq">—</span></div>
+  <div class="row"><span>Пик движка<br><small class="dim">рекорд, % от deadline_ticks</small></span><span class="v" id="v_epeak">—</span></div>
+  <div class="row" id="r_over"><span>Потерянные блоки за этот тест</span><span class="v" id="v_over">—</span></div>
+  <div class="row" id="r_adapt"><span>Голоса урезаны за этот тест (раз)</span><span class="v" id="v_adapt">—</span></div>
+  <div class="row"><span>Сколько голосов можно</span><span class="v" id="v_cap">—</span></div>
+  <div class="row"><span>Движок (вызов на ядре 0), пик<br><small class="dim">с прошлого замера (0,5 с), % от блока</small></span><span class="v" id="v_ecall">—</span></div>
+  <div class="row"><span>MICRO D, пик<br><small class="dim">с прошлого замера (0,5 с), % от блока</small></span><span class="v" id="v_mdpeak">—</span></div>
+  <div class="row"><span>Наша часть: MICRO D + эффекты + сведение, пик<br><small class="dim">с прошлого замера (0,5 с), % от блока</small></span><span class="v" id="v_mixpeak">—</span></div>
+  <div class="row" id="r_shed"><span>Защита от перегрузки выключала эффекты (раз за тест)</span><span class="v" id="v_shed">—</span></div>
+</section>
+
+<section>
+  <h2>Итог по шагам (последний тест)</h2>
+  <div class="scroll"><table id="stepTable">
+    <thead><tr>
+      <th>№</th><th class="l">Шаг</th><th>Потер. блоки</th><th>Корот. пром.</th><th>Урезано</th><th>Перегр.</th>
+      <th>Опустош.</th><th>MIDI потер.</th><th>Движок мин / сред / макс</th><th>Пик звука</th><th>Пик движка</th>
+      <th>Макс. % блока: движок яд. 0 / MICRO D / наша часть</th><th>Защита (раз)</th><th>Голосов мин</th><th class="l">Заметка</th>
+    </tr></thead>
+    <tbody></tbody>
+  </table></div>
+  <p class="dim">Пики — рекорды с момента включения синтезатора. Пик звука (прерывания) в коде не сбрасывается ничем
+     (app/board/audio.c только поднимает его). Пик движка считает закрытая библиотека; на синтезаторе он ни разу не падал,
+     считаем его тоже рекордом. Поэтому для шага пишем только «вырос до X» или «—» (не вырос): шаг, который не поднял
+     рекорд, мог нагружать меньше прежнего рекорда.
+     «Макс. % блока» (команда 23) — наоборот, пики с прошлого замера (каждые 0,5 с): для шага это самый высокий замер
+     внутри шага (первый замер шага может захватить до 0,5 с перед ним). «Наша часть» включает MICRO D.
+     Старая прошивка этих чисел не даёт: «нет» / «нет данных».</p>
+</section>
+
+<section>
+  <h2>Журнал</h2>
+  <div class="bar">
+    <button id="rawBtn">Скачать все замеры (CSV)</button>
+    <button id="sumBtn">Скачать итог по шагам (CSV)</button>
+    <button id="clearBtn">Очистить журнал</button>
+  </div>
+  <p id="storeMsg" class="dim"></p>
+  <ul id="runList" class="dim"></ul>
+</section>
+
+<div id="selftest">самопроверка: …</div>
+</main>
+
+<script>
+"use strict";
+// ==== CORE BEGIN ==== (pure logic, no DOM; tests/t_loadtest.js runs this part under Node)
+/* ===== Protocol (mirror of app/transfer.c, same code as tools/fm1-diag.html) =====
+ * Frame: F0 7D 46('F') 4D('M') 02 cmd token-lo token-hi <packed payload> checksum F7.
+ * checksum: sum of bytes from 7D through checksum == 0 (mod 128)  (transfer.c:292-296, 344-347).
+ * Packing: LSB-first stream of 8-bit bytes in 7-bit chunks; trailing partial chunk if bits remain.
+ * Reply: header copied, byte 5 |= 64; first unpacked byte = status (transfer.c:328-330).
+ * A request costs the synth one control-task wake and three short struct copies; the firmware itself
+ * reads the same three structs every 500 ms (screen.c health_at), so POLL_MS = 500 is safe. */
+const HDR = [0xF0, 0x7D, 0x46, 0x4D, 0x02];
+/* SAFETY: read-only commands with no payload (transfer.c command 17-19, 23). Never any other sysex.
+ * 23 (load figures of our mix part) is new: older firmware (ALPHA f9b8f4b and before) answers it with an
+ * error status, so its fields stay empty ("нет данных"). */
+const ALLOWED_COMMANDS = Object.freeze([17, 18, 19, 23]);
+
+function packStream(bytes) {
+  const out = []; let value = 0, bits = 0;
+  for (const b of bytes) {
+    value |= (b & 255) << bits; bits += 8;
+    while (bits >= 7) { out.push(value & 127); value >>>= 7; bits -= 7; }
+  }
+  if (bits) out.push(value & 127);
+  return out;
+}
+function unpackStream(chunks) {
+  const out = []; let value = 0, bits = 0;
+  for (const c of chunks) {
+    if (c > 127) return null;
+    value |= c << bits; bits += 7;
+    if (bits >= 8) { out.push(value & 255); value >>>= 8; bits -= 8; }
+  }
+  if (value || bits >= 7) return null;
+  return out;
+}
+function checksumOf(bytesFrom1) {
+  let s = 0; for (const b of bytesFrom1) s += b;
+  return (128 - (s & 127)) & 127;
+}
+function buildFrame(cmd, token, payload) {
+  const f = HDR.concat([cmd & 127, token & 127, (token >> 7) & 127], packStream(payload));
+  f.push(checksumOf(f.slice(1)));
+  f.push(0xF7);
+  return f;
+}
+function parseFrame(m) {
+  const n = m.length;
+  if (n < 10 || m[0] !== 0xF0 || m[n - 1] !== 0xF7) return null;
+  for (let i = 0; i < 5; ++i) if (m[i] !== HDR[i]) return null;
+  let s = 0;
+  for (let i = 1; i + 1 < n; ++i) { if (m[i] > 127) return null; s += m[i]; }
+  if (s & 127) return null;
+  const data = unpackStream(Array.from(m.slice(8, n - 2)));
+  if (!data) return null;
+  return { cmd: m[5], token: m[6] | (m[7] << 7), data };
+}
+function u32(d, o) { return ((d[o] | (d[o+1] << 8) | (d[o+2] << 16)) + d[o+3] * 16777216) >>> 0; }
+function guardedFrame(cmd, token) {
+  if (!ALLOWED_COMMANDS.includes(cmd)) throw new Error("command " + cmd + " is not allowed");
+  const f = buildFrame(cmd, token, []);
+  if (f.length !== 10 || f[5] !== cmd) throw new Error("bad frame");
+  return f;
+}
+
+/* Every outgoing MIDI message passes here. Allowed: the four read requests above, note on (velocity 1..127),
+ * note off (0x8n, velocity 0) and CC 123 value 0 (all notes off). Anything else throws. */
+function checkOutgoing(m) {
+  if (!m || typeof m.length !== "number") throw new Error("bad message");
+  const a = Array.from(m);
+  for (const x of a) if (!Number.isInteger(x) || x < 0 || x > 255) throw new Error("bad byte");
+  if (a[0] === 0xF0) {
+    const p = a.length === 10 ? parseFrame(a) : null;
+    if (!p || !ALLOWED_COMMANDS.includes(p.cmd) || p.data.length) throw new Error("sysex not allowed");
+    return a;
+  }
+  if (a.length !== 3 || a[0] < 0x80 || a[0] > 0xEF || a[1] > 127 || a[2] > 127) throw new Error("message not allowed");
+  const st = a[0] & 0xF0;
+  if (st === 0x90 && a[2] >= 1) return a;
+  if (st === 0x80 && a[2] === 0) return a;
+  if (st === 0xB0 && a[1] === 123 && a[2] === 0) return a;
+  throw new Error("message not allowed");
+}
+
+/* ===== Counters (same fields and offsets as tools/fm1-diag.html) ===== */
+const LOG_FIELDS = ["blocks","short_intervals","overruns","irq_peak_ticks",
+  "render_ticks","engine_peak_ticks","midi_ticks","adapted","overloads","voice_capacity","master_gain","deadline_ticks",
+  "submitted","completed","underruns","midi_dropped","samples_status","edit_recording","st17","st18","st19",
+  "shed_count","shedding","fx_ticks","block_ticks","engine_call_peak","micro_d_peak","mix_peak","st23"];
+const BOARD_BLOCK_TICKS = 928419;   // 320 MHz board timer, 128 frames at 44 118 Hz (notes.md, device log 10.11)
+const POLL_MS = 500;
+/* Command 23 (board ticks, as irq_peak_ticks): load guard trips, bypassing now (0/1), the master effects'
+ * last cost, ticks of one block, and three peaks since the previous read of 23: the engine call on core 0
+ * (block start to our mix), MICRO D render, our whole part (MICRO D + effects + mixing). */
+function decodeSample(t, r17, r18, r19, r23) {
+  const s = { t };
+  s.st17 = r17 ? r17.status : ""; s.st18 = r18 ? r18.status : ""; s.st19 = r19 ? r19.status : ""; s.st23 = r23 ? r23.status : "";
+  if (r17 && r17.status === 0 && r17.d.length >= 18) {
+    s.submitted = u32(r17.d, 0); s.completed = u32(r17.d, 4); s.underruns = u32(r17.d, 8);
+    s.midi_dropped = u32(r17.d, 12); s.samples_status = r17.d[16]; s.edit_recording = r17.d[17];
+  }
+  if (r18 && r18.status === 0 && r18.d.length >= 32) {
+    s.render_ticks = u32(r18.d, 0); s.engine_peak_ticks = u32(r18.d, 4); s.midi_ticks = u32(r18.d, 8);
+    s.adapted = u32(r18.d, 12); s.overloads = u32(r18.d, 16); s.voice_capacity = u32(r18.d, 20);
+    s.master_gain = u32(r18.d, 24); s.deadline_ticks = u32(r18.d, 28);
+  }
+  if (r19 && r19.status === 0 && r19.d.length >= 16) {
+    s.blocks = u32(r19.d, 0); s.short_intervals = u32(r19.d, 4); s.overruns = u32(r19.d, 8); s.irq_peak_ticks = u32(r19.d, 12);
+  }
+  if (r23 && r23.status === 0 && r23.d.length >= 25) {
+    s.shed_count = u32(r23.d, 0); s.shedding = r23.d[4]; s.fx_ticks = u32(r23.d, 5); s.block_ticks = u32(r23.d, 9);
+    s.engine_call_peak = u32(r23.d, 13); s.micro_d_peak = u32(r23.d, 17); s.mix_peak = u32(r23.d, 21);
+  }
+  return s;
+}
+function packPoll(s) { return [s.t, s.step === undefined ? "" : s.step].concat(LOG_FIELDS.map(k => s[k] === undefined ? null : s[k])); }
+function unpackPoll(a) {
+  const s = { t: a[0], step: a[1] };
+  LOG_FIELDS.forEach((k, i) => { const v = a[i + 2]; if (v !== null && v !== undefined) s[k] = v; });
+  return s;
+}
+
+/* ===== Scenario ===== */
+const NOTE_VELOCITY = 90;
+const PLAY_MS = 8000, REST_MS = 3000, PREROLL_MS = 3000;
+const ARP_STEP_MS = 60000 / 160 / 4;      // 16th notes at 160 BPM = 93.75 ms
+const ARP_GATE = 0.5;
+const LATE_LIMIT_MS = 500;                // a page this late cannot play the scenario: stop
+const TRACK_KINDS = [
+  { id: "one", label: "1 нота" }, { id: "chord4", label: "аккорд 4 ноты" },
+  { id: "chord8", label: "аккорд 8 нот" }, { id: "arp", label: "быстрое арпеджио" }];
+const ALL_KINDS = [
+  { id: "all_one", base: "one", label: "все вместе: 1 нота" },
+  { id: "all_chord4", base: "chord4", label: "все вместе: аккорд 4 ноты" },
+  { id: "all_arp", base: "arp", label: "все вместе: арпеджио" }];
+const MELODIC = { one: [60], chord4: [60, 64, 67, 71], chord8: [48, 52, 55, 59, 60, 64, 67, 71], arp: [60, 64, 67, 72] };
+/* 808 pad notes: web/engine/sound.c drum_notes {36,38,41,45,48,37,39,56,49,46,42}. */
+const DRUMS = { one: [36], chord4: [36, 38, 42, 46], chord8: [36, 38, 41, 45, 48, 37, 39, 42], arp: [36, 42, 38, 42] };
+/* Default IN CH: track_session.inc session_init -> groove_channel(t) = t, track 8 -> 9 (instrument.h:83). 1-based here. */
+function defaultTracks() {
+  const out = [];
+  for (let i = 0; i < 8; ++i) out.push({ track: i + 1, ch: i === 7 ? 10 : i + 1, drums: i === 7, on: true });
+  return out;
+}
+function defaultKinds() { const k = {}; for (const x of TRACK_KINDS.concat(ALL_KINDS)) k[x.id] = true; return k; }
+function buildScenario(tracks, kinds) {
+  const steps = [];
+  const on = tracks.filter(t => t.on && Number.isInteger(t.ch) && t.ch >= 1 && t.ch <= 16);
+  for (const t of on) for (const k of TRACK_KINDS) if (kinds[k.id])
+    steps.push({ name: "дорожка " + t.track + " (канал " + t.ch + "): " + k.label, kind: k.id, targets: [{ ch: t.ch, drums: !!t.drums }] });
+  const seen = new Set(), all = [];
+  for (const t of on) if (!seen.has(t.ch)) { seen.add(t.ch); all.push({ ch: t.ch, drums: !!t.drums }); }
+  if (all.length) for (const k of ALL_KINDS) if (kinds[k.id])
+    steps.push({ name: k.label + " (каналы " + all.map(x => x.ch).join(", ") + ")", kind: k.base, targets: all });
+  steps.forEach((s, i) => { s.idx = i + 1; });
+  return steps;
+}
+function scenarioMs(steps) { return steps.length ? PREROLL_MS + steps.length * (PLAY_MS + REST_MS) : 0; }
+function stepEvents(step, t0) {
+  const ev = [];
+  for (const tg of step.targets) {
+    const notes = (tg.drums ? DRUMS : MELODIC)[step.kind], c = (tg.ch - 1) & 15;
+    if (step.kind === "arp") {
+      for (let i = 0; i * ARP_STEP_MS < PLAY_MS; ++i) {
+        const n = notes[i % notes.length], t = t0 + i * ARP_STEP_MS;
+        ev.push({ t, m: [0x90 | c, n, NOTE_VELOCITY] }, { t: t + ARP_STEP_MS * ARP_GATE, m: [0x80 | c, n, 0] });
+      }
+    } else {
+      for (const n of notes) ev.push({ t: t0, m: [0x90 | c, n, NOTE_VELOCITY] }, { t: t0 + PLAY_MS, m: [0x80 | c, n, 0] });
+    }
+  }
+  /* stable sort by time; at equal times note off goes first */
+  return ev.map((e, i) => [e, i]).sort((a, b) => a[0].t - b[0].t || (a[0].m[0] & 0xF0) - (b[0].m[0] & 0xF0) || a[1] - b[1]).map(x => x[0]);
+}
+
+/* ===== Notes the page has switched on and not yet off ===== */
+class Ledger {
+  constructor() { this.map = new Map(); this.channels = new Set(); }
+  on(c, n) { const k = c * 128 + n; this.map.set(k, (this.map.get(k) || 0) + 1); this.channels.add(c); }
+  off(c, n) { const k = c * 128 + n, v = this.map.get(k) || 0; if (v <= 1) this.map.delete(k); else this.map.set(k, v - 1); }
+  sounding() { return Array.from(this.map, ([k, cnt]) => [k >> 7, k & 127, cnt]); }
+  count() { let s = 0; for (const v of this.map.values()) s += v; return s; }
+}
+
+/* ===== Per-step summary from the raw polls ===== */
+const COUNTERS = ["overruns", "short_intervals", "adapted", "overloads", "underruns", "midi_dropped", "shed_count"];
+/* Peaks of command 23 restart at every read: the step's maximum is the highest poll inside the step. */
+const STEP_PEAKS = ["engine_call_peak", "micro_d_peak", "mix_peak"];
+function lastDefined(polls, key, from, to) {     // last poll with from < t <= to that has key
+  let v; for (const p of polls) if (p.t > from && p.t <= to && p[key] !== undefined) v = p[key];
+  return v;
+}
+function summarizeStep(polls, step, startT, playEndT, endT) {
+  const r = { step: step.idx, name: step.name, channels: step.targets.map(x => x.ch).join(" "),
+              start: startT, end: endT, play_ms: Math.max(0, Math.round(Math.min(playEndT, endT) - startT)), note: "" };
+  const before = k => lastDefined(polls, k, -Infinity, startT);
+  const after = k => lastDefined(polls, k, startT, endT);
+  const b0 = before("blocks"), b1 = after("blocks");
+  const restarted = b0 !== undefined && b1 !== undefined && b1 < b0;
+  for (const k of COUNTERS) {
+    const a = before(k), z = after(k);
+    r[k] = (a === undefined || z === undefined || restarted || z < a) ? "" : z - a;
+  }
+  const play = polls.filter(p => p.t > startT && p.t <= Math.min(playEndT, endT));
+  const rt = play.map(p => p.render_ticks).filter(v => v !== undefined);
+  const dl = lastDefined(polls, "deadline_ticks", -Infinity, endT);
+  r.deadline_ticks = dl === undefined ? "" : dl;
+  if (rt.length) {
+    r.render_min = Math.min.apply(null, rt); r.render_max = Math.max.apply(null, rt);
+    r.render_mean = Math.round(rt.reduce((x, y) => x + y, 0) / rt.length);
+  } else { r.render_min = r.render_max = r.render_mean = ""; }
+  const pctOf = (v, d) => (v === "" || v === undefined || !d) ? "" : Math.round(v * 1000 / d) / 10;
+  r.render_mean_pct = pctOf(r.render_mean, dl); r.render_max_pct = pctOf(r.render_max, dl);
+  for (const [key, out, scale] of [["irq_peak_ticks", "irq_peak", BOARD_BLOCK_TICKS], ["engine_peak_ticks", "engine_peak", dl]]) {
+    const a = before(key), z = after(key);
+    r[out + "_before"] = a === undefined ? "" : a;
+    r[out + "_after"] = z === undefined ? "" : z;
+    r[out + "_rose"] = (a === undefined || z === undefined || restarted) ? "" : (z > a ? "yes" : "no");
+    r[out + "_after_pct"] = pctOf(z, scale);
+  }
+  const inStep = polls.filter(p => p.t > startT && p.t <= endT);
+  const bt = lastDefined(polls, "block_ticks", -Infinity, endT);
+  r.block_ticks = bt === undefined ? "" : bt;
+  for (const key of STEP_PEAKS) {
+    const v = inStep.map(p => p[key]).filter(x => x !== undefined);
+    r[key + "_max"] = v.length ? Math.max.apply(null, v) : "";
+    r[key + "_max_pct"] = pctOf(r[key + "_max"], bt);
+  }
+  const cap = play.map(p => p.voice_capacity).filter(v => v !== undefined);
+  r.voice_capacity_min = cap.length ? Math.min.apply(null, cap) : "";
+  r.polls = play.length;
+  if (restarted) r.note = "синтезатор перезапустился (blocks упал)";
+  else if (b1 === undefined) r.note = "нет ответов синтезатора";
+  return r;
+}
+
+/* ===== The run: plays the scenario, keeps the ledger, stops safely ===== */
+class Runner {
+  constructor(steps, send, hooks) {
+    this.steps = steps; this.send = send; this.hooks = hooks || {};
+    this.ledger = new Ledger(); this.state = "idle"; this.i = -1;
+    this.queue = []; this.qi = 0; this.polls = []; this.summaries = [];
+    this.usedChannels = new Set();
+    for (const s of steps) for (const t of s.targets) this.usedChannels.add((t.ch - 1) & 15);
+    this.failures = 0; this.endHow = "";
+  }
+  running() { return this.state === "preroll" || this.state === "step"; }
+  start(now) {
+    if (this.state !== "idle") return;
+    this.state = "preroll"; this.t0 = now; this.nextAt = now + PREROLL_MS;
+  }
+  label(t) {
+    if (this.state === "preroll" || (this.state === "idle")) return "до начала";
+    if (this.state === "step") {
+      const s = this.steps[this.i];
+      return t <= this.playEnd ? String(s.idx) : s.idx + " пауза";
+    }
+    return "после конца";
+  }
+  call(name, arg) { const f = this.hooks[name]; if (f) f(arg); }
+  addPoll(s) {
+    s.step = this.label(s.t);
+    this.polls.push(s);
+    try { this.call("onPoll", s); } catch (e) { this.stop(s.t, "ошибка: " + (e && e.message)); }
+  }
+  emit(m) {
+    const st = m[0] & 0xF0, c = m[0] & 15;
+    this.send(m);                               // throws -> nothing changed in the ledger
+    if (st === 0x90) this.ledger.on(c, m[1]);
+    else if (st === 0x80) this.ledger.off(c, m[1]);
+  }
+  beginStep(i, t) {
+    this.i = i; this.state = "step"; this.stepStart = t;
+    this.playEnd = t + PLAY_MS; this.stepEnd = t + PLAY_MS + REST_MS;
+    this.queue = stepEvents(this.steps[i], t); this.qi = 0;
+    this.call("onStepStart", this.steps[i]);
+  }
+  finishStep(endT, note) {
+    const s = summarizeStep(this.polls, this.steps[this.i], this.stepStart, this.playEnd, endT);
+    if (note) s.note = s.note ? note + "; " + s.note : note;
+    this.summaries.push(s);
+    this.call("onStep", s);
+  }
+  tick(now) {
+    if (!this.running()) return;
+    try {
+      for (;;) {
+        if (this.state === "preroll") {
+          if (now < this.nextAt) return;
+          if (!this.polls.some(p => p.blocks !== undefined || p.render_ticks !== undefined)) {
+            this.stop(now, "синтезатор не ответил за " + PREROLL_MS / 1000 + " с: ноты не посылались"); return;
+          }
+          if (now - this.nextAt > LATE_LIMIT_MS) throw new Error("страница опоздала на " + Math.round(now - this.nextAt) + " мс");
+          this.beginStep(0, this.nextAt);
+          continue;
+        }
+        while (this.qi < this.queue.length && this.queue[this.qi].t <= now) {
+          if (now - this.queue[this.qi].t > LATE_LIMIT_MS) throw new Error("страница опоздала на " + Math.round(now - this.queue[this.qi].t) + " мс");
+          this.emit(this.queue[this.qi].m); this.qi++;
+        }
+        if (now < this.stepEnd) return;
+        if (this.qi < this.queue.length) throw new Error("шаг кончился раньше своих нот");
+        const end = this.stepEnd;
+        this.finishStep(end, "");
+        if (this.i + 1 < this.steps.length) {
+          if (now - end > LATE_LIMIT_MS) throw new Error("страница опоздала на " + Math.round(now - end) + " мс");
+          this.beginStep(this.i + 1, end);
+        } else { this.end(end, "закончен полностью"); return; }
+      }
+    } catch (e) {
+      this.stop(now, "ошибка: " + (e && e.message));
+    }
+  }
+  /* Note off for every note still on, then CC 123 on every channel the run uses. Never throws. */
+  panic() {
+    let failed = 0;
+    for (const [c, n, cnt] of this.ledger.sounding()) {
+      for (let k = 0; k < cnt; ++k) {
+        try { this.send([0x80 | c, n, 0]); this.ledger.off(c, n); } catch (e) { failed++; }
+      }
+    }
+    const chans = new Set(this.usedChannels); for (const c of this.ledger.channels) chans.add(c);
+    for (const c of chans) { try { this.send([0xB0 | c, 123, 0]); } catch (e) { failed++; } }
+    this.failures += failed;
+    return failed;
+  }
+  end(t, how) {
+    this.state = "done"; this.endT = t; this.endHow = how;
+    this.panic();
+    try { this.call("onEnd", this); } catch (e) {}
+  }
+  stop(now, why) {
+    const wasStep = this.state === "step";
+    if (this.state === "stopped" || this.state === "done") { this.panic(); return; }
+    this.state = "stopped"; this.endT = now; this.endHow = "остановлен: " + why;
+    this.panic();
+    if (wasStep) {
+      try {
+        const s = summarizeStep(this.polls, this.steps[this.i], this.stepStart, this.playEnd, now);
+        s.note = "остановлен: " + why + (s.note ? "; " + s.note : "");
+        this.summaries.push(s);
+        this.call("onStep", s);
+      } catch (e) {}
+    }
+    try { this.call("onEnd", this); } catch (e) {}
+  }
+}
+
+/* ===== CSV ===== */
+const SUMMARY_FIELDS = ["run", "step", "name", "channels", "start", "end", "play_ms",
+  "overruns", "short_intervals", "adapted", "overloads", "underruns", "midi_dropped", "shed_count",
+  "render_min", "render_mean", "render_max", "render_mean_pct", "render_max_pct", "deadline_ticks",
+  "irq_peak_before", "irq_peak_after", "irq_peak_rose", "irq_peak_after_pct",
+  "engine_peak_before", "engine_peak_after", "engine_peak_rose", "engine_peak_after_pct",
+  "engine_call_peak_max", "engine_call_peak_max_pct", "micro_d_peak_max", "micro_d_peak_max_pct",
+  "mix_peak_max", "mix_peak_max_pct", "block_ticks",
+  "voice_capacity_min", "polls", "note"];
+function csvCell(v) {
+  if (v === undefined || v === null) return "";
+  const s = String(v).replace(/[\r\n]+/g, " / ");
+  return /[",;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function isoTime(t) { const d = new Date(t); return isNaN(d) ? "" : d.toLocaleString("sv-SE").replace(" ", "T"); }
+function runHeader(run) {
+  return ["# run " + run.id + " start " + isoTime(run.started) + " end " + (run.end ? isoTime(run.end.t) + " (" + run.end.how + ")" : "?"),
+          "# setup: " + String(run.setup || "(не заполнено)").replace(/[\r\n]+/g, " / "),
+          "# channels: " + (run.tracks || []).filter(t => t.on).map(t => "track " + t.track + "=ch " + t.ch + (t.drums ? " drums" : "")).join(", ")];
+}
+function rawCsv(runs) {
+  const lines = ["time,unix_ms," + LOG_FIELDS.join(",") + ",run,step"];
+  for (const run of runs) {
+    lines.push.apply(lines, runHeader(run));
+    for (const a of run.raw) {
+      const s = unpackPoll(a);
+      lines.push(isoTime(s.t) + "," + Math.round(s.t) + "," + LOG_FIELDS.map(k => csvCell(s[k])).join(",") + "," + run.id + "," + csvCell(s.step));
+    }
+  }
+  return lines.join("\n") + "\n";
+}
+function summaryCsv(runs) {
+  const lines = [SUMMARY_FIELDS.join(",")];
+  for (const run of runs) {
+    lines.push.apply(lines, runHeader(run));
+    for (const s of run.steps) {
+      const row = Object.assign({}, s, { run: run.id, start: isoTime(s.start), end: isoTime(s.end) });
+      lines.push(SUMMARY_FIELDS.map(k => csvCell(row[k])).join(","));
+    }
+  }
+  return lines.join("\n") + "\n";
+}
+/* Setup text: a run takes the text at START and keeps following it while the run goes; when the run ends
+ * the page writes the text once more and the run is frozen. Typing afterwards changes only the draft for the
+ * next run, never a run that has ended. Returns the run that typing may change, or null. */
+function setupEditTarget(runs) {
+  const last = runs[runs.length - 1];
+  return last && !last.end ? last : null;
+}
+// ==== CORE END ====
+
+/* ===================== Page glue (DOM, WebMIDI, storage) ===================== */
+const $ = id => document.getElementById(id);
+function nowMs() { return performance.timeOrigin + performance.now(); }
+function fmt(n) { return n === undefined || n === "" ? "—" : Number(n).toLocaleString("ru-RU"); }
+function pct(a, b) { return (a === undefined || a === "" || !b) ? "—" : (a * 100 / b).toFixed(1) + " %"; }
+function mmss(ms) { const s = Math.round(ms / 1000); return Math.floor(s / 60) + " мин " + String(s % 60).padStart(2, "0") + " с"; }
+
+/* ---- self-test (framing vectors from fm1-diag.html + the send guard) ---- */
+function selfTest() {
+  const fails = [];
+  const eq = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
+  if (!eq(buildFrame(19, 5, []), [0xF0,0x7D,0x46,0x4D,0x02,0x13,0x05,0x00,0x56,0xF7])) fails.push("запрос 19");
+  if (!eq(buildFrame(17, 16383, []), [0xF0,0x7D,0x46,0x4D,0x02,0x11,0x7F,0x7F,0x5F,0xF7])) fails.push("запрос 17");
+  const p = parseFrame(Uint8Array.from([0xF0,0x7D,0x46,0x4D,0x02,0x53,0x05,0x00,0x00,0x7E,0x07,0x00,0x11,0xF7]));
+  if (!p || p.cmd !== 0x53 || !eq(p.data, [0, 255, 1])) fails.push("разбор ответа");
+  if (parseFrame(Uint8Array.from([0xF0,0x7D,0x46,0x4D,0x02,0x53,0x05,0x00,0x00,0x7E,0x07,0x00,0x12,0xF7])) !== null) fails.push("неверная сумма принята");
+  const bad = [[0xB0, 7, 100], [0xC0, 1], [0x90, 60, 0], [0xE0, 0, 64], buildFrame(3, 1, []), [0xFF]];
+  for (const m of bad) { let threw = false; try { checkOutgoing(m); } catch (e) { threw = true; } if (!threw) fails.push("пропущено " + m.join(" ")); }
+  for (const m of [[0x90, 60, 90], [0x89, 36, 0], [0xBF, 123, 0], guardedFrame(18, 7)]) { try { checkOutgoing(m); } catch (e) { fails.push("отказ " + m.join(" ")); } }
+  const el = $("selftest");
+  el.textContent = fails.length ? "самопроверка: ОШИБКА — " + fails.join("; ") : "самопроверка: OK";
+  el.className = fails.length ? "fail" : "ok";
+  return !fails.length;
+}
+const selfOk = selfTest();
+
+/* ---- storage: one key per run; every write wrapped (private windows, full storage) ---- */
+const KEY_RUNS = "fm1load.runs", KEY_SETUP = "fm1load.setup";
+let runs = [];
+function storeMsg(text, badFlag) { const el = $("storeMsg"); el.textContent = text; el.className = badFlag ? "bad" : "dim"; }
+function saveRun(run) {
+  try {
+    localStorage.setItem("fm1load.run." + run.id, JSON.stringify(run));
+    localStorage.setItem(KEY_RUNS, JSON.stringify(runs.map(r => r.id)));
+    storeMsg("Журнал сохраняется в браузере после каждого замера. Тестов в журнале: " + runs.length + ".", false);
+  } catch (e) {
+    storeMsg("Журнал НЕ сохраняется в браузере (" + (e && e.name) + "). Скачайте оба файла сейчас, потом очистите журнал.", true);
+  }
+}
+function loadRuns() {
+  try {
+    const ids = JSON.parse(localStorage.getItem(KEY_RUNS) || "[]");
+    for (const id of ids) {
+      const t = localStorage.getItem("fm1load.run." + id);
+      if (t) runs.push(JSON.parse(t));
+    }
+    const last = runs[runs.length - 1];
+    if (last && !last.end) { last.end = { t: last.raw.length ? last.raw[last.raw.length - 1][0] : last.started, how: "страница закрылась во время теста" }; saveRun(last); }
+    $("setup").value = localStorage.getItem(KEY_SETUP) || (last ? last.setup || "" : "");
+    storeMsg("Тестов в журнале: " + runs.length + ".", false);
+  } catch (e) { storeMsg("Не удалось прочитать журнал из браузера (" + (e && e.name) + ").", true); }
+}
+
+/* ---- tracks and kinds UI ---- */
+let tracks = defaultTracks(), kinds = defaultKinds();
+try {
+  const t = JSON.parse(localStorage.getItem("fm1load.tracks") || "null"); if (Array.isArray(t) && t.length === 8) tracks = t;
+  const k = JSON.parse(localStorage.getItem("fm1load.kinds") || "null"); if (k) Object.assign(kinds, k);
+} catch (e) {}
+function saveChoices() { try { localStorage.setItem("fm1load.tracks", JSON.stringify(tracks)); localStorage.setItem("fm1load.kinds", JSON.stringify(kinds)); } catch (e) {} }
+function buildChoiceUi() {
+  const tb = $("trackTable").tBodies[0]; tb.innerHTML = "";
+  tracks.forEach((t, i) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = '<td class="l">' + t.track + '</td><td class="l"><input type="checkbox" data-k="on"></td>' +
+      '<td class="l"><input type="number" min="1" max="16" data-k="ch"></td><td class="l"><input type="checkbox" data-k="drums"></td>';
+    tr.querySelector('[data-k=on]').checked = t.on;
+    tr.querySelector('[data-k=drums]').checked = t.drums;
+    tr.querySelector('[data-k=ch]').value = t.ch;
+    tr.oninput = () => {
+      t.on = tr.querySelector('[data-k=on]').checked; t.drums = tr.querySelector('[data-k=drums]').checked;
+      const c = parseInt(tr.querySelector('[data-k=ch]').value, 10); t.ch = (c >= 1 && c <= 16) ? c : 0;
+      saveChoices(); showPlan();
+    };
+    tb.appendChild(tr);
+  });
+  const kb = $("kindBoxes"); kb.innerHTML = "";
+  for (const k of TRACK_KINDS.concat(ALL_KINDS)) {
+    const l = document.createElement("label");
+    l.innerHTML = '<input type="checkbox"> ' + (k.base ? k.label : "каждая дорожка: " + k.label);
+    const cb = l.querySelector("input"); cb.checked = !!kinds[k.id];
+    cb.onchange = () => { kinds[k.id] = cb.checked; saveChoices(); showPlan(); };
+    kb.appendChild(l);
+  }
+}
+function lockChoices(lock) {
+  for (const el of document.querySelectorAll("#trackTable input, #kindBoxes input, #inSel, #outSel")) el.disabled = lock;
+}
+function showPlan() {
+  const steps = buildScenario(tracks, kinds);
+  $("planTotal").textContent = steps.length ? "Шагов: " + steps.length + ", всего примерно " + mmss(scenarioMs(steps)) : "Ничего не выбрано";
+  $("planList").innerHTML = "";
+  for (const s of steps) { const li = document.createElement("li"); li.textContent = s.name; $("planList").appendChild(li); }
+  updateStart();
+}
+
+/* ---- MIDI (port matching as in fm1-diag.html) ---- */
+let midi = null, inPort = null, outPort = null;
+const MATCH = /usb-midi|fm-?1/i;
+function setConn(text, cls) { const c = $("conn"); c.textContent = text; c.className = cls; }
+function candidates(map) { return Array.from(map.values()).filter(p => MATCH.test(p.name || "") && p.state !== "disconnected"); }
+function fillSelect(sel, list, current) {
+  const ids = list.map(p => p.id).join("|");
+  if (sel.dataset.ids !== ids) {
+    sel.innerHTML = "";
+    for (const p of list) { const o = document.createElement("option"); o.value = p.id; o.textContent = p.name; sel.appendChild(o); }
+    sel.dataset.ids = ids;
+  }
+  if (current && list.some(p => p.id === current.id)) sel.value = current.id;
+}
+function choosePorts() {
+  if (!midi) return;
+  const ins = candidates(midi.inputs), outs = candidates(midi.outputs);
+  if (runner && runner.running()) {   // ports are locked during a run; losing one stops it
+    if (!outs.some(p => p === outPort) || !ins.some(p => p === inPort)) runner.stop(nowMs(), "синтезатор отключился");
+    return;
+  }
+  fillSelect($("inSel"), ins, inPort); fillSelect($("outSel"), outs, outPort);
+  $("ports").style.display = (ins.length > 1 || outs.length > 1) ? "flex" : "none";
+  const ni = ins.find(p => p.id === $("inSel").value) || ins[0] || null;
+  const no = outs.find(p => p.id === $("outSel").value) || outs[0] || null;
+  if (ni !== inPort) {
+    if (inPort) inPort.onmidimessage = null;
+    inPort = ni;
+    if (inPort) inPort.onmidimessage = onMessage;
+  }
+  outPort = no;
+  if (!inPort || !outPort) setConn("Синтезатор не найден", "none");
+  else if (!polling) setConn("Синтезатор найден: " + outPort.name + ". Пока ничего не посылаем.", "ok");
+  updateStart();
+}
+$("inSel").onchange = choosePorts; $("outSel").onchange = choosePorts;
+async function startMidi() {
+  if (!navigator.requestMIDIAccess) { setConn("Этот браузер не умеет MIDI. Откройте страницу в Chrome или Edge.", "err"); return; }
+  try { midi = await navigator.requestMIDIAccess({ sysex: true }); }
+  catch (e) { setConn("Нет доступа к MIDI. Разрешите MIDI (sysex) для этой страницы и обновите её.", "err"); return; }
+  midi.onstatechange = choosePorts;
+  choosePorts();
+  setInterval(choosePorts, 2000);
+}
+
+/* The ONLY place that calls output.send. */
+function midiSend(m) {
+  const a = checkOutgoing(m);
+  if (!outPort) throw new Error("нет выхода MIDI");
+  outPort.send(a);
+}
+
+/* ---- polling: one request at a time; runs only from START until 3 s after the end ---- */
+let token = (Date.now() & 0x3fff) || 1, waiting = null, busyRound = false, pollTimer = null, polling = false, lastReplyAt = 0;
+function nextToken() { token = (token % 16383) + 1; return token; }
+function request(cmd) {
+  return new Promise(resolve => {
+    const t = nextToken();
+    try { midiSend(guardedFrame(cmd, t)); } catch (e) { resolve(null); return; }
+    waiting = { cmd, token: t, resolve, timer: setTimeout(() => { waiting = null; resolve(null); }, 300) };
+  });
+}
+function onMessage(ev) {
+  const d = ev.data;
+  if (!d || d[0] !== 0xF0 || !waiting) return;
+  const p = parseFrame(d);
+  if (!p || p.cmd !== (waiting.cmd | 64) || p.token !== waiting.token || !p.data.length) return;
+  const w = waiting; waiting = null; clearTimeout(w.timer);
+  lastReplyAt = Date.now();
+  w.resolve({ status: p.data[0], d: p.data.slice(1) });
+}
+async function pollRound() {
+  if (busyRound || !inPort || !outPort || !runner) return;
+  busyRound = true;
+  try {
+    const t = nowMs();
+    const r17 = await request(17), r18 = await request(18), r19 = await request(19), r23 = await request(23);
+    if (r17 || r18 || r19) { setConn("Синтезатор отвечает: " + outPort.name, "ok"); runner.addPoll(decodeSample(t, r17, r18, r19, r23)); }
+    else if (Date.now() - lastReplyAt > 3000) setConn("Синтезатор не отвечает (" + outPort.name + ")", "err");
+  } finally { busyRound = false; }
+}
+function startPolling() { polling = true; pollTimer = setInterval(pollRound, POLL_MS); }
+function stopPolling() { polling = false; clearInterval(pollTimer); pollTimer = null; }
+
+/* ---- the run ---- */
+let runner = null, run = null, tickTimer = null, nowTimer = null, firstPoll = null, firstShed;
+function updateStart() {
+  const busy = !!(runner && (runner.running() || polling));
+  $("startBtn").disabled = busy || !selfOk || !outPort || !inPort || !buildScenario(tracks, kinds).length;
+}
+function liveShow(s) {
+  if (!firstPoll) firstPoll = s;
+  $("v_render").textContent = pct(s.render_ticks, s.deadline_ticks);
+  $("v_irq").innerHTML = pct(s.irq_peak_ticks, BOARD_BLOCK_TICKS) + " <small>" + fmt(s.irq_peak_ticks) + " тиков</small>";
+  $("v_epeak").textContent = pct(s.engine_peak_ticks, s.deadline_ticks);
+  const dOver = (s.overruns !== undefined && firstPoll.overruns !== undefined) ? s.overruns - firstPoll.overruns : undefined;
+  const dAdapt = (s.adapted !== undefined && firstPoll.adapted !== undefined) ? s.adapted - firstPoll.adapted : undefined;
+  $("v_over").textContent = fmt(dOver); $("r_over").classList.toggle("alarm", dOver > 0);
+  $("v_adapt").textContent = fmt(dAdapt); $("r_adapt").classList.toggle("alarm", dAdapt > 0);
+  $("v_cap").textContent = fmt(s.voice_capacity);
+  for (const [id, key] of [["v_ecall", "engine_call_peak"], ["v_mdpeak", "micro_d_peak"], ["v_mixpeak", "mix_peak"]])
+    $(id).textContent = s[key] === undefined ? "нет данных" : pct(s[key], s.block_ticks);
+  if (s.shed_count === undefined) $("v_shed").textContent = "нет данных";
+  else {
+    if (firstShed === undefined) firstShed = s.shed_count; /* first poll of the run that has command 23 */
+    const dShed = s.shed_count - firstShed;
+    $("v_shed").innerHTML = fmt(dShed) + " <small>" + (s.shedding ? "эффекты выключены сейчас" : "эффекты работают") + "</small>";
+    $("r_shed").classList.toggle("alarm", dShed > 0 || !!s.shedding);
+  }
+}
+function showNow() {
+  if (!runner) return;
+  const t = nowMs();
+  let text;
+  if (runner.state === "preroll") text = "Читаю счётчики перед началом… " + Math.max(0, Math.ceil((runner.nextAt - t) / 1000)) + " с";
+  else if (runner.state === "step") {
+    const s = runner.steps[runner.i], left = Math.max(0, runner.stepEnd - nowMs());
+    text = "Шаг " + s.idx + " из " + runner.steps.length + ": " + s.name + (t <= runner.playEnd ? " — играет" : " — тишина") +
+           ". До конца теста " + mmss(left + (runner.steps.length - 1 - runner.i) * (PLAY_MS + REST_MS));
+  } else text = "Тест не идёт. " + (runner.endHow ? "Последний: " + runner.endHow + "." : "") +
+           (runner.failures ? " ВНИМАНИЕ: не удалось послать " + runner.failures + " сообщений «выкл» — выключите синтезатор, если что-то звучит." : "");
+  $("now").textContent = text; $("now").className = runner.running() ? "" : "dim";
+}
+function cell(v) { return v === "" || v === undefined ? "—" : fmt(v); }
+function showSteps(list) {
+  const tb = $("stepTable").tBodies[0]; tb.innerHTML = "";
+  for (const s of list) {
+    const tr = document.createElement("tr");
+    const bad = s.overruns > 0 || s.adapted > 0 || s.overloads > 0 || s.underruns > 0 || s.midi_dropped > 0 || s.shed_count > 0 || s.note;
+    if (bad) tr.className = "badrow";
+    const peak = (rose, after, p) => rose === "yes" ? "вырос до " + fmt(after) + (p === "" ? "" : " (" + p + " %)") : rose === "no" ? "—" : "?";
+    const td = [s.step, s.name, cell(s.overruns), cell(s.short_intervals), cell(s.adapted), cell(s.overloads), cell(s.underruns), cell(s.midi_dropped),
+      s.render_mean === "" ? "—" : [s.render_min, s.render_mean, s.render_max].map(v => s.deadline_ticks ? (v * 100 / s.deadline_ticks).toFixed(0) : fmt(v)).join(" / ") + " %",
+      peak(s.irq_peak_rose, s.irq_peak_after, s.irq_peak_after_pct), peak(s.engine_peak_rose, s.engine_peak_after, s.engine_peak_after_pct),
+      STEP_PEAKS.map(k => s[k + "_max_pct"] === "" || s[k + "_max_pct"] === undefined ? "нет" : s[k + "_max_pct"].toFixed(0)).join(" / ") + " %",
+      s.shed_count === "" || s.shed_count === undefined ? "нет данных" : fmt(s.shed_count),
+      cell(s.voice_capacity_min), s.note || ""];
+    td.forEach((v, i) => { const c = document.createElement("td"); c.textContent = v; if (i === 1 || i === 14) c.className = "l"; tr.appendChild(c); });
+    tb.appendChild(tr);
+  }
+}
+function showRuns() {
+  const ul = $("runList"); ul.innerHTML = "";
+  for (const r of runs) {
+    const li = document.createElement("li");
+    li.textContent = "Тест " + isoTime(r.started) + ": шагов " + r.steps.length + ", замеров " + r.raw.length + ". " + (r.end ? r.end.how : "идёт");
+    ul.appendChild(li);
+  }
+}
+function startRun() {
+  if (runner && (runner.running() || polling)) return;
+  const steps = buildScenario(tracks, kinds);
+  if (!steps.length || !outPort || !inPort) return;
+  run = { id: Math.round(Date.now()), started: Date.now(), setup: $("setup").value, tracks: JSON.parse(JSON.stringify(tracks)),
+          kinds: Object.assign({}, kinds), steps: [], raw: [], end: null };
+  runs.push(run); saveRun(run); showRuns(); showSteps([]);
+  firstPoll = null; firstShed = undefined;
+  runner = new Runner(steps, midiSend, {
+    onPoll: s => { run.raw.push(packPoll(s)); saveRun(run); liveShow(s); },
+    onStep: s => { run.steps.push(s); saveRun(run); showSteps(run.steps); },
+    onEnd: r => {
+      run.setup = $("setup").value; /* last write: the run's setup text is frozen from here on */
+      run.end = { t: Date.now(), how: r.endHow, failures: r.failures }; saveRun(run); showRuns();
+      clearInterval(tickTimer); tickTimer = null;
+      setTimeout(() => { stopPolling(); lockChoices(false); updateStart(); showNow(); setConn("Тест окончен. Больше ничего не посылаем.", "ok"); }, 3000);
+      showNow(); updateStart();
+    }
+  });
+  lockChoices(true);
+  runner.start(nowMs());
+  startPolling();
+  tickTimer = setInterval(() => runner.tick(nowMs()), 5);
+  updateStart(); showNow();
+}
+function stopAll(why) {
+  if (runner && runner.running()) { runner.stop(nowMs(), why); return; }
+  /* No run: CC 123 on the ticked channels (only when the user pressed STOP). */
+  if (why !== "нажата кнопка СТОП" || !outPort) return;
+  const chans = new Set(tracks.filter(t => t.on && t.ch >= 1 && t.ch <= 16).map(t => t.ch - 1));
+  if (runner) for (const c of runner.usedChannels) chans.add(c);
+  let failed = 0;
+  for (const c of chans) { try { midiSend([0xB0 | c, 123, 0]); } catch (e) { failed++; } }
+  $("now").textContent = failed ? "Не удалось послать «все ноты выкл» (" + failed + ")" : "Послано «все ноты выкл» на каналы " + Array.from(chans, c => c + 1).join(", ");
+}
+$("startBtn").onclick = startRun;
+$("stopBtn").onclick = () => stopAll("нажата кнопка СТОП");
+window.addEventListener("pagehide", () => stopAll("страница закрыта"));
+window.addEventListener("beforeunload", () => stopAll("страница закрыта"));
+document.addEventListener("visibilitychange", () => { if (document.hidden) stopAll("вкладка скрыта (браузер замедляет скрытые вкладки)"); });
+window.addEventListener("error", e => stopAll("ошибка страницы: " + (e && e.message)));
+window.addEventListener("unhandledrejection", e => stopAll("ошибка страницы: " + (e && e.reason && e.reason.message)));
+$("setup").oninput = () => {
+  try { localStorage.setItem(KEY_SETUP, $("setup").value); } catch (e) {}
+  const going = setupEditTarget(runs); /* only a run that has not ended; never the previous run */
+  if (going) { going.setup = $("setup").value; saveRun(going); }
+};
+
+/* ---- downloads ---- */
+function download(name, text) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["﻿" + text], { type: "text/csv;charset=utf-8" }));
+  a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+function stamp() { return isoTime(Date.now()).replace(/[-:]/g, "").replace("T", "-").slice(0, 13); }
+$("rawBtn").onclick = () => download("fm1-load-raw-" + stamp() + ".csv", rawCsv(runs));
+$("sumBtn").onclick = () => download("fm1-load-steps-" + stamp() + ".csv", summaryCsv(runs));
+$("clearBtn").onclick = () => {
+  if (runner && runner.running()) return;
+  if (!confirm("Удалить из браузера все тесты (" + runs.length + ")? Сначала скачайте оба файла.")) return;
+  try { for (const r of runs) localStorage.removeItem("fm1load.run." + r.id); localStorage.removeItem(KEY_RUNS); } catch (e) {}
+  runs = []; showRuns(); showSteps([]); storeMsg("Журнал очищен.", false);
+};
+
+loadRuns(); buildChoiceUi(); showPlan(); showRuns();
+if (runs.length) showSteps(runs[runs.length - 1].steps);
+setInterval(showNow, 500);
+startMidi();
+</script>
+</body>
+</html>

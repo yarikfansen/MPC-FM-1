@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MICRO D понятно</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#141217;color:#ddd;font:14px/1.45 system-ui,sans-serif}
+main{max-width:1180px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:6px 0 2px}h2{font-size:15px;margin:0 0 8px;color:#fff}
+.lead{color:#aaa;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.card{background:#1d1a21;border:1px solid #2c2932;border-radius:10px;padding:12px}
+.wide{grid-column:1/-1}
+canvas{width:240px;height:240px;border-radius:6px;display:block;margin:0 auto 8px;background:#000}
+p,ul{margin:6px 0 0;color:#bbb;font-size:13px}ul{padding-left:18px}
+table{border-collapse:collapse;font-size:13px;color:#ccc;width:100%}td,th{border-bottom:1px solid #2c2932;padding:4px 6px;text-align:left}th{color:#fff}
+</style></head><body><main>
+<h1>MICRO D — чтобы понял и ребёнок (эскиз, код не трогаю до «да»)</h1>
+<p class="lead">Идея: звук идёт по дорожке из 5 остановок. Дорожка всегда видна сверху; горит та остановка, где ты сейчас. SELECT шагает по ней. На каждой остановке — одна большая картинка того, что делает повёрнутая ручка, и простые слова.</p>
+<div class="grid">
+<div class="card wide"><h2>Дорожка звука (справа от F A S L, на всех 5 страницах)</h2><canvas id="path" style="width:720px;height:120px"></canvas>
+<p>ВОЛНЫ → ТОЛЩИНА → ЯРКОСТЬ (фильтр) → ФОРМА ВО ВРЕМЕНИ (огибающая) → ДВИЖЕНИЕ (LFO). Значок каждой остановки = её суть: волна, две волны, кривая фильтра, горка, качели.</p></div>
+<div class="card"><h2>1. ВОЛНЫ</h2><canvas id="p0"></canvas><p>Четыре ручки = четыре волны, у каждой ручки свой рисунок волны. В окне — что получилось вместе.</p></div>
+<div class="card"><h2>2. ТОЛЩИНА</h2><canvas id="p1"></canvas><p>THICK — вторая волна чуть «плывёт» (толще). AIR — шум-воздух. SLIDE — нота скользит к следующей. KEY — звук держится, пока держишь клавишу.</p></div>
+<div class="card"><h2>3. ЯРКОСТЬ</h2><canvas id="p2"></canvas><p>BRIGHT — светлее/темнее. PEAK — «писк» на краю. MOVE — насколько горка открывает фильтр. DIRT — грязь/перегруз.</p></div>
+<div class="card"><h2>4. ФОРМА ВО ВРЕМЕНИ</h2><canvas id="p3"></canvas><p>START — как быстро звук появляется, FALL — как быстро падает, HOLD — на каком уровне держится, RESTART — каждая нота с начала.</p></div>
+<div class="card"><h2>5. ДВИЖЕНИЕ</h2><canvas id="p4"></canvas><p>SPEED, SHAPE — скорость и форма качелей; DEPTH: вправо качает яркость, влево — высоту (вибрато). NOTES: 1 / 2 / 3 / 4 ноты сразу или ВСЕ НА ОДНУ (толстый унисон).</p></div>
+<div class="card"><h2>Слова на ручках: было → стало</h2>
+<table><tr><th>стр.</th><th>было</th><th>стало</th></tr>
+<tr><td>1</td><td>SAW SHARK SQ&gt;PLS TRI</td><td>те же + рисунок волны над ручкой</td></tr>
+<tr><td>2</td><td>DETUNE NOISE GLIDE VCA</td><td>THICK AIR SLIDE KEY</td></tr>
+<tr><td>3</td><td>CUTOFF RESO CONTOUR DRIVE</td><td>BRIGHT PEAK MOVE DIRT</td></tr>
+<tr><td>4</td><td>ATTACK DECAY SUSTAIN RETRIG</td><td>START FALL HOLD RESTART</td></tr>
+<tr><td>5</td><td>RATE WAVE AMOUNT MODE</td><td>SPEED SHAPE DEPTH NOTES</td></tr></table>
+<ul><li>Значения тоже простые: SLIDE OFF/0.2S, KEY ON/OFF, NOTES 1/2/3/4/ALL1, DEPTH «BRIGHT +20» / «PITCH 10».</li>
+<li>Заголовок — просто MICRO D; где ты — видно по дорожке; имя звука — в списке микшера (первый звук теперь называется MICRO D).</li></ul></div>
+</div></main>
+<script>
+const F=(p)=>'700 '+p+'px "Barlow Condensed"',TX='#f2eef5',DIM='#8b8494',FT='#4a4552',K=['#ff7eb3','#3ee07a','#ffd23f','#2fd8c8'],AM='#ffb347',CR='#f2e8d0';
+function ctx(id,w=240,h=240){const c=document.getElementById(id);c.width=w*2;c.height=h*2;const g=c.getContext('2d');g.setTransform(2,0,0,2,0,0);g.fillStyle='#000';g.fillRect(0,0,w,h);return g;}
+function rr(g,x,y,w,h,r,f,s,lw=1){g.beginPath();g.roundRect(x,y,w,h,r);if(f){g.fillStyle=f;g.fill();}if(s){g.strokeStyle=s;g.lineWidth=lw;g.stroke();}}
+function T(g,s,x,y,p,c,a='left'){g.font=F(p);g.fillStyle=c;g.textAlign=a;g.textBaseline='top';g.fillText(s,x,y);}
+function line(g,pts,c,w=2){g.strokeStyle=c;g.lineWidth=w;g.lineJoin='round';g.beginPath();pts.forEach((p,i)=>i?g.lineTo(...p):g.moveTo(...p));g.stroke();}
+const STOPS=['WAVES','THICK','BRIGHT','SHAPE','MOVE'],RU=['ВОЛНЫ','ТОЛЩИНА','ЯРКОСТЬ','ФОРМА','ДВИЖЕНИЕ'];
+function icon(g,i,cx,cy,s,c){const h=s/2;if(i==0)line(g,[[cx-h,cy+h*.5],[cx-h*.2,cy-h*.5],[cx-h*.2,cy+h*.5],[cx+h*.6,cy-h*.5],[cx+h*.6,cy+h*.5]],c,1.6);
+ if(i==1){line(g,[[cx-h,cy+h*.4],[cx-h*.1,cy-h*.5],[cx-h*.1,cy+h*.4],[cx+h*.8,cy-h*.5]],c,1.6);line(g,[[cx-h*.8,cy+h*.6],[cx+h*.1,cy-h*.3],[cx+h*.1,cy+h*.6],[cx+h,cy-h*.3]],c,1)}
+ if(i==2)line(g,[[cx-h,cy-h*.2],[cx,cy-h*.2],[cx+h*.3,cy-h*.6],[cx+h*.5,cy+h*.1],[cx+h,cy+h*.6]],c,1.6);
+ if(i==3)line(g,[[cx-h,cy+h*.6],[cx-h*.5,cy-h*.6],[cx,cy-h*.1],[cx+h*.5,cy-h*.1],[cx+h,cy+h*.6]],c,1.6);
+ if(i==4){g.strokeStyle=c;g.lineWidth=1.6;g.beginPath();for(let k=0;k<=20;k++){const x=cx-h+k*s/20,y=cy-Math.sin(k/20*Math.PI*2)*h*.5;k?g.lineTo(x,y):g.moveTo(x,y);}g.stroke();}}
+/* the path strip: y 46..66 on the device screen */
+/* the path: right of F A S L, the stop you are on lit */
+function strip(g,cur,y=29,x0=34){const w=37,gap=3;STOPS.forEach((s,i)=>{const x=x0+i*(w+gap),on=i==cur;rr(g,x,y,w,23,4,on?AM:'#15131a',on?null:'#3a3540');icon(g,i,x+w/2,y+8,14,on?'#000':DIM);T(g,s,x+w/2,y+14,9,on?'#000':DIM,'center');
+ if(i<4){g.fillStyle=on?AM:'#5a5560';g.beginPath();g.moveTo(x+w,y+9);g.lineTo(x+w+3,y+11.5);g.lineTo(x+w,y+14);g.fill();}});}
+function topLine(g,cur){T(g,'120',5,3,22,TX);T(g,'BPM',38,11,11,K[1]);T(g,'MICRO D',120,4,20,TX,'center');
+ g.fillStyle=K[1];g.beginPath();g.moveTo(183,9);g.lineTo(192,14.5);g.lineTo(183,20);g.fill();T(g,'100',224,3,22,TX,'right');rr(g,228,7,6,13,1.5,null,TX);
+ ['F','A','S','L'].forEach((l,i)=>{const x=5+(i%2)*13,y=28+Math.floor(i/2)*13;rr(g,x,y,11,11,2.5,i<3?[TX,'#3ee07a','#ff4b4b'][i]:null,i<3?null:FT);T(g,l,x+5.5,y+1,10,i<3?'#000':FT,'center');});}
+function knobs(g,l){l.forEach((k,i)=>{const x=i*60;g.fillStyle=K[i];g.fillRect(x+6,197,48,2);T(g,k[0],x+30,202,16,TX,'center');T(g,k[1],x+30,219,16,K[i],'center');});}
+function box(g){rr(g,6,70,228,118,4,'#0c0b09','#4a4436');}
+function page(id,cur,draw,kn,big){const g=ctx(id);topLine(g,cur);strip(g,cur);box(g);T(g,big,120,74,20,K[0],'center');draw(g);knobs(g,kn);}
+function drawAll(){
+ {const g=ctx('path',720,120);g.setTransform(6,0,0,6,0,0);strip(g,2,4,4);}
+ page('p0',0,g=>{const W=[u=>1-2*u,u=>.5*(1-2*u)+.5*(1-4*Math.abs(u-.5)),u=>u<.5?1:-1,u=>1-4*Math.abs(u-.5)],L=[.9,.3,.6,.2];
+  W.forEach((f,i)=>{const x=14+i*30;line(g,[...Array(21)].map((_,k)=>[x+2+k,108-f((k%10)/10)*6]),K[i],1.6);rr(g,x+4,122,18,40*1,3,'#1a1814','#4a4436');rr(g,x+5,161-38*L[i],16,38*L[i],2,K[i]);});
+  line(g,[[136,140],[146,140]],DIM,1.2);line(g,[...Array(75)].map((_,k)=>{const u=(k%37)/37;return [152+k,140-30*W.reduce((a,f,i)=>a+f(u)*L[i]*L[i],0)/1.3]}),AM,2);
+  T(g,'= YOUR SOUND',190,174,10,DIM,'center');},[['SAW','70'],['SHARK','0'],['SQUARE','40'],['TRI','60']],'BUZZY SAW');
+ page('p1',1,g=>{for(let l=0;l<2;l++)line(g,[...Array(213)].map((_,x)=>{const ph=x/36+(l?x*.003+.15:0),u=ph-Math.floor(ph);return [14+x,138-24*(1-2*u)]}),l?CR:AM,1.6);
+  T(g,'TWO WAVES DRIFT = THICK',120,170,11,DIM,'center');},[['THICK','24'],['AIR','PINK 6'],['SLIDE','OFF'],['KEY','SHAPE']],'THICK');
+ page('p2',2,g=>{const pts=[...Array(220)].map((_,x)=>{const u=x/219,w=20*Math.pow(2,u*10)/900,den=Math.sqrt((1-w*w)**2+.15*w*w);return [10+x,Math.max(100,Math.min(184,150-20*Math.log10(1/den)*1.6))]});
+  g.fillStyle='#2a1d0c';g.beginPath();g.moveTo(10,184);pts.forEach(p=>g.lineTo(...p));g.lineTo(230,184);g.fill();line(g,pts,AM,1.8);
+  T(g,'DARK',16,170,11,DIM);T(g,'BRIGHT',224,104,11,DIM,'right');},[['BRIGHT','570'],['PEAK','20'],['MOVE','+12'],['DIRT','10']],'BRIGHT');
+ page('p3',3,g=>{const P=[[14,180],[60,104],[110,138],[180,138],[226,180]];line(g,P,AM,2);
+  [['START',37,140],['FALL',85,112],['HOLD',145,124]].forEach(([s,x,y],i)=>{T(g,s,x,y,11,K[i],'center');g.fillStyle=K[i];g.beginPath();g.arc(P[i+1][0],P[i+1][1],4,0,7);g.fill();});
+  T(g,'KEY DOWN',36,180,10,DIM,'center');T(g,'KEY UP',190,180,10,DIM,'center');},[['START','215MS'],['FALL','680MS'],['HOLD','100'],['RESTART','OFF']],'START');
+ page('p4',4,g=>{line(g,[...Array(201)].map((_,x)=>[20+x,104-Math.sin(x/32)*6]),'#5fa8e8',1.6);
+  ['C3','E3','G3',''].forEach((n,i)=>{const x=22+i*50;rr(g,x,118,40,22,4,n?AM:'#0c0b09',n?null:'#4a4436');T(g,n||'-',x+20,122,13,n?'#000':DIM,'center');line(g,[[x+20,140],[120,156]],n?AM:'#4a4436',1);});
+  rr(g,64,156,112,22,4,'#18130c',AM);T(g,'ONE FILTER FOR ALL',120,160,12,CR,'center');},[['SPEED','0.2HZ'],['SHAPE','SINE'],['DEPTH','BRIGHT 9'],['NOTES','4']],'NOTES: 4 AT ONCE');
+}
+document.fonts.load('700 12px "Barlow Condensed"').then(drawAll,drawAll);
+</script></body></html>

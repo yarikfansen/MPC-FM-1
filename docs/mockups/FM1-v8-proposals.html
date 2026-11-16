@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FM-1 v8 эскизы</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#141217;color:#ddd;font:14px/1.45 system-ui,sans-serif}
+main{max-width:1180px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:6px 0 2px}h2{font-size:15px;margin:0 0 8px;color:#fff}
+.lead{color:#aaa;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.card{background:#1d1a21;border:1px solid #2c2932;border-radius:10px;padding:12px}
+.wide{grid-column:1/-1}
+canvas{width:240px;height:240px;image-rendering:auto;border-radius:6px;display:block;margin:0 auto 8px;background:#000}
+.pair{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.cap{text-align:center;font-size:12px;color:#888;margin-bottom:4px}
+p{margin:6px 0 0;color:#bbb;font-size:13px}
+ul{margin:6px 0 0 18px;padding:0;color:#bbb;font-size:13px}
+</style></head><body><main>
+<h1>FM-1 v8 — эскизы (код не трогаю до «да»)</h1>
+<p class="lead">Экран 240×240, показан в 1:1. Сверху вниз: строка BPM / название экрана / батарея → F A S L и STEPS → ARP, движок и звук, CHAIN → цепочка паттернов → сетка → ручки.</p>
+<div class="grid">
+<div class="card"><h2>1. SEQ — новый верх</h2><canvas id="seq"></canvas>
+<ul><li>BPM «120» тем же шрифтом, что «100» у батареи; подпись BPM крупнее.</li>
+<li>Название экрана крупнее (20 px) и полностью.</li>
+<li>Справа от F A S L — <b>STEPS [64]</b> той же высоты: слово STEPS шириной как CHAIN, окошко 64 шириной как OFF.</li>
+<li>Строка в 1,618 раза выше: <b>ARP [ON/OFF]</b> слева, <b>CHAIN [ON/OFF]</b> справа, одинаковые цвета, всегда видны. REC STEP убран.</li>
+<li>Значок движка и имя звука крупнее, по центру над цепочкой паттернов.</li></ul></div>
+<div class="card"><h2>2. LFO — без «GLOBAL LFO»</h2><canvas id="lfo"></canvas>
+<ul><li>Заголовок убран: вкладки LFO 1 / LFO 2 и так говорят, где мы.</li></ul></div>
+<div class="card"><h2>3. EDIT (DX7) — без BANK</h2><canvas id="edit"></canvas>
+<ul><li>«BANK A» убран.</li><li>SELECT переключает строку TONE ↔ ENV (горит выбранная), ручки 1–4 — её значения.</li></ul></div>
+<div class="card"><h2>4. FX — крупно «FX»</h2><canvas id="fx"></canvas>
+<ul><li>«MASTER FX» → «FX», крупно.</li><li>Название эффекта ниже — внутри окна картинки, по центру его верхней половины; картинка видна и под названием.</li></ul></div>
+<div class="card wide"><h2>5. Новые значки движков</h2><canvas id="logos" style="width:720px;height:120px"></canvas>
+<p>Одна толщина линий, один размер 28×28, читаемы издалека: DX7 — три волны операторов, 303 — пила с подъёмом, PSG — меандр, PLUCK — затухающая струна, 808 — бочка, SAMPLER — форма волны.</p></div>
+<div class="card wide"><h2>6. Предложение: тема «Матрица»</h2>
+<div class="pair"><div><div class="cap">SEQ</div><canvas id="mxSeq"></canvas></div><div><div class="cap">FX</div><canvas id="mxFx"></canvas></div><div><div class="cap">MIXER</div><canvas id="mxMix"></canvas></div></div>
+<ul><li>Чёрный фон, один цвет — зелёный фосфор в 4 яркостях (#00ff41 → #0b3d16); акценты только белым (курсор) и красным (игра/запись).</li>
+<li>Моноширинный «терминальный» шрифт для цифр и надписей; крупные названия — тот же шрифт.</li>
+<li>В окнах картинок — тусклый «цифровой дождь» из символов, сама кривая — яркая зелёная.</li>
+<li>Можно сделать переключаемой темой в GLOBAL (обычная / Матрица), чтобы не терять цветовую подсказку ручек.</li></ul></div>
+</div></main>
+<script>
+const W=240,F=(p,w=700)=>w+' '+p+'px "Barlow Condensed"',M=p=>p+'px "Share Tech Mono"';
+const K=['#ff7eb3','#3ee07a','#ffd23f','#2fd8c8'],TX='#f2eef5',DIM='#8b8494',FT='#4a4552',RED='#ff4b4b',GRN='#3ee07a';
+function ctx(id,w=W,h=W){const c=document.getElementById(id);c.width=w*2;c.height=h*2;const g=c.getContext('2d');g.scale(2,2);g.fillStyle='#000';g.fillRect(0,0,w,h);return g;}
+function rr(g,x,y,w,h,r,f,s,lw=1){g.beginPath();g.roundRect(x,y,w,h,r);if(f){g.fillStyle=f;g.fill();}if(s){g.strokeStyle=s;g.lineWidth=lw;g.stroke();}}
+function t(g,s,x,y,p,c,a='left',font=F){g.font=font(p);g.fillStyle=c;g.textAlign=a;g.textBaseline='top';g.fillText(s,x,y);}
+function wid(g,s,p,font=F){g.font=font(p);return g.measureText(s).width;}
+function battery(g,x,y,col){rr(g,x,y+2,6,13,1.5,null,TX);g.fillStyle=TX;g.fillRect(x+2,y,2,2);g.fillRect(x+2,y+5,2,8);t(g,'100',x-4,y-3,22,col,'right');}
+function play(g,x,y,c){g.fillStyle=c;g.beginPath();g.moveTo(x,y);g.lineTo(x+11,y+6.5);g.lineTo(x,y+13);g.fill();}
+/* top line: BPM / title / play+battery (title 20 px) */
+function topLine(g,title,font=F,cols={tx:TX,dim:DIM,bat:GRN,play:GRN}){t(g,'120',5,3,22,cols.tx,'left',font);const bw=wid(g,'120',22,font);t(g,'BPM',8+bw,10,13,cols.dim,'left',font);
+ battery(g,228,5,cols.bat);if(cols.play)play(g,170,6,cols.play);if(title)t(g,title,120,4,20,cols.dim,'center',font);}
+function fasl(g,y,font=F,on=TX,off=FT){[['F',1],['A',0],['S',1],['L',0]].forEach(([l,o],i)=>{const x=5+i*15;rr(g,x,y,12,12,2,o?on:null,o?null:off);t(g,l,x+6,y+0.5,11,o?'#000':off,'center',font);});}
+/* label + lamp; returns width. h = lamp height */
+function lamp(g,x,y,label,txt,col,lp,h,right,font=F,ink='#000'){const lw=wid(g,label,lp,font),tw=Math.max(wid(g,txt,h*0.7,font)+10,h*1.4),w=lw+4+tw;if(right)x-=w;
+ t(g,label,x,y+(h-lp)/2,lp,TX,'left',font);rr(g,x+lw+4,y,tw,h,3,col);t(g,txt,x+lw+4+tw/2,y+h*0.13,h*0.7,ink,'center',font);return [x,w,lw,tw];}
+function engineIcon(g,cx,cy,s,kind,c){g.strokeStyle=c;g.lineWidth=2.2;g.lineCap='round';g.lineJoin='round';const h=s/2;g.beginPath();
+ if(kind=='dx7'){for(let k=0;k<3;k++){const yy=cy-h*0.55+k*h*0.55;for(let i=0;i<=20;i++){const x=cx-h+i*s/20,y=yy+Math.sin(i/20*Math.PI*2*(k+1))*h*0.18;i?g.lineTo(x,y):g.moveTo(x,y);}}}
+ else if(kind=='303'){g.moveTo(cx-h,cy+h*0.6);g.lineTo(cx-h*0.2,cy-h*0.6);g.lineTo(cx-h*0.2,cy+h*0.6);g.lineTo(cx+h*0.6,cy-h*0.6);g.lineTo(cx+h*0.6,cy+h*0.6);g.moveTo(cx+h*0.6,cy-h*0.6);g.quadraticCurveTo(cx+h,cy-h*0.9,cx+h,cy-h*0.9);}
+ else if(kind=='psg'){g.moveTo(cx-h,cy+h*0.5);g.lineTo(cx-h,cy-h*0.5);g.lineTo(cx-h*0.33,cy-h*0.5);g.lineTo(cx-h*0.33,cy+h*0.5);g.lineTo(cx+h*0.33,cy+h*0.5);g.lineTo(cx+h*0.33,cy-h*0.5);g.lineTo(cx+h,cy-h*0.5);g.lineTo(cx+h,cy+h*0.5);}
+ else if(kind=='pluck'){for(let i=0;i<=30;i++){const u=i/30,x=cx-h+u*s,y=cy-Math.sin(u*Math.PI*6)*h*0.8*Math.exp(-u*2.5);i?g.lineTo(x,y):g.moveTo(x,y);}}
+ else if(kind=='808'){g.ellipse(cx,cy+h*0.15,h*0.85,h*0.55,0,0,Math.PI*2);g.moveTo(cx-h*0.85,cy-h*0.1);g.ellipse(cx,cy-h*0.1,h*0.85,h*0.3,0,Math.PI,0,false);}
+ else {for(let i=0;i<=28;i++){const u=i/28,x=cx-h+u*s,a=(0.35+0.65*Math.abs(Math.sin(u*9)))*h*0.85*(1-u*0.5);g.moveTo(x,cy-a);g.lineTo(x,cy+a);}}
+ g.stroke();}
+function knobs(g,l,font=F,cols=K,ink=TX){l.forEach((k,i)=>{const x=i*60;g.fillStyle=cols[i];g.fillRect(x+6,197,48,2);t(g,k[0],x+30,201,14,ink,'center',font);t(g,k[1],x+30,216,20,cols[i],'center',font);});}
+function slots(g,y,font=F,cur='#ffd23f',used='#7a6a2a',empty='#5a4f22'){for(let i=0;i<16;i++){const x=10+i*14;rr(g,x,y,10,7,2,i==2?cur:i<5?used:null,i<5?null:empty);}}
+function grid(g,y0,pitch,cOn=GRN,cOff='#101013',edge='#2a2730',cur=TX,play=RED){const X=s=>5+s*14+Math.floor(s/4)*3;const on=[0,3,6,8,10,14,16,22,24,27,40,44,51,60];
+ for(let r=0;r<4;r++)for(let s=0;s<16;s++){const i=r*16+s,x=X(s),y=y0+r*pitch,o=on.includes(i);rr(g,x,y,11,pitch-6,3,o?cOn:cOff,o?null:(s%4==0?'#45404c':edge));
+ if(i==9){rr(g,x+1,y+1,9,pitch-8,2,null,play,2);} if(i==16){rr(g,x,y,11,pitch-6,3,null,cur,1.2);rr(g,x+1,y+1,9,pitch-8,2,null,'#000',1);}}}
+
+function drawAll(){
+/* 1. SEQ */
+(function(){const g=ctx('seq');topLine(g,'SEQUENCER');fasl(g,29);
+ /* STEPS: label as wide as CHAIN, box as wide as OFF, same height as F A S L (12) */
+ const cw=wid(g,'CHAIN',17),ow=Math.max(wid(g,'OFF',19*0.7)+10,19*1.4);g.font=F(17);
+ const stx=235-ow-4-cw; t(g,'STEPS',stx,28,13,DIM);rr(g,235-ow,29,ow,12,2,'#2a2730');t(g,'64',235-ow/2,29,12,TX,'center');
+ /* ARP / CHAIN row, 12 x 1.618 = 19 px */
+ const L=lamp(g,6,47,'ARP','ON',GRN,15,19,false),R=lamp(g,235,47,'CHAIN','OFF',RED,15,19,true);
+ /* engine icon + sound name, centred between ARP and CHAIN */
+ const a=L[0]+L[1]+6,b=R[0]-6,nm='303 SAW',nw=wid(g,nm,17),gw=28+5+nw,gx=(a+b-gw)/2;
+ rr(g,gx,42,28,28,4,null,GRN,1.5);engineIcon(g,gx+14,56,20,'303',GRN);t(g,nm,gx+33,47,17,TX);
+ slots(g,72);grid(g,82,29);knobs(g,[['VELOCITY','100'],['GATE','75%'],['PROB','100%'],['NOTE','A2']]);})();
+/* 2. LFO */
+(function(){const g=ctx('lfo');topLine(g,'');fasl(g,29);
+ [1,2].forEach((k,i)=>{const x=71+i*51,on=k==1;rr(g,x,46,48,16,3,on?'#ffd23f':null,on?null:'#5a5560');t(g,'LFO '+k,x+24,47.5,12,on?'#000':DIM,'center');});
+ lamp(g,6,44,'LFO','ON',GRN,13,12,false);
+ rr(g,6,72,228,116,4,'#0b0a0d','#2a2730');t(g,'2.4 HZ  ·  SINE',120,78,11,DIM,'center');t(g,'FILTER CUTOFF',120,92,26,K[0],'center');
+ rr(g,14,122,212,6,3,'#141218','#4a4552');g.fillStyle='#ffd23f';g.fillRect(120,123,64,4);
+ g.strokeStyle=K[3];g.lineWidth=2;g.beginPath();for(let x=0;x<220;x++){const y=160-Math.sin(x/110*Math.PI*2)*20;x?g.lineTo(10+x,y):g.moveTo(10,y);}g.stroke();
+ knobs(g,[['TARGET','CUTOFF'],['RATE','2.4Hz'],['DEPTH','+60'],['WAVE','SINE']]);})();
+/* 3. EDIT DX7 */
+(function(){const g=ctx('edit');topLine(g,'EDIT');fasl(g,29);
+ engineIcon(g,90,56,24,'dx7',GRN);rr(g,74,42,32,28,4,null,GRN,1.5);t(g,'E.PIANO 1',112,46,19,TX);
+ const rows=[['TONE',['CHOIR','5'],['FDBK','6'],['TRANS','+0'],['LEVEL','99']],['ENV',['ATTACK','12'],['DECAY','40'],['SUSTAIN','70'],['RELEASE','35']]];
+ rows.forEach((row,r)=>{const y=82+r*52,on=r==0;rr(g,6,y,228,46,4,on?'#1c1824':'#0b0a0d',on?K[0]:'#2a2730',on?1.6:1);t(g,row[0],14,y+4,13,on?TX:DIM);
+  for(let i=0;i<4;i++){t(g,row[i+1][0],62+i*44,y+6,11,on?TX:DIM,'center');t(g,row[i+1][1],62+i*44,y+20,18,on?K[i]:FT,'center');}});
+ t(g,'SELECT: TONE ↔ ENV',120,184,11,DIM,'center');
+ knobs(g,[['CHOIR','5'],['FDBK','6'],['TRANS','+0'],['LEVEL','99']]);})();
+/* 4. FX */
+(function(){const g=ctx('fx');t(g,'120',5,3,22,TX);t(g,'BPM',8+wid(g,'120',22),10,13,DIM);battery(g,228,5,GRN);t(g,'FX',120,1,26,TX,'center');fasl(g,29);
+ const n=['FLT','DRV','CHO','PHA','RNG','REV','EQ','DLY','SND'],cw=228/9;n.forEach((s,i)=>{const cx=6+cw*(i+.5),on=i==0;t(g,s,cx,48,13,on?K[0]:i>6?TX:DIM,'center');if(on){g.fillStyle=K[0];g.fillRect(cx-wid(g,s,13)/2,64,wid(g,s,13),2);}});
+ rr(g,6,72,228,116,4,'#0b0a0d','#2a2730');
+ const pts=[];for(let x=0;x<224;x++){const u=x/223,f=20*Math.pow(2,u*10),fc=1500,w=f/fc,k=0.4,den=Math.sqrt((1-w*w)**2+k*k*w*w),db=20*Math.log10(1/den);pts.push([8+x,Math.max(78,Math.min(186,150-db*2.2))]);}
+ g.fillStyle='#14361f';g.beginPath();g.moveTo(8,186);pts.forEach(p=>g.lineTo(p[0],p[1]));g.lineTo(232,186);g.fill();g.strokeStyle=GRN;g.lineWidth=1.5;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(...p):g.moveTo(...p));g.stroke();
+ t(g,'FILTER',120,104,26,K[0],'center');
+ knobs(g,[['TYPE','ACID'],['CUTOFF','1.5K'],['RESO','80'],['MIX','127']]);})();
+/* 5. logos */
+(function(){const g=ctx('logos',720,120);const ks=[['dx7','DX7'],['303','303'],['psg','PSG'],['pluck','PLUCK'],['808','808'],['smp','SAMPLER']];
+ ks.forEach(([k,n],i)=>{const cx=60+i*120;rr(g,cx-26,18,52,52,8,null,GRN,1.6);engineIcon(g,cx,44,30,k,GRN);t(g,n,cx,80,16,TX,'center');});})();
+/* 6. Matrix */
+const MX={a:'#00ff41',b:'#00c032',c:'#0f7a2a',d:'#0b3d16',bg:'#000'};
+function rain(g,x,y,w,h,seed){let r=seed;g.font=M(9);g.textBaseline='top';const cols=Math.floor(w/7);for(let c=0;c<cols;c++){r=(r*1103515245+12345)&0x7fffffff;const head=r%h;for(let yy=0;yy<h;yy+=10){r=(r*1103515245+12345)&0x7fffffff;const d=(yy-head+h)%h;g.fillStyle=d<12?'#0f6a26':d<50?'#0a3a16':'#071f0e';g.fillText(String.fromCharCode(0x30A0+(r%90)),x+c*7,y+yy);}}}
+function mxTop(g,title){t(g,'120',5,3,22,MX.a,'left',M);t(g,'BPM',44,11,11,MX.c,'left',M);t(g,'100',221,3,22,MX.a,'right',M);rr(g,227,7,6,13,1.5,null,MX.a);g.fillStyle=MX.a;g.fillRect(229,5,2,2);if(title)t(g,title,120,5,17,MX.b,'center',M);}
+(function(){const g=ctx('mxSeq');mxTop(g,'SEQUENCER');fasl(g,29,M,MX.a,MX.d);t(g,'STEPS',150,29,12,MX.c,'left',M);rr(g,200,29,34,12,2,MX.d);t(g,'64',217,29,12,MX.a,'center',M);
+ const L=lamp(g,6,47,'ARP','ON',MX.a,14,19,false,M),R=lamp(g,235,47,'CHAIN','OFF',MX.d,14,19,true,M,MX.a);
+ const a=L[0]+L[1]+6,b=R[0]-6,nm='303 SAW',nw=wid(g,nm,14,M),gw=28+5+nw,gx=(a+b-gw)/2;
+ rr(g,gx,42,28,28,4,null,MX.b,1.2);engineIcon(g,gx+14,56,20,'303',MX.a);t(g,nm,gx+33,49,14,MX.a,'left',M);
+ slots(g,72,M,MX.a,MX.c,MX.d);grid(g,82,29,MX.b,'#020a04',MX.d,'#ffffff',RED);knobs(g,[['VEL','100'],['GATE','75%'],['PROB','100%'],['NOTE','A2']],M,[MX.a,MX.a,MX.a,MX.a],MX.c);})();
+(function(){const g=ctx('mxFx');mxTop(g,'');t(g,'FX',120,2,24,MX.a,'center',M);fasl(g,29,M,MX.a,MX.d);
+ const n=['FLT','DRV','CHO','PHA','RNG','REV','EQ','DLY','SND'],cw=228/9;n.forEach((s,i)=>{const cx=6+cw*(i+.5);t(g,s,cx,48,11,i==0?MX.a:MX.c,'center',M);if(!i){g.fillStyle=MX.a;g.fillRect(cx-9,62,18,2);}});
+ rr(g,6,72,228,116,4,'#000',MX.d);g.save();g.beginPath();g.roundRect(7,73,226,114,4);g.clip();rain(g,8,74,224,112,7);
+ g.strokeStyle=MX.a;g.lineWidth=2;g.shadowColor=MX.a;g.shadowBlur=6;g.beginPath();for(let x=0;x<224;x++){const u=x/223,w=20*Math.pow(2,u*10)/1500,den=Math.sqrt((1-w*w)**2+0.16*w*w),db=20*Math.log10(1/den);const y=Math.max(78,Math.min(186,150-db*2.2));x?g.lineTo(8+x,y):g.moveTo(8,y);}g.stroke();g.restore();
+ t(g,'FILTER',120,102,24,MX.a,'center',M);knobs(g,[['TYPE','ACID'],['CUT','1.5K'],['RESO','80'],['MIX','127']],M,[MX.a,MX.a,MX.a,MX.a],MX.c);})();
+(function(){const g=ctx('mxMix');mxTop(g,'MIXER');fasl(g,29,M,MX.a,MX.d);
+ const tr=['303 SAW','808 KIT','SOFT LEAD','PLUCK','SAMPLER','PSG YM','PIANO 1','BASS 2'];tr.forEach((n,i)=>{const y=48+i*18,sel=i==0;if(sel){g.fillStyle='#ffffff';g.fillRect(3,y+2,2,13);}t(g,String(i+1),11,y+2,13,sel?MX.a:MX.c,'center',M);t(g,n,20,y+3,12,sel?MX.a:MX.b,'left',M);
+  for(let s=0;s<16;s++){const x=90+s*9,on=(s*(i+3))%5==0;rr(g,x,y+4,6,11,1.5,on?MX.b:'#020a04',on?null:MX.d);}});
+ g.fillStyle=RED;g.fillRect(90+9*5,45,6,2);knobs(g,[['VOL','100'],['FILT','64'],['SEND','20'],['STATE','ON']],M,[MX.a,MX.a,MX.a,MX.a],MX.c);})();
+}
+Promise.all([document.fonts.load('700 12px "Barlow Condensed"'),document.fonts.load('12px "Share Tech Mono"')]).then(drawAll,drawAll);
+</script></body></html>

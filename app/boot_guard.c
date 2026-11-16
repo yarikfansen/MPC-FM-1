@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only WITH GPL-3.0-linking-exception */
+#include "audio_output.h"
 #include "boot_guard.h"
 #include "flash_layout.h"
 #include "fm1.h"
@@ -10,7 +11,11 @@
  * ever programmed 1 -> 0, so a start costs one byte write and the sector is
  * erased once every ~4000 starts:
  *   0xff empty, 0xfe started, 0xfc started+alive,
- *   0xfa safe start, 0xf8 safe start+alive, 0x00 failures cleared by the user.
+ *   0xfa safe start, 0xf8 safe start+alive, 0x00 failures cleared by the user,
+ *   0x7f sent to the USB download mode for failed starts: counts as one start
+ *   short of that limit and ends the count, so the next power-on is a SAFE
+ *   try and not the download mode again (a reinstall does not erase this
+ *   sector, so without it the instrument stayed in that mode for good).
  * A torn or unknown byte ends the count, like a healthy start. */
 enum { HEADER = 8, SLOTS = FM1_FLASH_SECTOR_BYTES - HEADER, TAIL = 32 };
 static const uint32_t MAGIC = 0x47424d46U; /* 'FMBG' */
@@ -27,24 +32,25 @@ unsigned boot_journal_failures(const uint8_t *slots, unsigned count)
     while (count--) {
         uint8_t v = slots[count];
         if (v == BOOT_SLOT_STARTED || v == BOOT_SLOT_SAFE_STARTED) { if (n < 255) ++n; }
+        else if (v == BOOT_SLOT_ROM) { n += BOOT_GUARD_ROM_AFTER - 1; break; }
         else if (v != BOOT_SLOT_SAFE_ALIVE) break; /* healthy, cleared or unknown */
     }
-    return n;
+    return n < 255 ? n : 255;
 }
 static int retry(int r) { return r == FM1_FLASH_BUSY; }
 static int put(unsigned index, uint8_t value)
 {
     int r;
     unsigned tries = 0;
-    do r = fm1_flash_write(GROOVE_BOOT_JOURNAL_OFFSET + HEADER + index, &value, 1);
+    do r = flash_write_safe(GROOVE_BOOT_JOURNAL_OFFSET + HEADER + index, &value, 1);
     while (retry(r) && ++tries < 3);
     return r;
 }
 static int format(void)
 {
     const uint32_t header[2] = {MAGIC, ~MAGIC};
-    int r = fm1_flash_erase(GROOVE_BOOT_JOURNAL_OFFSET);
-    if (!r) r = fm1_flash_write(GROOVE_BOOT_JOURNAL_OFFSET, header, sizeof header);
+    int r = flash_erase_safe(GROOVE_BOOT_JOURNAL_OFFSET);
+    if (!r) r = flash_write_safe(GROOVE_BOOT_JOURNAL_OFFSET, header, sizeof header);
     return r;
 }
 /* First written-but-unknown position: the first empty byte. */
@@ -87,11 +93,21 @@ void boot_guard_start(void)
     if (started) return;
     started = 1;
     start_ms = fm1_millis();
+#ifdef __wasm__
+    return; /* browser simulator: a page reload is not a failed start (OCT- still gives SAFE) */
+#endif
     if (fm1_flash_size() < GROOVE_FLASH_BYTES) return; /* no journal: never block a start */
     unsigned next = 0, count = 0;
     if (open_journal(&next, &count)) return;
     failures = count;
-    if (failures >= BOOT_GUARD_ROM_AFTER) boot_guard_enter_rom();
+    if (failures >= BOOT_GUARD_ROM_AFTER) {
+        /* Note the visit first. Cut before the write: this happens again at
+         * the next power-on. The call does not return on the device; if it
+         * ever did, the start goes on below as a SAFE one. */
+        if (!put(next, BOOT_SLOT_ROM)) ++next;
+        boot_guard_enter_rom();
+        if (next >= SLOTS) { safe = 1; reason = BOOT_GUARD_FAILED_STARTS; return; }
+    }
     if (failures >= BOOT_GUARD_SAFE_AFTER) { safe = 1; reason = BOOT_GUARD_FAILED_STARTS; }
     slot = next;
     journal_ok = !put(slot, safe ? BOOT_SLOT_SAFE_STARTED : BOOT_SLOT_STARTED);

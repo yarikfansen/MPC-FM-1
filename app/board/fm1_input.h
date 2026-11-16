@@ -29,6 +29,10 @@ static struct {
     uint8_t column,queued,stalled;
 } fm1_in;
 static volatile uint8_t fm1_led[FM1_NCOL];
+/* Soft glow (user 09.11): a dim LED is lit in one scan cycle of four (~227 Hz). */
+static volatile uint8_t fm1_led_dim[FM1_NCOL];
+static uint8_t fm1_dim_phase;
+static uint8_t fm1_led_probing;
 static uint8_t fm1_scan_bytes[2] __attribute__((aligned(4)));
 
 #ifndef FM1_SCAN_REG
@@ -61,6 +65,7 @@ static inline __attribute__((always_inline)) void fm1_scan_latch(unsigned column
     FM1_PR(FM1_PA,FM1_OUT)|=1u<<1;
     FM1_PR(FM1_PA,FM1_OUT)&=~(1u<<1);
     unsigned leds=fm1_led[column];
+    if(!fm1_dim_phase&&!fm1_led_probing)leds|=fm1_led_dim[column];
     FM1_PR(FM1_PA,FM1_OUT)|=(leds&6u)<<8;
     FM1_PR(FM1_PH,FM1_OUT)|=((leds&8u)<<3)|((leds&16u)<<5);
     fm1_in.column=(uint8_t)column;
@@ -125,6 +130,7 @@ static FM1_AUDIO_CODE void fm1_input_tick(void)
     uint32_t a=FM1_PR(FM1_PA,FM1_IN),b=FM1_PR(FM1_PB,FM1_IN);
     fm1_in.rows[column]=(uint8_t)(~((a&1)|((a>>4)&30)|((b>>2)&32))&63);
     unsigned next=fm1_in.queued;
+    if(!next)fm1_dim_phase=(uint8_t)((fm1_dim_phase+1u)&3u);
     fm1_scan_latch(next);
     fm1_scan_queue(next==10?0:next+1);
     if(column==10)fm1_scan_decode();
@@ -150,7 +156,13 @@ static void fm1_input_init(void)
 }
 static void fm1_led_key(uint32_t key,int on)
 {
-    if(key>=FM1_NKEY)return;
+    if(key>=FM1_NKEY||fm1_led_probing)return;
     unsigned pin=fm1_key_pin[key],column=pin>>4,mask=1u<<(pin&15);
     uint8_t value=fm1_led[column];fm1_led[column]=(uint8_t)(on?value|mask:value&~mask);
+}
+static void fm1_led_key_dim(uint32_t key,int on)
+{
+    if(key>=FM1_NKEY)return;
+    unsigned pin=fm1_key_pin[key],column=pin>>4,mask=1u<<(pin&15);
+    uint8_t value=fm1_led_dim[column];fm1_led_dim[column]=(uint8_t)(on?value|mask:value&~mask);
 }

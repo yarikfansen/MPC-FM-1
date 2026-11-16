@@ -3,12 +3,15 @@
  * preserve valid version-1 entries before rewriting their project records;
  * defer edit checkpoints until allocation succeeds; reject tuned saves that
  * overlap a legacy sample bank before changing Flash. */
+#include "audio_output.h"
 #include "instrument.h"
 #include "tuning_hook.h"
 #include "extras.h"
 #include "boot_guard.h"
 #include "variation.h"
 #include "fm_patch.h"
+#include "micro_d.h"
+#include "binaural.h"
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -214,12 +217,12 @@ static int tuning_recover(void)
     if (!r) r = fm1_flash_read(address, data, header.magic == LEGACY_TUNING_JOURNAL_MAGIC
         ? offsetof(struct tuning_sector, session) : sizeof *data);
     uint32_t expected = r ? 0 : ~groove_crc32(~0U, data, sizeof *data), actual;
-    if (!r) r = fm1_flash_erase(GROOVE_TUNING_OFFSET);
-    if (!r) r = fm1_flash_write(GROOVE_TUNING_OFFSET, data, sizeof *data);
+    if (!r) r = flash_erase_safe(GROOVE_TUNING_OFFSET);
+    if (!r) r = flash_write_safe(GROOVE_TUNING_OFFSET, data, sizeof *data);
     if (!r) r = flash_checksum(GROOVE_TUNING_OFFSET, sizeof *data, &actual);
     if (!r && actual != expected) r = FM1_FLASH_IO;
     free(data);
-    if (!r) r = fm1_flash_erase(TUNING_JOURNAL_ADDRESS);
+    if (!r) r = flash_erase_safe(TUNING_JOURNAL_ADDRESS);
     return r;
 }
 static int tuning_commit(const struct tuning_sector *data)
@@ -227,9 +230,9 @@ static int tuning_commit(const struct tuning_sector *data)
     int r = recover_staging();
     struct tuning_journal header = {TUNING_JOURNAL_MAGIC,
                                     ~groove_crc32(~0U, data, sizeof *data), ~0U};
-    if (!r) r = fm1_flash_erase(TUNING_JOURNAL_ADDRESS);
-    if (!r) r = fm1_flash_write(TUNING_JOURNAL_ADDRESS, &header, sizeof header);
-    if (!r) r = fm1_flash_write(TUNING_JOURNAL_ADDRESS + sizeof header, data, sizeof *data);
+    if (!r) r = flash_erase_safe(TUNING_JOURNAL_ADDRESS);
+    if (!r) r = flash_write_safe(TUNING_JOURNAL_ADDRESS, &header, sizeof header);
+    if (!r) r = flash_write_safe(TUNING_JOURNAL_ADDRESS + sizeof header, data, sizeof *data);
     if (!r) {
         uint32_t crc;
         r = flash_checksum(TUNING_JOURNAL_ADDRESS + sizeof header, sizeof *data, &crc);
@@ -237,7 +240,7 @@ static int tuning_commit(const struct tuning_sector *data)
     }
     if (!r) {
         uint32_t commit = 0;
-        r = fm1_flash_write(TUNING_JOURNAL_ADDRESS + offsetof(struct tuning_journal, commit),
+        r = flash_write_safe(TUNING_JOURNAL_ADDRESS + offsetof(struct tuning_journal, commit),
                             &commit, sizeof commit);
     }
     if (!r) {
@@ -431,16 +434,16 @@ static int program_record(unsigned sector)
 {
     uint32_t address = sector * FM1_FLASH_SECTOR_BYTES;
     record.header.commit = ~0U;
-    int r = fm1_flash_erase(address);
+    int r = flash_erase_safe(address);
     if (!r)
-        r = fm1_flash_write(address, &record,
+        r = flash_write_safe(address, &record,
                             record.header.magic == PROJECT_MAGIC ? sizeof record : sizeof record.header);
     if (!r && record.header.magic == SETTINGS_MAGIC)
-        r = fm1_flash_write(address + offsetof(struct record, settings),
+        r = flash_write_safe(address + offsetof(struct record, settings),
                             &record.settings, sizeof record.settings);
     if (!r) {
         uint32_t commit = 0;
-        r = fm1_flash_write(address + offsetof(struct header, commit), &commit, sizeof commit);
+        r = flash_write_safe(address + offsetof(struct header, commit), &commit, sizeof commit);
     }
     if (!r)
         r = read_sector(sector);
@@ -455,6 +458,7 @@ static int recover_staging(void)
         return FM1_FLASH_UNAVAILABLE;
     int r = groove_fm_library_recover();
     if (!r) r = tuning_recover();
+    if (!r) r = extras_recover();
     if (r) return r;
     r = read_sector(STAGING_SECTOR);
     if (r)
@@ -543,11 +547,21 @@ int groove_project_info(unsigned slot, char name[13])
     name[12] = 0;
     return r;
 }
+/* SEQ CHAIN: one slot read ahead into RAM. */
+static struct preload {
+    unsigned slot; /* slot + 1, 0 = nothing held */
+    int extras;    /* extras_read result: 0 valid, else defaults */
+    struct groove_project project;
+    struct groove_tuning tables[GROOVE_TRACKS];
+    uint8_t raw[EXTRAS_RECORD];
+} *preload;
 int groove_project_save_slot(unsigned slot)
 {
     if (slot >= GROOVE_PROJECT_SLOTS)
         return GROOVE_PROJECT_INVALID;
     var_restore_all(); /* save the pattern as written, not this loop's variation */
+    if (preload && preload->slot == slot + 1U)
+        preload->slot = 0; /* read ahead before this save */
     int r = tuning_can_save();
     if (!r)
         r = tuning_upgrade();
@@ -588,35 +602,79 @@ int groove_project_save_slot(unsigned slot)
     return r;
 }
 static unsigned boot_restore;
-int groove_project_load_slot(unsigned slot)
+/* Read a slot: its project into record, tuning tables and extras record. An
+ * extras read error only means defaults, as before. */
+static int read_slot(unsigned slot, struct groove_tuning tables[GROOVE_TRACKS], uint8_t raw[EXTRAS_RECORD], int *extras)
 {
-    if (slot >= GROOVE_PROJECT_SLOTS)
-        return GROOVE_PROJECT_INVALID;
     unsigned sector = slot;
     uint32_t generation = 0;
     int r = latest(sector, &sector, &generation);
     if (!r)
         r = read_project(sector);
     uint32_t key[3] = {record.header.generation, record.header.crc, 0};
-    struct groove_tuning tables[GROOVE_TRACKS];
+    memset(tables, 0, sizeof(struct groove_tuning) * GROOVE_TRACKS);
     if (!r && groove_tuning_apply) {
         key[2] = project_tuning_key();
         r = tuning_read(slot, key, tables);
     }
+    if (!r)
+        *extras = extras_read(slot, raw);
+    return r;
+}
+int groove_project_preload(unsigned slot)
+{
+    if (slot >= GROOVE_PROJECT_SLOTS)
+        return GROOVE_PROJECT_INVALID;
+    if (preload && preload->slot == slot + 1U)
+        return 0;
+    if (!preload && !(preload = malloc(sizeof *preload)))
+        return GROOVE_PROJECT_MEMORY;
+    preload->slot = 0;
+    int r = read_slot(slot, preload->tables, preload->raw, &preload->extras);
     if (!r) {
-        r = apply_edit(&record.project, 0x82000U + slot);
+        preload->project = record.project;
+        preload->slot = slot + 1U;
+    }
+    return r;
+}
+void groove_project_preload_drop(void)
+{
+    free(preload);
+    preload = 0;
+}
+int groove_project_load_slot(unsigned slot)
+{
+    if (slot >= GROOVE_PROJECT_SLOTS)
+        return GROOVE_PROJECT_INVALID;
+    /* A slot read ahead loads from RAM, with no Flash access. */
+    struct groove_tuning tables[GROOVE_TRACKS];
+    uint8_t raw[EXTRAS_RECORD];
+    int extras = 1, r = 0;
+    const struct groove_project *p = &record.project;
+    const struct groove_tuning *t = tables;
+    const uint8_t *x = raw;
+    if (preload && preload->slot == slot + 1U) {
+        p = &preload->project; t = preload->tables; x = preload->raw; extras = preload->extras;
+    } else
+        r = read_slot(slot, tables, raw, &extras);
+    if (!r) {
+        r = apply_edit(p, 0x82000U + slot);
         if (!r && groove_tuning_apply)
-            (void)groove_arrangement_tuning_apply(tables);
+            (void)groove_arrangement_tuning_apply(t);
     }
     if (!r && settings.slot != slot) {
+        /* Written once the output is quiet (groove_project_poll). */
         settings.slot = (uint8_t)slot;
         settings_mark();
         settings_changed -= 1500U;
     }
     if (!r) {
-        /* Safe start: the power-on restore leaves effects, LFO and arp at
-         * their defaults; loading a pattern by hand brings them back. */
-        if (boot_restore) extras_defaults(); else (void)extras_load(slot);
+        /* The power-on restore brings effects, LFO and arp back with the
+         * pattern (user 10.11). Only after a failed start (one that did not
+         * live BOOT_GUARD_ALIVE_MS) do they stay at their defaults for this
+         * session, in case one of them was the cause; loading the pattern by
+         * hand brings them back then. */
+        extras_apply(slot, extras ? 0 : x, boot_restore && boot_guard_failures() != 0);
         groove_project_clean();
     }
     return r;
@@ -699,13 +757,54 @@ int groove_settings_radio(unsigned flags, unsigned role)
     settings_mark();
     return 0;
 }
+/* CLOCK switch. Device 11.11: groove_clock_set from the control task reboots the synth while the sequencer
+ * plays (it releases the sequencer's held notes outside the audio context); with a stopped transport it is safe.
+ * So a change only stops the transport the normal way (STOP runs in the audio context) and stays pending;
+ * clock_poll (from groove_project_poll) calls groove_clock_set on a later poll, never in the poll that follows
+ * the request directly, and only when the published transport state has been "stopped" for CLOCK_SETTLE_MS.
+ * The transport stays stopped afterwards. The screen keeps its arpeggiators silent while a change is pending
+ * (groove_settings_clock_pending). */
+enum { CLOCK_SETTLE_MS = 20, CLOCK_RESTOP_MS = 100 };
+static uint8_t clock_pending;   /* 0 none, 1 just requested, 2 waiting for the stopped transport */
+static uint32_t clock_stop_at;  /* last STOP sent for a pending change */
+static uint32_t clock_busy_at;  /* the request, or the last poll that saw the transport playing */
+static unsigned clock_playing(void)
+{
+    struct groove_view v = {0};
+    groove_get_view(0, 0, &v);
+    return v.playing;
+}
+static void clock_stop(uint32_t now)
+{
+    static const uint8_t stop = 0xfc;
+    (void)groove_midi_local(&stop, 1); /* a lost STOP is sent again by clock_poll */
+    clock_stop_at = now;
+}
 void groove_settings_clock(unsigned mode)
 {
     if (mode <= GROOVE_CLOCK_MIDI && settings.clock != mode) {
-        groove_clock_set(mode);
+        uint32_t now = fm1_millis();
+        if (clock_playing()) clock_stop(now);
+        clock_busy_at = now;
+        clock_pending = 1;
         settings.clock = (uint8_t)mode;
         settings_mark();
     }
+}
+unsigned groove_settings_clock_pending(void) { return clock_pending != 0; }
+static void clock_poll(void)
+{
+    if (!clock_pending) return;
+    if (clock_pending == 1) { clock_pending = 2; return; }
+    uint32_t now = fm1_millis();
+    if (clock_playing()) { /* STOP not run yet, lost, or the transport was started again */
+        if (now - clock_stop_at >= CLOCK_RESTOP_MS) clock_stop(now);
+        clock_busy_at = now;
+        return;
+    }
+    if (now - clock_busy_at < CLOCK_SETTLE_MS) return;
+    clock_pending = 0;
+    groove_clock_set(settings.clock); /* no change when the knob went back meanwhile */
 }
 void groove_settings_midi(unsigned track, unsigned parameter, int delta)
 {
@@ -788,6 +887,43 @@ int groove_settings_track(unsigned track, unsigned parameter, int delta)
     return r;
 }
 int groove_settings_status(void) { return settings_result; }
+/* fm1_flash_write/erase suspend the whole audio output (~50 ms with the gain
+ * ramp). Deferred writes wait for a stopped transport and QUIET_MS without
+ * sound (track meters, MICRO D, BINAURAL), so reverb tails are not cut. */
+enum { QUIET_MS = 1500, QUIET_LEVEL = 2 };
+static uint32_t loud_at, loud_checked;
+unsigned groove_storage_quiet(void)
+{
+    uint32_t now = fm1_millis();
+    if (now - loud_checked >= 50U) {
+        loud_checked = now;
+        unsigned loud = 0;
+        for (unsigned t = 0; t < GROOVE_TRACKS && !loud; ++t) {
+            struct groove_view v = {0};
+            groove_get_view(t, 0, &v);
+            loud = v.playing || v.level > QUIET_LEVEL || (micro_d_track(t) && micro_d_level(t) > QUIET_LEVEL);
+        }
+#if FM1_BINAURAL
+        loud |= binaural_running();
+#endif
+        if (loud) loud_at = now;
+    }
+    return now - loud_at >= QUIET_MS;
+}
+/* Autosave and the deferred settings save also wait for REST_MS without any
+ * key, button, knob or MIDI note (the screen calls groove_storage_touch every
+ * control tick with one), so a performance is never frozen by Flash writes. */
+enum { REST_MS = 20000 };
+static uint32_t touched_at;
+void groove_storage_touch(void) { touched_at = fm1_millis(); }
+unsigned groove_storage_rest(void)
+{
+    uint32_t now = fm1_millis();
+    unsigned quiet = groove_storage_quiet(); /* always polled: it must see every sound */
+    if (now - touched_at < REST_MS) return 0;
+    touched_at = now - REST_MS; /* stays at rest when the counter wraps after 49 days */
+    return quiet;
+}
 void groove_project_init(void)
 {
     memset(&settings, 0, sizeof settings);
@@ -798,10 +934,12 @@ void groove_project_init(void)
     role_pending = 2;
     settings_dirty = 0;
     settings_result = 0;
+    clock_pending = 0;
 }
 void groove_project_poll(void)
 {
     boot_guard_poll(!restore_pending);
+    clock_poll(); /* only ever pending after a CLOCK knob turn; reads no Flash */
     if (boot_guard_settling()) return; /* OCT- may still ask for SAFE mode: read nothing yet */
     if (boot_guard_safe() && restore_pending) {
         /* SAFE mode: no settings, project, tuning or extras are read, and the
@@ -853,7 +991,9 @@ void groove_project_poll(void)
         if (!r || (r != -2 && r != -3))
             role_pending = 0;
     }
-    if (settings_dirty && fm1_millis() - settings_changed >= 1500U) {
+    if (!restore_pending) micro_d_host_guard(fm1_millis()); /* a MICRO D host made audible by a controller goes silent again */
+    unsigned rest = groove_storage_rest(); /* polled here so it sees every stop */
+    if (settings_dirty && fm1_millis() - settings_changed >= 1500U && rest) {
         unsigned sector = SETTINGS_SECTOR;
         uint32_t generation = 0;
         int r = tuning_upgrade();

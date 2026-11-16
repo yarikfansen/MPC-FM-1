@@ -10,7 +10,11 @@
  * A journal sector counts starts that never reached a healthy state:
  *   2 failed starts in a row  -> SAFE mode: no project, settings, samples or
  *                                Bluetooth are read; USB and updates work;
- *   4 failed starts in a row  -> the chip's USB download mode (mask ROM).
+ *   4 failed starts in a row  -> the chip's USB download mode (mask ROM),
+ *                                once: the journal notes the visit, so the
+ *                                power-on after it is one SAFE try again
+ *                                (ROM and SAFE alternate until a start
+ *                                lives and the failures are cleared).
  * At power-on: OCT- held = SAFE mode, OCT- and OCT+ held = USB download mode.
  * A start becomes healthy after BOOT_GUARD_ALIVE_MS of normal running.
  * Control task only. */
@@ -30,6 +34,8 @@ void boot_guard_enter_rom(void);            /* does not return on the device */
 
 /* Journal logic, exposed for host tests. */
 enum { BOOT_SLOT_EMPTY = 0xff, BOOT_SLOT_STARTED = 0xfe, BOOT_SLOT_ALIVE = 0xfc,
-       BOOT_SLOT_SAFE_STARTED = 0xfa, BOOT_SLOT_SAFE_ALIVE = 0xf8, BOOT_SLOT_CLEARED = 0x00 };
+       BOOT_SLOT_SAFE_STARTED = 0xfa, BOOT_SLOT_SAFE_ALIVE = 0xf8, BOOT_SLOT_CLEARED = 0x00,
+       /* One programmed bit: a power cut leaves the byte empty or written, never a third value. */
+       BOOT_SLOT_ROM = 0x7f };
 unsigned boot_journal_failures(const uint8_t *slots, unsigned count);
 #endif

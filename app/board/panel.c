@@ -44,7 +44,43 @@ void fm1_controls_read(struct fm1_controls *state)
     *state = snapshot;
 }
 
+/* Sets one matrix LED directly (green PLAY LED); ignored while the finder runs. */
+void fm1_led_raw(int idx, int on)
+{
+    if (idx < 0 || idx >= FM1_NCOL * 4 || fm1_led_probing) return;
+    uint8_t bit = (uint8_t)(1U << ((unsigned)idx % 4U + 1U)), v = fm1_led[(unsigned)idx / 4U];
+    fm1_led[(unsigned)idx / 4U] = on ? (uint8_t)(v | bit) : (uint8_t)(v & ~bit);
+}
+int fm1_led_probe_key(int idx)
+{
+    unsigned pin = (((unsigned)idx / 4U) << 4) | ((unsigned)idx % 4U + 1U);
+    for (unsigned key = 0; key < FM1_NKEY; ++key)
+        if (fm1_key_pin[key] == pin) return (int)key;
+    return -1;
+}
+/* LED finder (GLOBAL > LED TEST): lights one position of the 11 x 4 LED matrix
+ * (idx = column * 4 + row - 1); idx < 0 restores the normal LEDs. Returns the
+ * key at that position or -1 when none sits there. */
+int fm1_led_probe(int idx)
+{
+    static uint8_t saved[FM1_NCOL];
+    if (idx < 0) {
+        if (fm1_led_probing) { for (unsigned c = 0; c < FM1_NCOL; ++c) fm1_led[c] = saved[c]; fm1_led_probing = 0; }
+        return -1;
+    }
+    if (idx >= FM1_NCOL * 4) return -1;
+    if (!fm1_led_probing) { for (unsigned c = 0; c < FM1_NCOL; ++c) saved[c] = fm1_led[c]; fm1_led_probing = 1; }
+    for (unsigned c = 0; c < FM1_NCOL; ++c) fm1_led[c] = 0;
+    fm1_led[(unsigned)idx / 4U] = (uint8_t)(1U << ((unsigned)idx % 4U + 1U));
+    return fm1_led_probe_key(idx);
+}
+
 void fm1_led_set(unsigned key, int on)
 {
     fm1_led_key(key, on);
+}
+/* Soft glow layer (one scan cycle of four); a lit LED wins over it. */
+void fm1_led_dim_set(unsigned key, int on)
+{
+    fm1_led_key_dim(key, on);
 }

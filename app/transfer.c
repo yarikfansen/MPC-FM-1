@@ -3,6 +3,9 @@
 #include "tuning_hook.h"
 #include "fm_patch.h"
 #include "fm1_engine_control.h"
+#include "audio_output.h"
+#include "blackbox.h"
+#include "ui_meter.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -92,10 +95,51 @@ static uint32_t get32(const uint8_t *p)
 { return p[0] | (uint32_t)p[1] << 8 | (uint32_t)p[2] << 16 | (uint32_t)p[3] << 24; }
 static void put32(uint8_t *p, uint32_t value)
 { for (unsigned i = 0; i < 4; ++i) p[i] = (uint8_t)(value >> (i * 8U)); }
+/* Ticks as 16 bits in units of 32 ticks, saturated; a non-zero cost never reads as 0. */
+static unsigned put16s(uint8_t *out, unsigned at, uint32_t ticks)
+{
+    uint32_t v = ticks >> 5;
+    if (!v && ticks) v = 1;
+    if (v > 65535U) v = 65535U;
+    out[at] = (uint8_t)v; out[at + 1] = (uint8_t)(v >> 8);
+    return at + 2;
+}
 static int command(unsigned cmd, const uint8_t *data, unsigned n, uint8_t *out, unsigned *count)
 {
     int r = GROOVE_PROJECT_INVALID;
     *count = 0;
+    /* F8 screen timing (ui_meter.h), read-only; the figures start again at each read.
+     * Firmware without it answers "invalid". */
+    if (cmd == 25 && !n) {
+        *count = ui_meter_read(out, fm1_mix_block_ticks, fm1_output_timer_period()); return 0;
+    }
+    /* Black box readout (blackbox.h bb_read), read-only: one byte = part 0..2.
+     * Firmware without it answers "invalid". */
+    if (cmd == 24 && n == 1) {
+        unsigned k = bb_read(data[0], out);
+        if (!k) return GROOVE_PROJECT_INVALID;
+        *count = k; return 0;
+    }
+    /* Load figures of our mix part, read-only; the three peaks restart at
+     * each read. Firmware without it answers "invalid". */
+    if (cmd == 23 && !n) {
+        struct fm1_output_load l; fm1_output_load_read(&l);
+        put32(out, l.shed_count); out[4] = (uint8_t)l.shedding;
+        put32(out + 5, l.fx_ticks); put32(out + 9, l.block_ticks);
+        put32(out + 13, l.engine_peak); put32(out + 17, l.micro_d_peak); put32(out + 21, l.mix_peak);
+        /* Version 2 (audit A1), appended: bytes 0..24 are version 1 as it was. 25 = reply version,
+         * 26 = number of unit costs, 27 = shift of the 16-bit tick figures (ticks = value << shift,
+         * 65535 = that or more; the reply must fit response[65]). Then u16 each: the guard's learned
+         * cost per unit, base_float, base_dry, clear_cost, guard_now_peak, panel_irq_peak; last
+         * lone_spikes u32. */
+        unsigned at = 28;
+        out[25] = 2; out[26] = FM1_OUTPUT_LOAD_UNITS; out[27] = 5;
+        for (unsigned u = 0; u < FM1_OUTPUT_LOAD_UNITS; ++u) at = put16s(out, at, l.unit_cost[u]);
+        at = put16s(out, at, l.base_float); at = put16s(out, at, l.base_dry); at = put16s(out, at, l.clear_cost);
+        at = put16s(out, at, l.guard_now_peak); at = put16s(out, at, l.panel_irq_peak);
+        put32(out + at, l.lone_spikes);
+        *count = at + 4; return 0;
+    }
     /* Additive capability reply; command 21 retains its old exact layout. */
     if (cmd == 22 && !n) {
         out[0]=1; out[1]=128; out[2]=4; out[3]=(uint8_t)groove_fm_library_available();

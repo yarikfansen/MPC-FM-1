@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FM-1 v9 эскизы</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Share+Tech+Mono&family=Roboto+Condensed:wght@700&family=Noto+Sans+Hebrew:wght@700&family=Noto+Sans+SC:wght@700&family=Noto+Sans+JP:wght@700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#141217;color:#ddd;font:14px/1.45 system-ui,sans-serif}
+main{max-width:1180px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:6px 0 2px}h2{font-size:15px;margin:0 0 8px;color:#fff}
+.lead{color:#aaa;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.card{background:#1d1a21;border:1px solid #2c2932;border-radius:10px;padding:12px}
+.wide{grid-column:1/-1}
+canvas{width:240px;height:240px;border-radius:6px;display:block;margin:0 auto 8px;background:#000}
+.pair{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.cap{text-align:center;font-size:12px;color:#888;margin-bottom:4px}
+p{margin:6px 0 0;color:#bbb;font-size:13px}
+ul{margin:6px 0 0 18px;padding:0;color:#bbb;font-size:13px}
+</style></head><body><main>
+<h1>FM-1 v9.3 — эскизы по правкам (код не трогаю до «да»)</h1>
+<p class="lead">Экран 240×240 в 1:1. Верх одинаков на всех экранах, кроме MIXER: «120 BPM» на прежнем месте, название экрана по центру, справа PLAY и батарея. Под «120» — F A S L квадратом 2×2, справа от него движок и звук, у правого края STEPS и CHAIN.</p>
+<div class="grid">
+<div class="card wide"><h2>1. SEQ</h2>
+<div class="pair"><div><div class="cap">длинное имя: значок прижат к F A S L, имя обрезано</div><canvas id="seq"></canvas></div><div><div class="cap">короткое имя: значок + имя по центру экрана; запись, CHAIN ON</div><canvas id="seqRec"></canvas></div></div>
+<ul><li>F A S L — 4 скруглённых квадрата 2×2 между «120» и цепочкой паттернов; движок и звук вплотную справа от них.</li>
+<li>CHAIN — как в 9501f46: подпись всегда одного цвета, окошко всегда одного размера; OFF красный, ON зелёный (появляется, когда в цепочке больше одного паттерна).</li>
+<li>STEPS [64] — той же длины, что CHAIN [OFF]: окошко как OFF, правые края совпадают.</li>
+<li>Длинное имя звука обрезается, на STEPS / CHAIN не заходит.</li>
+<li>Во время записи вместо PLAY — красный круг.</li></ul></div>
+<div class="card"><h2>2. PLAY / запись</h2><canvas id="play" style="width:240px;height:120px"></canvas>
+<ul><li>Треугольник меньше, скруглённые углы, без белой линии; по высоте — по центру цифр заряда, слева от них.</li><li>Запись — красный круг на том же месте.</li></ul></div>
+<div class="card"><h2>3. LFO</h2><canvas id="lfo"></canvas>
+<ul><li>«LFO» по центру сверху; LFO 1 / LFO 2 — квадраты размером со значок движка.</li><li>Без LFO ON/OFF и строки «2.4 HZ · SINE».</li></ul></div>
+<div class="card"><h2>4. EDIT (DX7)</h2><canvas id="edit"></canvas>
+<ul><li>Без подсказки SELECT; TONE + ENV вместе = высоте окна фильтра на FX.</li></ul></div>
+<div class="card"><h2>5. FX</h2><canvas id="fx"></canvas>
+<ul><li>«FX» по центру сверху; имя эффекта под ним, строка эффектов — внутри рамки анимации.</li></ul></div>
+<div class="card"><h2>6. MIXER — точка CHAIN</h2><canvas id="mix"></canvas>
+<ul><li>Верх как раньше (F A S L строкой).</li><li>Точка без хвоста, шаг на каждую долю в темпе BPM; круг = 64 шага, 16 на сторону.</li></ul></div>
+<div class="card"><h2>7. GLOBAL — тема</h2><canvas id="glo"></canvas>
+<ul><li>THEME: CLASSIC / MATRIX, ручка 1 меняет сразу.</li></ul></div>
+<div class="card wide"><h2>8. То же в теме «Матрица»</h2>
+<div class="pair"><div><div class="cap">SEQ</div><canvas id="mSeq"></canvas></div><div><div class="cap">SEQ, запись</div><canvas id="mSeqRec"></canvas></div><div><div class="cap">LFO</div><canvas id="mLfo"></canvas></div><div><div class="cap">EDIT</div><canvas id="mEdit"></canvas></div><div><div class="cap">FX</div><canvas id="mFx"></canvas></div><div><div class="cap">MIXER</div><canvas id="mMix"></canvas></div></div>
+<ul><li>Те же места и размеры; зелёный фосфор, моноширинный шрифт, тусклый «дождь» в окнах. Белый — курсор, красный — игра/запись и CHAIN OFF.</li></ul></div>
+<div class="card wide"><h2>9. Остальные экраны — в том же стиле</h2><p>Верх как везде (120 BPM, название по центру, F A S L 2×2, движок и звук), внизу у ручек слова и цифры одним шрифтом. Содержание окон — как в прошивке сейчас, только перерисовано; значения — примерные.</p><div class="pair" style="margin-top:10px"><div style="width:250px"><div class="cap"><b>ARPEGGIATOR</b></div><canvas id="o_arp"></canvas><div class="cap" style="text-align:left">Режим крупно, октавы, ноты арпеджио; ручки RATE / GATE / HUMAN / HOLD.</div></div><div style="width:250px"><div class="cap"><b>CHAIN</b></div><canvas id="o_chain"></canvas><div class="cap" style="text-align:left">16 полей песни: проект и повтор xN; красная рамка — играет, белая — выбрано.</div></div><div style="width:250px"><div class="cap"><b>VARIATION</b></div><canvas id="o_vars"></canvas><div class="cap" style="text-align:left">MUTATE / HUMAN / RATCHET / CHANCE; в окне — картинка выбранной.</div></div><div style="width:250px"><div class="cap"><b>STEP EDIT</b></div><canvas id="o_step"></canvas><div class="cap" style="text-align:left">Номер шага — под батареей (STEP 17), шаг меняет SELECT. В окнах только значения; названия — у ручек внизу.</div></div><div style="width:250px"><div class="cap"><b>SEL</b></div><canvas id="o_sel"></canvas><div class="cap" style="text-align:left">SELECT — строка (белая рамка), ALGORITHM — действие в строке, SAVE — выполнить.</div></div><div style="width:250px"><div class="cap"><b>SAVE PROJECT</b></div><canvas id="o_save"></canvas><div class="cap" style="text-align:left">Под батареей NAME; имя крупно, активная буква пульсирует зелёным; розовая кнопка SAVE «to» зелёная галочка.</div></div><div style="width:250px"><div class="cap"><b>SAMPLER REC</b></div><canvas id="o_srec"></canvas><div class="cap" style="text-align:left">Волна входа, время «0.0 / 1.2 S», ARMED, линия порога.</div></div><div style="width:250px"><div class="cap"><b>SAMPLER CHOP</b></div><canvas id="o_schop"></canvas><div class="cap" style="text-align:left">Волна с нарезкой, выбранный кусок подсвечен.</div></div><div style="width:250px"><div class="cap"><b>303 EDIT</b></div><canvas id="o_e303"></canvas><div class="cap" style="text-align:left">Одна кривая фильтра на 4 ручки; ENV MOD и DECAY её анимируют.</div></div><div style="width:250px"><div class="cap"><b>808 EDIT</b></div><canvas id="o_e808"></canvas><div class="cap" style="text-align:left">SELECT — инструмент (пэд), ALGORITHM — страницы; ручки — его звук.</div></div><div style="width:250px"><div class="cap"><b>AMP ENV</b></div><canvas id="o_env"></canvas><div class="cap" style="text-align:left">Кривая ADSR, точка выбранной ручки крупнее.</div></div><div style="width:250px"><div class="cap"><b>FM LAB</b></div><canvas id="o_lab"></canvas><div class="cap" style="text-align:left">Схема алгоритма: столбики операторов, снизу несущие (заливка, значок динамика), выше модуляторы (значок волны), жёлтая петля — обратная связь; ALG под батареей.</div></div><div style="width:250px"><div class="cap"><b>DX7 LFO</b></div><canvas id="o_dlfo"></canvas><div class="cap" style="text-align:left">Встроенный LFO DX7: волна и цель.</div></div><div style="width:250px"><div class="cap"><b>TRACK FX</b></div><canvas id="o_tfx"></canvas><div class="cap" style="text-align:left">Вкладки TRACK FX / SHARED FX / DELAY.</div></div><div style="width:250px"><div class="cap"><b>ENGINE</b></div><canvas id="o_eng"></canvas><div class="cap" style="text-align:left">Шесть движков новыми значками, выбранный в рамке.</div></div><div style="width:250px"><div class="cap"><b>PRESETS</b></div><canvas id="o_pres"></canvas><div class="cap" style="text-align:left">Список звуков движка, выбранный крупнее.</div></div><div style="width:250px"><div class="cap"><b>SCOPE</b></div><canvas id="o_scope"></canvas><div class="cap" style="text-align:left">Осциллограф выхода. Удержание HOME — сразу сюда.</div></div><div style="width:250px"><div class="cap"><b>BLUETOOTH</b></div><canvas id="o_ble"></canvas><div class="cap" style="text-align:left">SELECT — строка (устройство), ALGORITHM — CONNECT / SCAN / DISCONNECT (по кругу), SAVE — выполнить.</div></div></div></div>
+<div class="card wide"><h2>10. «Матрица»: Нео, Морфеус и Тринити вместо котиков; SAVE</h2>
+<div class="pair"><div><div class="cap">ARP — Нео</div><canvas id="mArp"></canvas></div><div><div class="cap">SAVE PROJECT</div><canvas id="mSave"></canvas></div></div>
+<ul><li>Где были котики (ARP, заставка), в теме «Матрица» — крупный портрет Нео: зачёс назад, вытянутое лицо, узкие овальные очки, высокий воротник.</li>
+<li>SAVE PROJECT: «SLOT 03» поднят в строку под заголовком, как значок движка и звук; имя проекта крупно; ниже розовая SAVE, «to» по центру экрана, зелёная галочка — симметрично. Экран ~3×3 см — всё это читается.</li></ul></div>
+<div class="card wide"><h2>11. Русский язык</h2>
+<div class="pair"><div><div class="cap">СЕКВЕНСОР</div><canvas id="rSeq"></canvas></div><div><div class="cap">МИКШЕР</div><canvas id="rMix"></canvas></div><div><div class="cap">СОХРАНЕНИЕ</div><canvas id="rSave"></canvas></div><div><div class="cap">ЭФФЕКТЫ</div><canvas id="rFx"></canvas></div><div><div class="cap">LFO</div><canvas id="rLfo"></canvas></div><div><div class="cap">ОБЩЕЕ: ЯЗЫК</div><canvas id="rGlo"></canvas></div></div>
+<ul><li>Пункт ЯЗЫК в GLOBAL: ENGLISH / РУССКИЙ, отдельно от темы (можно «Матрицу» по-русски).</li>
+<li>Буквы кнопок F A S L, BPM, LFO и имена звуков остаются латиницей.</li>
+<li>Для прошивки нужен кириллический шрифт тех же размеров — это несколько десятков КБ флеша; проверю место перед кодом.</li></ul></div>
+<div class="card wide"><h2>12. FM LAB — алгоритмы DX7 картинкой</h2>
+<div class="pair"><div><div class="cap">ALG 1</div><canvas id="alg1"></canvas></div><div><div class="cap">ALG 5</div><canvas id="alg5"></canvas></div><div><div class="cap">ALG 32</div><canvas id="alg32"></canvas></div><div><div class="cap">Матрица, ALG 5</div><canvas id="malg5"></canvas></div></div>
+<ul><li>Каждый столбик — цепочка: верхний оператор модулирует нижний; нижние (залитые, значок динамика) звучат и идут в OUT.</li>
+<li>Жёлтая петля — обратная связь (FDBK). Розовая рамка — оператор, который сейчас крутят ручки. Номер алгоритма — под батареей.</li></ul></div>
+<div class="card wide"><h2>13. Другие языки: иврит, китайский, японский</h2>
+<div class="pair"><div><div class="cap">иврит — SEQ</div><canvas id="heSeq"></canvas></div><div><div class="cap">иврит — SAVE</div><canvas id="heSave"></canvas></div>
+<div><div class="cap">китайский — SEQ</div><canvas id="zhSeq"></canvas></div><div><div class="cap">китайский — MIXER</div><canvas id="zhMix"></canvas></div>
+<div><div class="cap">японский — SEQ</div><canvas id="jaSeq"></canvas></div><div><div class="cap">японский — SAVE</div><canvas id="jaSave"></canvas></div></div>
+<p><b>Место во флеше.</b> Последняя сборка — 568 712 из 789 793 байт, свободно ≈ 216 КБ. Нынешний шрифт: 65 знаков × 16 размеров = 31,7 КБ (≈ 490 Б на знак во всех размерах).</p>
+<ul><li><b>Русский:</b> ~22 новых буквы (А, В, Е, К, М, Н, О, Р, С, Т, Х уже есть) во всех размерах ≈ 11 КБ + строки ≈ 3 КБ → <b>~14 КБ</b>.</li>
+<li><b>Иврит:</b> 27 букв ≈ 13 КБ + строки 3 КБ + вывод справа налево ~1 КБ → <b>~17 КБ</b>.</li>
+<li><b>Японский:</b> катакана (~50) + ~25 иероглифов, только размеры 13/16/20/24 (мельче не читается) ≈ 19 КБ + строки 4 КБ → <b>~23 КБ</b>.</li>
+<li><b>Китайский:</b> ~110 иероглифов на все слова меню, 4 размера ≈ 28 КБ + строки 4 КБ → <b>~32 КБ</b>.</li>
+<li>Все четыре вместе ≈ <b>86 КБ</b> — помещается (останется ~130 КБ). Имена звуков и проектов остаются латиницей; на экране 3×3 см иероглифы читаются от 16 px, поэтому подписи ручек в CJK — 16 px, длинные слова сокращены.</li></ul></div>
+<div class="card wide"><h2>14. «Бесконечные» ручки — где по кругу</h2>
+<div class="pair"><div><div class="cap">SEQ: белые — SELECT 1→64→1, жёлтая — ALGORITHM в столбце</div><canvas id="inf"></canvas></div></div>
+<ul><li><b>По кругу</b> (выбор места, страницы, пункта — с конца сразу в начало, без возврата):
+ SEQ — SELECT идёт по всем шагам подряд 1 → 64 → 1 (с конца ряда — в начало следующего, с 64 — на 1); ALGORITHM — только вверх-вниз по выбранному столбцу, по кругу (ряд 4 ↓ ряд 1); MIXER — дорожки 8 → 1; FX — эффекты; LFO 1 ↔ 2; EDIT — страницы и TONE ↔ ENV;
+ SEL — строки и действия; BLUETOOTH — устройства и CONNECT / SCAN / DISCONNECT; GLOBAL — меню (уже так); PRESETS — список звуков; SAVE — слоты 16 → 1 и буквы Z → A; CHAIN — поля; 808 / SAMPLER — пэды.</li>
+<li><b>Не по кругу</b> (упор в край): громкость, срез, резонанс, MIX и другие значения звука — прыжок с максимума в минимум дал бы щелчок или удар по ушам.</li>
+<li>На экране: у края списка — маленькая стрелка-петля, когда следующий шаг перенесёт в начало.</li></ul></div>
+<div class="card wide" id="va"><h2>15. MICRO D — парафонический виртуальный аналог по образцу Behringer D Mini, в стиле Moog (проект)</h2>
+<div class="pair"><div><div class="cap">1/5 MIX — микшер волн</div><canvas id="va_mix"></canvas></div><div><div class="cap">2/5 OSC</div><canvas id="va_osc"></canvas></div><div><div class="cap">3/5 FILTER — лестница 24 дБ</div><canvas id="va_flt"></canvas></div><div><div class="cap">4/5 ENV — общая огибающая</div><canvas id="va_env"></canvas></div><div><div class="cap">5/5 LFO и режим</div><canvas id="va_lfo"></canvas></div><div><div class="cap">GLOBAL</div><canvas id="va_glo"></canvas></div><div><div class="cap">Матрица</div><canvas id="va_mmix"></canvas></div><div><div class="cap">Матрица</div><canvas id="va_mlfo"></canvas></div></div>
+<p><b>Как это работает.</b> Закрытый движок на каждую ноту дорожки вызывает нашу функцию <code>groove_midi_note</code>. Дорожка MICRO D = дорожка в режиме «только MIDI»: её старый движок молчит, а ноты играет наш <code>app/micro_d.c</code> в общем миксе перед MASTER FX. Секвенсор, CHAIN, VARIATION, ARP и запись работают как обычно.</p>
+<ul><li><b>Парафония:</b> до 4 осцилляторов (по одному на ноту) → <b>один общий</b> лестничный фильтр → одна огибающая. Аккорд звучит одним «жестом», как на парафонических Moog / D Mini. Полифония остаётся за DX7.</li>
+<li><b>Осциллятор:</b> 5 форм D Mini смешиваются уровнями — SAW, SHARK, SQR↔PULSE (одна ручка сужает квадрат в импульс), TRI; без алиасинга (polyBLEP). Второй, расстроенный слой (DETUNE), белый/розовый шум, GLIDE.</li>
+<li><b>Фильтр:</b> полная лестница 24 дБ — ядро LADDER из наших MASTER FX, 2× передискретизация, резонанс до самовозбуждения, DRIVE (перегруз входа, как у микшера минимуга).</li>
+<li><b>Огибающая:</b> ADS на фильтр (CONTOUR) и VCA (ENV / GATE). RETRIG ON — каждая нота перезапускает огибающую; OFF — легато, пока держится хоть одна нота.</li>
+<li><b>Режимы (MODE):</b> MONO (глайд), PARA 2 / 3 / 4, UNISON (все осцилляторы на одну ноту).</li>
+<li><b>5 страниц:</b> MIX — SAW, SHARK, SQR›PLS, TRI; OSC — DETUNE, NOISE, GLIDE, VCA; FILTER — CUTOFF, RESO, CONTOUR, DRIVE; ENV — ATTACK, DECAY, SUSTAIN, RETRIG; LFO — RATE, WAVE, AMOUNT (+ фильтр / − высота), MODE. SELECT / ALGORITHM листают страницы по кругу; номер — под батареей.</li>
+<li><b>Вид в стиле Moog</b> (на страницах MICRO D): чёрная панель, кремовые надписи, янтарные и синие акценты, круглые ручки со шкалой и клавиши-«рокеры», подпись секции внизу окна (MIXER, OSCILLATOR, FILTER, CONTOUR, MODULATION). Без логотипов и торговых марок.</li>
+<li><b>Нагрузка:</b> один фильтр на дорожку вместо одного на голос → дорожка ≈ 5–6 % процессора (сейчас пик 52 %); молчащий движок этой дорожки свою долю освобождает. Предел — 2 дорожки MICRO D (GLOBAL). Замер — на устройстве.</li>
+<li><b>Место:</b> код ≈ 6–8 КБ флеша, ≈ 0,5 КБ памяти на дорожку, 16 пресетов ≈ 1 КБ. Свободно ≈ 216 КБ.</li>
+<li>Источники про D Mini (обзоры расходятся — сверю с официальной страницей Behringer перед кодом): <a href="https://www.thomann.ro/behringer_d_mini.htm">Thomann</a>, <a href="https://www.synthtopia.com/content/2026/06/09/behringer-d-mini-offers-minimoog-inspired-sound-in-a-tiny-form-factor/">Synthtopia</a>, <a href="https://synthanatomy.com/?p=103052">Synth Anatomy</a>.</li></ul></div>
+</div></main>
+<script>
+const W=240,BF=(p)=>'700 '+p+'px "Barlow Condensed"',MF=p=>p+'px "Share Tech Mono"';
+const MX={a:'#00ff41',b:'#00c032',c:'#0f7a2a',d:'#0b3d16'};
+const CL={f:BF,s:1,tx:'#f2eef5',dim:'#8b8494',ft:'#4a4552',k:['#ff7eb3','#3ee07a','#ffd23f','#2fd8c8'],grn:'#3ee07a',red:'#ff4b4b',yel:'#ffd23f',bat:'#f2eef5',
+ panel:'#0b0a0d',edge:'#2a2730',off:'#101013',edge4:'#45404c',used:'#7a6a2a',empty:'#5a4f22',fasl:['#f2eef5','#3ee07a','#ff4b4b','#2fd8c8'],cur:'#f2eef5',fill:'#14361f',sel:'#1c1824',box:'#2a2730',rain:0};
+const MT={f:MF,s:0.82,tx:MX.a,dim:MX.c,ft:MX.d,k:[MX.a,MX.a,MX.a,MX.a],grn:MX.a,red:'#ff4b4b',yel:MX.a,bat:MX.a,
+ panel:'#000',edge:MX.d,off:'#020a04',edge4:'#145a24',used:MX.c,empty:MX.d,fasl:[MX.a,MX.a,MX.a,MX.a],cur:'#ffffff',fill:'#06240f',sel:'#031408',box:MX.d,rain:1};
+const BPM=120;let PULSE=0;
+const RF=p=>'700 '+p+'px "Barlow Condensed","Roboto Condensed"';
+const RUT=Object.assign({},CL,{f:RF,s:1});
+const RU={SEQUENCER:'СЕКВЕНСОР',BPM:'BPM',STEPS:'ШАГИ',CHAIN:'ЦЕПЬ',OFF:'ВЫКЛ',ON:'ВКЛ',VELOCITY:'СИЛА',GATE:'ДЛИНА',PROB:'ШАНС',NOTE:'НОТА',
+ MIXER:'МИКШЕР',VOL:'ГРОМК',FILT:'ФИЛЬТР',SEND:'ПОСЫЛ',STATE:'СОСТ',FX:'ЭФФЕКТЫ',FILTER:'ФИЛЬТР',TYPE:'ТИП',CUTOFF:'СРЕЗ',RESO:'РЕЗОН',MIX:'СМЕСЬ',
+ FLT:'ФЛТ',DRV:'ДРВ',CHO:'ХОР',PHA:'ФАЗ',RNG:'КОЛ',REV:'РЕВ',EQ:'ЭКВ',DLY:'ЗАД',SND:'ПОС',
+ 'SAVE PROJECT':'СОХРАНЕНИЕ',SLOT:'СЛОТ',CURSOR:'КУРСОР',LETTER:'БУКВА',ACTION:'РЕЖИМ',WRITE:'ЗАПИСЬ',LFO:'LFO',TARGET:'ЦЕЛЬ',RATE:'ТЕМП',DEPTH:'ГЛУБИНА',WAVE:'ФОРМА',SINE:'СИНУС',
+ 'FILTER CUTOFF':'СРЕЗ ФИЛЬТРА',GLOBAL:'ОБЩЕЕ',SWING:'СВИНГ',THEME:'ТЕМА',CLICK:'МЕТРОНОМ',OUTPUT:'ВЫХОД',LINE:'ЛИНИЯ',LANGUAGE:'ЯЗЫК',RUSSIAN:'РУССКИЙ',CLASSIC:'КЛАССИКА',
+ ARPEGGIATOR:'АРПЕДЖИАТОР',MODE:'РЕЖИМ',UP:'ВВЕРХ',HUMAN:'ЖИВОСТЬ',HOLD:'УДЕРЖ',EDIT:'ЗВУК',TONE:'ТОН',ENV:'ОГИБ',CHOIR:'ХОР',FDBK:'ОБР.СВ',TRANS:'ТРАНСП',LEVEL:'УРОВЕНЬ',
+ NAME:'ИМЯ',to:'в',ALGORITHM:'АЛГОРИТМ',ATTACK:'АТАКА',DECAY:'СПАД',SUSTAIN:'УДЕРЖ',RELEASE:'ЗАТУХ',ROW:'РЯД',DO:'ДА'};
+function ctx(id,w=W,h=W){const c=document.getElementById(id);c.width=w*2;c.height=h*2;const g=c.getContext('2d');g.setTransform(2,0,0,2,0,0);g.fillStyle='#000';g.fillRect(0,0,w,h);return g;}
+function rr(g,x,y,w,h,r,f,s,lw=1){g.beginPath();g.roundRect(x,y,w,h,r);if(f){g.fillStyle=f;g.fill();}if(s){g.strokeStyle=s;g.lineWidth=lw;g.stroke();}}
+function L(th,s){return th.dict&&th.dict[s]!==undefined?th.dict[s]:s;}
+function T(g,th,s,x,y,p,c,a='left'){s=L(th,s);g.font=th.f(Math.round(p*th.s));g.fillStyle=c;g.textAlign=a;g.textBaseline='top';g.fillText(s,x,y);}
+function TW(g,th,s,p){s=L(th,s);g.font=th.f(Math.round(p*th.s));return g.measureText(s).width;}
+/* cut (keep the size) so the text never passes maxw */
+function cut(g,th,s,p,maxw){while(s.length>1&&TW(g,th,s,p)>maxw)s=s.slice(0,-1);return s.trimEnd();}
+function rain(g,x,y,w,h,seed){let r=seed;g.font=MF(9);g.textBaseline='top';g.textAlign='left';const cols=Math.floor(w/7);for(let c=0;c<cols;c++){r=(r*1103515245+12345)&0x7fffffff;const head=r%h;for(let yy=0;yy<h-8;yy+=10){r=(r*1103515245+12345)&0x7fffffff;const d=(yy-head+h)%h;g.fillStyle=d<12?'#0b4a1c':d<50?'#072810':'#041608';g.fillText(String.fromCharCode(0x30A0+(r%90)),x+c*7,y+yy);}}}
+function box(g,th,x,y,w,h,seed){rr(g,x,y,w,h,4,th.panel,th.edge);if(th.rain){g.save();g.beginPath();g.roundRect(x+1,y+1,w-2,h-2,4);g.clip();rain(g,x+2,y+2,w-4,h-4,seed);g.restore();}}
+/* play 9 x 11 with rounded corners; cy = centre */
+function play(g,x,cy,c){const y=cy-5.5;g.save();g.lineJoin='round';g.lineWidth=2;g.fillStyle=c;g.strokeStyle=c;g.beginPath();g.moveTo(x+1,y+1);g.lineTo(x+8,y+5.5);g.lineTo(x+1,y+10);g.closePath();g.fill();g.stroke();g.restore();}
+/* centre of the ink of the 22 px digits drawn at y 3 */
+function inkMid(g,th){g.font=th.f(Math.round(22*th.s));g.textBaseline='top';const m=g.measureText('100');return 3+(m.actualBoundingBoxDescent-m.actualBoundingBoxAscent)/2;}
+/* right corner: [play | rec] percent battery, all centred on the digits */
+function rightCorner(g,th,state){const cy=inkMid(g,th);rr(g,228,cy-6,6,13,1.5,null,th.tx);g.fillStyle=th.tx;g.fillRect(230,cy-8,2,2);g.fillRect(230,cy-3,2,8);
+ T(g,th,'100',224,3,22,th.bat,'right');const px=224-TW(g,th,'100',22)-4-10;
+ if(state=='play')play(g,px,cy,th.grn);else if(state=='rec'){g.fillStyle=th.red;g.beginPath();g.arc(px+5,cy+0.5,5,0,Math.PI*2);g.fill();}return px;}
+/* top line, the same on every page: 120 BPM left (where it was), title centred */
+function topLine(g,th,title,state='play'){placeFasl(g,th);T(g,th,'120',5,3,22,th.tx);const bw=TW(g,th,'120',22);T(g,th,'BPM',8+bw,11,11,th.grn);rightCorner(g,th,state);if(title)T(g,th,title,120,4,20,th.tx,'center');}
+/* F A S L 2x2 under 120: 14 px squares, 3 px apart -> 31 x 31 at (5, 29) */
+const FQ=14,FG=3,SLOT_Y=64;let FY=29;
+function placeFasl(g,th){g.font=th.f(Math.round(22*th.s));g.textBaseline='top';const bot=3+g.measureText('120').actualBoundingBoxDescent;FY=Math.round((bot+SLOT_Y-(2*FQ+FG))/2);}
+function faslSquare(g,th,on=[1,1,1,0]){['F','A','S','L'].forEach((l,i)=>{const x=5+(i%2)*(FQ+FG),y=FY+Math.floor(i/2)*(FQ+FG),o=on[i];rr(g,x,y,FQ,FQ,3,o?th.fasl[i]:null,o?null:th.ft,1.2);T(g,th,l,x+FQ/2,y+1.5,12,o?'#000':th.ft,'center');});}
+function faslRow(g,th,y,on=[1,1,1,0]){['F','A','S','L'].forEach((l,i)=>{const x=5+i*15,o=on[i];rr(g,x,y,12,12,2,o?th.fasl[i]:null,o?null:th.ft);T(g,th,l,x+6,y+0.5,11,o?'#000':th.ft,'center');});}
+/* label + 20 x 9 lamp, as CHAIN in 9501f46; right-aligned; returns the left edge */
+function labelLamp(g,th,right,y,label,txt,c,ink){const lw=TW(g,th,label,13),x=right-(lw+3+20);g.textBaseline='top';const m=g.measureText(L(th,label)),mid=(m.actualBoundingBoxDescent-m.actualBoundingBoxAscent)/2;
+ /* y = centre line: label and lamp share it */
+ T(g,th,label,x,y-mid,13,th.tx);rr(g,x+lw+3,y-4.5,20,9,2,c);
+ g.font=th.f(Math.round(8*Math.max(th.s,0.95)));g.fillStyle=ink;g.textAlign='center';g.textBaseline='middle';g.fillText(L(th,txt),x+lw+3+10,y+0.5);g.textBaseline='top';return x;}
+function chainLamp(g,th,right,y,on){return labelLamp(g,th,right,y,'CHAIN',on?'ON':'OFF',on?th.grn:th.red,'#000');}
+function stepsLamp(g,th,right,y){return labelLamp(g,th,right,y,'STEPS','64',th.box,th.tx);}
+function engineIcon(g,cx,cy,s,kind,c){g.save();g.strokeStyle=c;g.lineWidth=2;g.lineCap='round';g.lineJoin='round';const h=s/2;g.beginPath();
+ if(kind=='dx7'){for(let k=0;k<3;k++){const yy=cy-h*0.55+k*h*0.55;for(let i=0;i<=20;i++){const x=cx-h+i*s/20,y=yy+Math.sin(i/20*Math.PI*2*(k+1))*h*0.18;i?g.lineTo(x,y):g.moveTo(x,y);}}}
+ else if(kind=='303'){g.moveTo(cx-h,cy+h*0.6);g.lineTo(cx-h*0.2,cy-h*0.6);g.lineTo(cx-h*0.2,cy+h*0.6);g.lineTo(cx+h*0.6,cy-h*0.6);g.lineTo(cx+h*0.6,cy+h*0.6);}
+ g.stroke();g.restore();}
+/* engine icon (as tall as the F A S L block) + sound name, right next to F A S L */
+function engine(g,th,kind,name,maxr){const s=2*FQ+FG,lo=5+s+5,hi=Math.min(maxr,240-lo);const n=cut(g,th,name,19,maxr-(lo+s+6)),gw=s+6+TW(g,th,n,19);
+ let x=Math.round(120-gw/2);if(x<lo)x=lo;if(x+gw>hi)x=Math.max(lo,Math.round(hi-gw));
+ rr(g,x,FY,s,s,4,null,th.grn,1.5);engineIcon(g,x+s/2,FY+s/2,s*0.7,kind,th.tx);T(g,th,n,x+s+6,FY+(s-19)/2,19,th.grn);}
+/* bottom: words and numbers in one font */
+function knobs(g,th,l){l.forEach((k,i)=>{const x=i*60,c=th.k[i];let p=16;while(p>11&&Math.max(TW(g,th,k[0],p),TW(g,th,k[1],p))>57)p--;g.fillStyle=c;g.fillRect(x+6,197,48,2);T(g,th,k[0],x+30,202+(16-p)/2,p,th.tx,'center');T(g,th,k[1],x+30,219+(16-p)/2,p,c,'center');});}
+function knobsMix(g,th,l){l.forEach((k,i)=>{const x=i*60,c=th.k[i];let p=14;while(p>10&&TW(g,th,k[0],p)>57)p--;g.fillStyle=c;g.fillRect(x+6,197,48,2);T(g,th,k[0],x+30,201+(14-p)/2,p,th.tx,'center');T(g,th,k[1],x+30,216,20,c,'center');});}
+function slots(g,th,y,n){for(let i=0;i<16;i++){const x=10+i*14;rr(g,x,y,10,8,2,i==2?th.yel:i<n?th.used:null,i<n?null:th.empty);}}
+function grid(g,th,y0,pitch,h){const X=s=>5+s*14+Math.floor(s/4)*3,on=[0,3,6,8,10,14,16,22,24,27,40,44,51,60];
+ for(let r=0;r<4;r++)for(let s=0;s<16;s++){const i=r*16+s,x=X(s),y=y0+r*pitch,o=on.includes(i);rr(g,x,y,11,h,3,o?(th.rain?MX.b:'#3ee07a'):th.off,o?null:(s%4==0?th.edge4:th.edge));
+  if(i==9)rr(g,x+1,y+1,9,h-2,2,null,th.red,2);if(i==16){rr(g,x,y,11,h,3,null,th.cur,1.2);rr(g,x+1,y+1,9,h-2,2,null,'#000',1);}}}
+
+function seq(g,th,rec){topLine(g,th,'SEQUENCER',rec?'rec':'play');faslSquare(g,th,[1,1,1,0]);
+ const sx=stepsLamp(g,th,235,FY+FQ/2),cx=chainLamp(g,th,235,FY+FQ+FG+FQ/2,rec);
+ engine(g,th,'303',rec?'303 SAW':'ACID SQUELCH BASS 2',Math.min(sx,cx)-6);
+ slots(g,th,64,rec?5:1);grid(g,th,79,29,23);knobs(g,th,[['VELOCITY','100'],['GATE','75%'],['PROB','100%'],['NOTE','A2']]);}
+function lfo(g,th){topLine(g,th,'LFO');faslSquare(g,th);
+ [1,2].forEach((k,i)=>{const s=2*FQ+FG,x=120-s-2+i*(s+4),on=k==1;rr(g,x,FY,s,s,4,on?th.yel:null,on?null:th.ft,1.2);T(g,th,'LFO',x+s/2,FY+4,10,on?'#000':th.dim,'center');T(g,th,String(k),x+s/2,FY+13,15,on?'#000':th.dim,'center');});
+ box(g,th,6,66,228,122,3);if(th.rain){g.fillStyle='#000';g.fillRect(8,70,224,30);}T(g,th,'FILTER CUTOFF',120,74,24,th.k[0],'center');
+ rr(g,14,106,212,6,3,th.rain?'#000':'#141218',th.ft);g.fillStyle=th.yel;g.fillRect(120,107,64,4);
+ g.strokeStyle=th.k[3];g.lineWidth=2;g.beginPath();for(let x=0;x<216;x++){const y=150-Math.sin(x/108*Math.PI*2)*22;x?g.lineTo(12+x,y):g.moveTo(12,y);}g.stroke();
+ knobs(g,th,[['TARGET','CUTOFF'],['RATE','2.4HZ'],['DEPTH','+60'],['WAVE','SINE']]);}
+function edit(g,th){topLine(g,th,'EDIT');faslSquare(g,th);engine(g,th,'dx7','E.PIANO 1',230);
+ const rows=[['TONE',['CHOIR','5'],['FDBK','6'],['TRANS','+0'],['LEVEL','99']],['ENV',['ATTACK','12'],['DECAY','40'],['SUSTAIN','70'],['RELEASE','35']]];
+ rows.forEach((row,r)=>{const y=66+r*63,on=r==0;rr(g,6,y,228,59,4,on?th.sel:th.panel,on?th.k[0]:th.edge,on?1.6:1);T(g,th,row[0],12,y+4,12,on?th.tx:th.dim);
+  for(let i=0;i<4;i++){T(g,th,row[i+1][0],62+i*48,y+12,13,on?th.tx:th.dim,'center');T(g,th,row[i+1][1],62+i*48,y+30,20,on?th.k[i]:th.ft,'center');}});
+ knobs(g,th,[['CHOIR','5'],['FDBK','6'],['TRANS','+0'],['LEVEL','99']]);}
+function fx(g,th){topLine(g,th,'FX');faslSquare(g,th);{g.font=th.f(Math.round(24*th.s));const m=g.measureText('FILTER');T(g,th,'FILTER',120,FY+FQ+FG/2-(m.actualBoundingBoxDescent-m.actualBoundingBoxAscent)/2,24,th.k[0],'center');}
+ box(g,th,6,66,228,122,7);if(th.rain){g.fillStyle='#000';g.fillRect(8,68,224,20);}
+ const n=['FLT','DRV','CHO','PHA','RNG','REV','EQ','DLY','SND'],cw=224/9;n.forEach((s,i)=>{const cx=8+cw*(i+.5),on=i==0;T(g,th,s,cx,70,12,on?th.k[0]:i>6?th.tx:th.dim,'center');if(on){const w=TW(g,th,s,12);g.fillStyle=th.k[0];g.fillRect(cx-w/2,84,w,2);}});
+ const pts=[];for(let x=0;x<224;x++){const u=x/223,w=20*Math.pow(2,u*10)/1500,den=Math.sqrt((1-w*w)**2+0.16*w*w),db=20*Math.log10(1/den);pts.push([8+x,Math.max(94,Math.min(186,158-db*2.2))]);}
+ g.save();if(!th.rain){g.fillStyle=th.fill;g.beginPath();g.moveTo(8,186);pts.forEach(p=>g.lineTo(p[0],p[1]));g.lineTo(232,186);g.fill();}
+ g.strokeStyle=th.grn;g.lineWidth=th.rain?2:1.5;if(th.rain){g.shadowColor=MX.a;g.shadowBlur=6;}g.beginPath();pts.forEach((p,i)=>i?g.lineTo(...p):g.moveTo(...p));g.stroke();g.restore();
+ knobs(g,th,[['TYPE','ACID'],['CUTOFF','1.5K'],['RESO','80'],['MIX','127']]);}
+function mixer(g,th){topLine(g,th,'MIXER');faslRow(g,th,29);
+ const tr=['303 SAW','808 KIT','SOFT LEAD','PLUCK','SAMPLER','PSG YM','PIANO 1','BASS 2'];
+ tr.forEach((n,i)=>{const y=46+i*18,sel=i==0;if(sel){g.fillStyle=th.cur;g.fillRect(6,y+2,2,13);}T(g,th,String(i+1),15,y+2,13,sel?th.tx:th.dim,'center');T(g,th,n,24,y+3,12,sel?th.tx:th.dim);
+  for(let s=0;s<16;s++){const x=88+s*9,on=(s*(i+3))%5==0;rr(g,x,y+4,6,11,1.5,on?(th.rain?MX.b:th.k[i%4]):th.off,on?null:th.edge);}});
+ knobsMix(g,th,[['VOL','100'],['FILT','64'],['SEND','20'],['STATE','ON']]);}
+/* CHAIN dot: one step per beat, 16 steps per side, clockwise from the top left; no tail */
+function edgePt(p){const i=2,L=W-2*i,s=Math.floor(p/16)%4,u=(p%16)/16*L;return s==0?[i+u,i]:s==1?[W-i,i+u]:s==2?[W-i-u,W-i]:[i,W-i-u];}
+function chainDot(g,th,step){const [x,y]=edgePt(step%64);g.fillStyle=th.rain?'#ffffff':th.yel;g.beginPath();g.arc(x,y,2.2,0,Math.PI*2);g.fill();}
+function glo(g,th){topLine(g,th,'GLOBAL');faslSquare(g,th);const it=[['SWING','0%'],['THEME','MATRIX'],['CLICK','OFF'],['OUTPUT','LINE']];
+ it.forEach(([a,b],i)=>{const y=72+i*30,sel=i==1;if(sel)rr(g,6,y-3,228,28,4,th.sel,th.k[0],1.4);T(g,th,a,16,y,sel?20:16,sel?th.tx:th.dim);T(g,th,(sel?'‹ ':'')+b+(sel?' ›':''),226,y,sel?20:16,sel?th.k[0]:th.dim,'right');});
+ knobs(g,th,[['THEME','MATRIX'],['',''],['',''],['','']]);}
+
+/* ---- the other pages ---- */
+function icon2(g,cx,cy,s,kind,c){if(kind=='dx7'||kind=='303')return engineIcon(g,cx,cy,s,kind,c);g.save();g.strokeStyle=c;g.lineWidth=2;g.lineCap='round';g.lineJoin='round';const h=s/2;g.beginPath();
+ if(kind=='psg'){g.moveTo(cx-h,cy+h*0.5);g.lineTo(cx-h,cy-h*0.5);g.lineTo(cx-h*0.33,cy-h*0.5);g.lineTo(cx-h*0.33,cy+h*0.5);g.lineTo(cx+h*0.33,cy+h*0.5);g.lineTo(cx+h*0.33,cy-h*0.5);g.lineTo(cx+h,cy-h*0.5);g.lineTo(cx+h,cy+h*0.5);}
+ else if(kind=='pluck'){for(let i=0;i<=30;i++){const u=i/30,x=cx-h+u*s,y=cy-Math.sin(u*Math.PI*6)*h*0.8*Math.exp(-u*2.5);i?g.lineTo(x,y):g.moveTo(x,y);}}
+ else if(kind=='808'){g.ellipse(cx,cy+h*0.15,h*0.85,h*0.55,0,0,Math.PI*2);g.moveTo(cx+h*0.85,cy-h*0.1);g.ellipse(cx,cy-h*0.1,h*0.85,h*0.3,0,0,Math.PI,true);}
+ else {for(let i=0;i<=28;i++){const u=i/28,x=cx-h+u*s,a=(0.35+0.65*Math.abs(Math.sin(u*9)))*h*0.85*(1-u*0.5);g.moveTo(x,cy-a);g.lineTo(x,cy+a);}}
+ g.stroke();g.restore();}
+/* info window under the battery: label (13) over value (20), right edge 235; returns its left edge */
+function info(g,th,label,value){if(!label)return 236;const lw=TW(g,th,label,13),vw=value?TW(g,th,value,22):0,w=Math.max(lw,vw);
+ if(value){T(g,th,label,235,FY-1,13,th.dim,'right');T(g,th,value,235,FY+11,22,th.tx,'right');}else T(g,th,label,235,FY+(2*FQ+FG-20)/2,20,th.tx,'right');return 235-w;}
+function head(g,th,title,kind,name,inf){topLine(g,th,title);faslSquare(g,th);const ix=inf?info(g,th,inf[0],inf[1]):236;if(kind){const s=2*FQ+FG,lo=5+s+5,hi=ix-6,n=cut(g,th,name,19,hi-(lo+s+6)),gw=s+6+TW(g,th,n,19);let x=Math.round(120-gw/2);if(x+gw>hi)x=hi-gw;x=Math.max(lo,x);
+ rr(g,x,FY,s,s,4,null,th.grn,1.5);icon2(g,x+s/2,FY+s/2,s*0.7,kind,th.tx);T(g,th,n,x+s+6,FY+(s-19)/2,19,th.grn);}}
+function wave(g,x,y,w,h,c,seed,a=1){g.strokeStyle=c;g.lineWidth=1;g.beginPath();let r=seed;for(let i=0;i<w;i++){r=(r*1103515245+12345)&0x7fffffff;const env=Math.exp(-((i%(w/4))/(w/4))*3)*a,v=((r%1000)/1000-0.5)*2*env*h/2;g.moveTo(x+i,y-v);g.lineTo(x+i,y+v);}g.stroke();}
+const CREW={neo:['...hhhh...','..hhhhhh..','..hsssss..','..gggggg..','..ssssss..','...ssss...','..cccccc..','.cccccccc.','.cccccccc.','.sccccccs.','.sccccccs.','..cccccc..','..cccccc..','..cccccc..','.ccc..ccc.','.ccc..ccc.','cccc..cccc','..kk..kk..','..kk..kk..','.kkk..kkk.'],
+ morpheus:['...ssss...','..ssssss..','..ssssss..','..ggssgg..','..ssssss..','...ssss...','.cccccccc.','cccccccccc','cccccccccc','sccccccccs','sccccccccs','.cccccccc.','.cccccccc.','.cccccccc.','.ccc..ccc.','cccc..cccc','cccc..cccc','..kk..kk..','..kk..kk..','.kkk..kkk.'],
+ trinity:['...hhhh...','..hhhhhh..','..hssssh..','...gggg...','...ssss...','....ss....','...cccc...','..cccccc..','..cccccc..','..sccccs..','..sccccs..','...cccc...','...cccc...','...cccc...','...c..c...','...c..c...','...c..c...','...c..c...','...k..k...','..kk..kk..']};
+function crew(g,who,x,y,sc,up){const P={h:MX.c,s:MX.b,g:MX.a,c:'#0f5a22',k:MX.c};CREW[who].forEach((row,r)=>{for(let c=0;c<10;c++){const k=row[c];if(k=='.')continue;g.fillStyle=P[k];g.fillRect(x+c*sc,y+r*sc-(up&&r<6?sc:0),sc,sc);}});}
+const NEO=['....hhhhhh....','...hhhhhhhh...','..hhhhhhhhhh..','..hhsssssshh..','..ssssssssss..','.bbbbbbbbbbbb.','.bLwLLbbLwLLb.','.bLLLLbbLLLLb.','..bbbb..bbbb..','..ssssssssss..','...ssssssss...','...ssmmmmss...','....ssssss....','.....ssss.....','..ccc.ss.ccc..','.cccc....cccc.'];
+function neoPortrait(g,x,y,w){const u=2,c=document.createElement('canvas');c.width=40*u;c.height=52*u;const q=c.getContext('2d');q.scale(u,u);
+ const HAIR='#03200c',SK='#29b04a',SH='#0b5a22',DK='#032a10',COAT='#041d0c',COL='#0a3a18';
+ const P=(pts,f)=>{q.beginPath();q.moveTo(...pts[0]);pts.slice(1).forEach(p=>q.lineTo(...p));q.closePath();q.fillStyle=f;q.fill();};
+ const E=(cx,cy,rx,ry,f)=>{q.beginPath();q.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);q.fillStyle=f;q.fill();};
+ /* coat with the high collar */
+ P([[0,52],[3,44],[12,39],[20,46],[28,39],[37,44],[40,52]],COAT);P([[12,39],[14,32],[20,37],[26,32],[28,39],[20,46]],COL);
+ q.strokeStyle=MX.d;q.lineWidth=0.6;q.beginPath();q.moveTo(12,39);q.lineTo(16.5,52);q.moveTo(28,39);q.lineTo(23.5,52);q.stroke();
+ q.fillStyle=SH;q.fillRect(15.5,29,9,8);
+ E(9.7,20.5,1.4,2.6,SH);E(30.3,20.5,1.4,2.6,SK);
+ /* long face, narrow chin */
+ q.beginPath();q.moveTo(10,18);q.bezierCurveTo(10,30,14.5,36.5,20,37);q.bezierCurveTo(25.5,36.5,30,30,30,18);q.bezierCurveTo(30,10,26,7,20,7);q.bezierCurveTo(14,7,10,10,10,18);q.fillStyle=SK;q.fill();
+ /* light from the right: the left side falls into shadow */
+ q.save();q.clip();const gr=q.createLinearGradient(9,0,21,0);gr.addColorStop(0,'rgba(0,10,3,0.75)');gr.addColorStop(1,'rgba(0,10,3,0)');q.fillStyle=gr;q.fillRect(8,6,14,32);q.restore();
+ /* short dark hair, high forehead */
+ q.beginPath();q.moveTo(9.5,17);q.lineTo(9.3,10);q.bezierCurveTo(10,2.6,30,2.6,30.7,10);q.lineTo(30.5,17);q.bezierCurveTo(30,13.6,29,12.2,27.5,11.6);q.bezierCurveTo(24.5,10.9,22,11.2,20,11.4);q.bezierCurveTo(18,11.2,15.5,10.9,12.5,11.6);q.bezierCurveTo(11,12.2,10,13.6,9.5,17);q.fillStyle=HAIR;q.fill();
+ q.strokeStyle=MX.d;q.lineWidth=0.5;q.beginPath();q.moveTo(13,5.6);q.quadraticCurveTo(20,3.6,27,5.6);q.moveTo(11.6,7.8);q.quadraticCurveTo(20,5.4,28.4,7.8);q.stroke();
+ /* thin wrap-around glasses, outer corners up */
+ P([[19.4,18.3],[16.5,17.7],[12.5,17.3],[8.2,16.5],[9.4,19.2],[11.4,21.2],[15.5,21.6],[18.8,20.6]],'#000');
+ P([[20.6,18.3],[23.5,17.7],[27.5,17.3],[31.8,16.5],[30.6,19.2],[28.6,21.2],[24.5,21.6],[21.2,20.6]],'#000');
+ q.strokeStyle='rgba(120,255,150,0.55)';q.lineWidth=0.45;q.beginPath();q.moveTo(19,18.2);q.lineTo(8.6,16.7);q.moveTo(21,18.2);q.lineTo(31.4,16.7);q.stroke();
+ q.strokeStyle=MX.c;q.lineWidth=0.6;q.beginPath();q.moveTo(19.3,18.4);q.lineTo(20.7,18.4);q.stroke();
+ q.fillStyle='rgba(200,255,210,0.8)';q.fillRect(26.5,18,1.4,0.6);
+ /* nose: lit ridge, shadow on the left, dark nostrils */
+ q.strokeStyle='rgba(150,255,170,0.55)';q.lineWidth=0.7;q.beginPath();q.moveTo(20.4,21.5);q.lineTo(20.8,26.6);q.stroke();
+ q.strokeStyle=SH;q.lineWidth=0.9;q.beginPath();q.moveTo(19.2,21.5);q.lineTo(18.4,27);q.stroke();
+ E(20,28.3,2.7,0.95,DK);
+ /* cheekbones, mouth, chin */
+ q.strokeStyle=SH;q.lineWidth=0.8;q.beginPath();q.moveTo(12.4,25);q.lineTo(14.4,30.5);q.moveTo(27.6,25);q.lineTo(25.6,30.5);q.stroke();
+ q.strokeStyle=DK;q.lineWidth=1;q.beginPath();q.moveTo(16.9,31.4);q.quadraticCurveTo(20,32.1,23.1,31.4);q.stroke();
+ q.fillStyle='rgba(3,42,16,0.6)';q.beginPath();q.ellipse(20,35.6,4,1.2,0,0,Math.PI*2);q.fill();
+ g.save();g.imageSmoothingEnabled=true;g.drawImage(c,x,y,w,w*52/40);g.restore();}
+function neoFace(g,x,y,sc){const P={h:MX.c,s:MX.b,b:MX.a,L:'#021a08',w:'#ffffff',m:MX.d,c:'#0f5a22'};NEO.forEach((row,r)=>{for(let c=0;c<14;c++){const k=row[c];if(k=='.')continue;g.fillStyle=P[k];g.fillRect(x+c*sc,y+r*sc,sc,sc);}});}
+const O={
+arp(g,th){head(g,th,'ARPEGGIATOR','dx7','E.PIANO 1');box(g,th,6,66,228,122,1);if(th.rain){g.fillStyle='#000';g.fillRect(8,68,224,118);}T(g,th,'MODE',14,72,12,th.dim);T(g,th,'UP',14,84,40,th.tx);
+ rr(g,150,74,36,14,3,th.box);T(g,th,'OCT-',168,75,11,th.tx,'center');rr(g,190,74,36,14,3,th.box);T(g,th,'OCT+',208,75,11,th.tx,'center');T(g,th,'2',188,92,40,th.tx,'center');
+ if(th.rain)neoPortrait(g,116-39,84,78);
+ else for(let i=0;i<8;i++){const h=10+((i*3)%4)*10;rr(g,20+i*26,180-h,18,h,3,i==3?th.k[0]:th.grn);}
+ knobs(g,th,[['RATE','1/16'],['GATE','50%'],['HUMAN','10%'],['HOLD','OFF']]);},
+chain(g,th){head(g,th,'CHAIN');const P=[1,1,2,3,3,4,0,0,0,0,0,0,0,0,0,0],R=[2,1,4,1,2,1];
+ for(let i=0;i<16;i++){const x=6+(i%4)*57,y=66+Math.floor(i/4)*31,u=P[i];rr(g,x,y,53,27,4,u?th.sel:th.panel,i==1?th.red:i==4?th.cur:u?th.edge4:th.edge,i==1||i==4?2:1);
+  if(u){T(g,th,'P'+u,x+6,y+5,16,th.tx);T(g,th,'x'+R[i],x+47,y+7,13,th.yel,'right');}else T(g,th,'—',x+26,y+5,14,th.ft,'center');}
+ knobs(g,th,[['FIELD','5'],['PROJECT','P3'],['REPEAT','X2'],['CHAIN','ON']]);},
+vars(g,th){head(g,th,'VARIATION','303','303 SAW');box(g,th,6,66,228,122,2);T(g,th,'RATCHET',120,72,24,th.k[2],'center');
+ for(let i=0;i<8;i++){const x=18+i*26,n=i%3==1?3:1;for(let k=0;k<n;k++)rr(g,x+k*7,116+k*6,n>1?6:18,60-k*6,2,n>1?th.k[2]:th.grn);}
+ knobs(g,th,[['MUTATE','20%'],['HUMAN','0%'],['RATCHET','3X'],['CHANCE','100%']]);},
+step(g,th){head(g,th,'STEP EDIT','303','303 SAW',['STEP','17']);
+ [['CHORD','MAJ'],['TIE','ON'],['LOCK','CUTOFF'],['VALUE','92']].forEach(([a,b],i)=>{const x=6+(i%2)*116,y=66+Math.floor(i/2)*62;rr(g,x,y,112,58,4,th.sel,th.k[i]);T(g,th,b,x+56,y+14,30,th.k[i],'center');});
+ knobs(g,th,[['CHORD','MAJ'],['TIE','ON'],['LOCK','CUTOFF'],['VALUE','92']]);},
+sel(g,th){head(g,th,'SEL','303','303 SAW');const R=[['STEP',['COPY','PASTE','CLEAR','']],['PAGE',['COPY','PASTE','CLEAR','FILL']],['TRACK',['COPY','PASTE','CLEAR','UNDO']],['SOUND',['COPY','PASTE','','NAME']]];
+ R.forEach(([n,it],r)=>{const y=68+r*31;if(r==2)rr(g,3,y-2,234,30,5,null,th.cur,1.4);T(g,th,n,8,y+6,14,r==2?th.tx:th.dim);it.forEach((s,c)=>{if(!s)return;const x=58+c*44,on=r==2&&c==0;rr(g,x,y,41,26,4,on?th.k[0]:th.panel,on?null:th.edge);T(g,th,s,x+20.5,y+6,13,on?'#000':th.tx,'center');});});
+ knobs(g,th,[['SELECT','TRACK'],['ALGORITHM','COPY'],['',''],['SAVE','DO']]);},
+save(g,th){topLine(g,th,'SAVE PROJECT');faslSquare(g,th);const ix=info(g,th,'NAME');
+ {const sq=2*FQ+FG,nm=L(th,'SLOT'),gw=sq+6+TW(g,th,nm,19);let x=Math.round(120-gw/2);if(x+gw>ix-6)x=ix-6-gw;x=Math.max(5+sq+5,x);rr(g,x,FY,sq,sq,4,null,th.grn,1.5);T(g,th,'03',x+sq/2,FY+6,19,th.tx,'center');T(g,th,nm,x+sq+6,FY+(sq-19)/2,19,th.grn);}
+ box(g,th,6,66,228,122,5);if(th.rain){g.fillStyle='#000';g.fillRect(8,70,224,114);}
+ {const nm='ACID JAM',cur=7,p=40,w=TW(g,th,nm,p);let x=120-w/2;g.font=th.f(Math.round(p*th.s));for(let i=0;i<nm.length;i++){const ch=nm[i],cw=g.measureText(ch).width;
+   const a=0.35+0.65*(0.5+0.5*Math.sin(PULSE*Math.PI*2));T(g,th,ch,x,74,p,i==cur?(a>0.7?th.grn:th.ft):th.tx);if(i==cur){g.globalAlpha=a;g.fillStyle=th.grn;g.fillRect(x,120,cw,3);g.globalAlpha=1;}x+=cw;}}
+ {const cy=(123+188)/2,tw=TW(g,th,'to',26),tl=120-tw/2,trr=120+tw/2,lx=(6+tl)/2,rx=(trr+234)/2,bw=Math.min(78,tl-6-10),bh=38;
+  T(g,th,'to',120,cy-15,26,th.tx,'center');rr(g,lx-bw/2,cy-bh/2,bw,bh,bh/2,th.k[0]);T(g,th,'SAVE',lx,cy-12,24,'#000','center');
+  g.save();g.strokeStyle=th.grn;g.lineWidth=8;g.lineCap='round';g.lineJoin='round';g.beginPath();g.moveTo(rx-20,cy+1);g.lineTo(rx-7,cy+15);g.lineTo(rx+20,cy-15);g.stroke();g.restore();}
+ knobs(g,th,[['SLOT','03'],['CURSOR','8'],['LETTER','M'],['ACTION','SAVE']]);},
+srec(g,th){head(g,th,'SAMPLER REC','smp','PAD 3');box(g,th,6,66,228,122,6);rr(g,14,72,60,16,3,th.yel);T(g,th,'ARMED',44,73,13,'#000','center');T(g,th,'0.0 / 1.2 S',226,72,16,th.tx,'right');
+ wave(g,14,140,212,70,th.grn,5,0.9);g.fillStyle=th.k[1];g.fillRect(14,118,212,1);
+ knobs(g,th,[['SOURCE','USB'],['THRESH','-24DB'],['LENGTH','1.2S'],['MONITOR','ON']]);},
+schop(g,th){head(g,th,'SAMPLER CHOP','smp','PAD 3');box(g,th,6,66,228,122,8);const xs=[14,62,110,170];
+ g.fillStyle=th.sel;g.fillRect(62,70,48,114);wave(g,14,128,212,90,th.grn,9,1);xs.forEach((x,i)=>{g.fillStyle=i==1?th.k[0]:th.yel;g.fillRect(x,70,1.5,114);T(g,th,String(i+1),x+4,72,12,i==1?th.k[0]:th.yel);});
+ knobs(g,th,[['START','120MS'],['SLICES','4'],['MODE','TRANSIENT'],['','']]);},
+e303(g,th){head(g,th,'303 EDIT','303','ACID SQUELCH');box(g,th,6,66,228,122,10);
+ const pts=[];for(let x=0;x<220;x++){const u=x/219,w=20*Math.pow(2,u*10)/900,den=Math.sqrt((1-w*w)**2+0.09*w*w),db=20*Math.log10(1/den);pts.push([10+x,Math.max(76,Math.min(184,150-db*2))]);}
+ g.save();if(!th.rain){g.fillStyle=th.fill;g.beginPath();g.moveTo(10,184);pts.forEach(p=>g.lineTo(...p));g.lineTo(230,184);g.fill();}g.strokeStyle=th.grn;g.lineWidth=1.5;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(...p):g.moveTo(...p));g.stroke();g.restore();
+ knobs(g,th,[['CUTOFF','40'],['RESO','90'],['ENV MOD','70'],['DECAY','45']]);},
+e808(g,th){head(g,th,'808 EDIT','808','808 KIT');const P=['BD','SD','LT','MT','HT','RS','CP','CH'];
+ P.forEach((n,i)=>{const x=6+(i%4)*57,y=66+Math.floor(i/4)*36,on=i==1;rr(g,x,y,53,32,4,on?th.k[0]:th.panel,on?null:th.edge);T(g,th,n,x+26.5,y+6,18,on?'#000':th.tx,'center');});
+ box(g,th,6,140,228,48,11);T(g,th,'SNARE DRUM',120,152,22,th.k[0],'center');
+ knobs(g,th,[['LEVEL','100'],['TUNE','+2'],['DECAY','60'],['TONE','40']]);},
+env(g,th){head(g,th,'AMP ENV','dx7','E.PIANO 1');box(g,th,6,66,228,122,12);const P=[[14,180],[44,80],[100,120],[180,120],[226,180]];
+ g.strokeStyle=th.grn;g.lineWidth=2;g.beginPath();P.forEach((p,i)=>i?g.lineTo(...p):g.moveTo(...p));g.stroke();P.slice(1).forEach((p,i)=>{g.fillStyle=th.k[i];g.beginPath();g.arc(p[0],p[1],i==1?5:3.5,0,7);g.fill();});
+ knobs(g,th,[['ATTACK','12'],['DECAY','40'],['SUSTAIN','70'],['RELEASE','35']]);},
+lab(g,th,alg=5){const A=ALGS[alg];head(g,th,'FM LAB','dx7','E.PIANO 1',['ALG',String(alg)]);box(g,th,6,66,228,122,13);algPic(g,th,A,4);
+ knobs(g,th,[['RATIO','2.00'],['LEVEL','85'],['DETUNE','+3'],['FDBK','0']]);},
+dlfo(g,th){head(g,th,'DX7 LFO','dx7','E.PIANO 1');box(g,th,6,66,228,122,14);T(g,th,'PITCH',120,72,24,th.k[2],'center');
+ g.strokeStyle=th.k[3];g.lineWidth=2;g.beginPath();for(let x=0;x<216;x++){const y=150-((x/36)%2<1?1:-1)*20;x?g.lineTo(12+x,y):g.moveTo(12,y);}g.stroke();
+ knobs(g,th,[['RATE HZ','5.2'],['DEPTH','20'],['TARGET','PITCH'],['WAVE','SQR']]);},
+tfx(g,th){head(g,th,'TRACK FX','303','303 SAW');['TRACK FX','SHARED FX','DELAY'].forEach((n,i)=>{const x=6+i*77,on=i==0;rr(g,x,66,72,18,4,on?th.k[0]:null,on?null:th.edge4);T(g,th,n,x+36,68,13,on?'#000':th.dim,'center');});
+ box(g,th,6,90,228,98,15);T(g,th,'DRIVE',120,96,24,th.k[0],'center');g.strokeStyle=th.grn;g.lineWidth=2;g.beginPath();for(let x=0;x<200;x++){const u=(x-100)/100,y=154-Math.tanh(u*3)*26;x?g.lineTo(20+x,y):g.moveTo(20,y);}g.stroke();
+ knobs(g,th,[['TYPE','DRIVE'],['AMOUNT','60'],['TONE','40'],['MIX','80']]);},
+eng(g,th){head(g,th,'ENGINE','303','303 SAW');[['dx7','DX7'],['303','303'],['808','808'],['psg','PSG'],['pluck','PLUCK'],['smp','SAMPLER']].forEach(([k,n],i)=>{const x=10+(i%3)*76,y=68+Math.floor(i/3)*62,on=i==1;
+  rr(g,x,y,68,56,6,on?th.sel:null,on?th.k[0]:th.edge4,on?2:1);icon2(g,x+34,y+22,26,k,on?th.grn:th.dim);T(g,th,n,x+34,y+38,14,on?th.tx:th.dim,'center');});
+ knobs(g,th,[['ENGINE','303'],['',''],['',''],['','']]);},
+pres(g,th){head(g,th,'PRESETS','303','303 SAW');const L=['303 SAW','303 SQUARE','ACID SQUELCH','RUBBER BASS','DEEP SUB'];
+ L.forEach((n,i)=>{const y=68+i*24,on=i==2;if(on)rr(g,6,y-2,228,24,4,th.sel,th.k[0],1.4);T(g,th,String(i+1).padStart(2,'0'),14,y+2,on?18:15,on?th.k[0]:th.ft);T(g,th,n,44,y+2,on?18:15,on?th.tx:th.dim);});
+ knobs(g,th,[['SOUND','03'],['',''],['',''],['ACTION','LOAD']]);},
+scope(g,th){head(g,th,'SCOPE');box(g,th,6,66,228,122,16);g.strokeStyle=th.edge4;g.lineWidth=1;g.beginPath();g.moveTo(8,127);g.lineTo(232,127);g.stroke();
+ g.strokeStyle=th.grn;g.lineWidth=1.5;g.beginPath();for(let x=0;x<222;x++){const y=127-Math.sin(x/14)*30*Math.cos(x/60)-Math.sin(x/3.1)*6;x?g.lineTo(9+x,y):g.moveTo(9,y);}g.stroke();
+ knobs(g,th,[['ZOOM','2X'],['TRIG','AUTO'],['SOURCE','MIX'],['HOLD','OFF']]);},
+ble(g,th){head(g,th,'BLUETOOTH');const D=['WH-1000XM4','MIDI BLE PAD','PHONE'];
+ D.forEach((n,i)=>{const y=68+i*26,on=i==1;if(on)rr(g,6,y-2,228,24,4,th.sel,th.k[0],1.4);T(g,th,n,14,y+2,16,on?th.tx:th.dim);T(g,th,i==0?'AUDIO':'MIDI',226,y+3,13,on?th.k[0]:th.ft,'right');});
+ ['CONNECT','SCAN','DISCONNECT'].forEach((n,i)=>{const x=6+i*77,on=i==0;rr(g,x,150,72,26,5,on?th.k[0]:th.panel,on?null:th.edge4);T(g,th,n,x+36,155,15,on?'#000':th.tx,'center');});
+ knobs(g,th,[['BT','ON'],['BT AUDIO','ON'],['BLE ROLE','HOST'],['CLOCK','INT']]);}
+};
+/* DX7 algorithms: columns of operators from the top (modulator) down to the carrier; fb = the operator feeding itself */
+const ALGS={1:{c:[[2,1],[6,5,4,3]],fb:6},5:{c:[[2,1],[4,3],[6,5]],fb:6},32:{c:[[1],[2],[3],[4],[5],[6]],fb:6},16:{c:[[2,1],[4,3],[6,5]],fb:6,join:1}};
+function opIcon(g,x,y,carrier,c){g.save();g.strokeStyle=c;g.lineWidth=1.4;g.beginPath();if(carrier){g.moveTo(x-5,y+2);g.lineTo(x-5,y-2);g.lineTo(x-1,y-2);g.lineTo(x+3,y-5);g.lineTo(x+3,y+5);g.lineTo(x-1,y+2);g.closePath();}
+ else for(let i=0;i<=12;i++){const xx=x-6+i,yy=y-Math.sin(i/12*Math.PI*2)*4;i?g.lineTo(xx,yy):g.moveTo(xx,yy);}g.stroke();g.restore();}
+function algPic(g,th,A,sel){const n=A.c.length,long=A.c.some(c=>c.length>3),bw=n>4?30:40,bh=long?20:24,gap=n>4?6:12,tot=n*bw+(n-1)*gap,x0=120-tot/2,yb=154,step=long?23:34;
+ const out=164+8;g.strokeStyle=th.dim;g.lineWidth=1.5;g.beginPath();g.moveTo(x0+bw/2,out);g.lineTo(x0+tot-bw/2,out);g.moveTo(120,out);g.lineTo(120,182);g.stroke();
+ g.fillStyle=th.dim;g.beginPath();g.moveTo(115,178);g.lineTo(125,178);g.lineTo(120,184);g.fill();T(g,th,'OUT',128,173,11,th.dim);
+ A.c.forEach((col,i)=>{const x=x0+i*(bw+gap),cx=x+bw/2,len=col.length;const top=yb-(len-1)*step;
+  g.strokeStyle=th.dim;g.lineWidth=1.5;g.beginPath();g.moveTo(cx,top);g.lineTo(cx,out);g.stroke();
+  col.forEach((op,k)=>{const y=top+k*step,car=k==len-1,on=op==sel;rr(g,x,y-bh/2,bw,bh,4,car?th.grn:th.panel,on?th.k[0]:car?null:th.edge4,on?2:1.2);
+   opIcon(g,x+9,y,car,car?'#000':th.dim);T(g,th,String(op),x+bw-6,y-9,16,car?'#000':th.tx,'right');
+   if(op==A.fb){g.strokeStyle=th.yel;g.lineWidth=1.5;g.beginPath();g.moveTo(x+bw,y);g.lineTo(x+bw+4,y);g.lineTo(x+bw+4,y-bh/2-5);g.lineTo(cx,y-bh/2-5);g.lineTo(cx,y-bh/2);g.stroke();}});});
+ T(g,th,'■ CARRIER',12,70,10,th.grn);T(g,th,'□ MOD',12,81,10,th.dim);T(g,th,'↺ FB',12,92,10,th.yel);}
+const HEF=p=>'700 '+p+'px "Barlow Condensed","Noto Sans Hebrew"',ZHF=p=>'700 '+p+'px "Barlow Condensed","Noto Sans SC"',JAF=p=>'700 '+p+'px "Barlow Condensed","Noto Sans JP"';
+const HE={SEQUENCER:'סקוונסר',STEPS:'צעדים',CHAIN:'שרשרת',OFF:'כבוי',ON:'פועל',VELOCITY:'עוצמה',GATE:'אורך',PROB:'סיכוי',NOTE:'תו','SAVE PROJECT':'שמירה',SLOT:'משבצת',CURSOR:'סמן',LETTER:'אות',ACTION:'פעולה',NAME:'שם',to:'אל',SAVE:'SAVE'};
+const ZH={SEQUENCER:'音序器',STEPS:'步数',CHAIN:'链',OFF:'关',ON:'开',VELOCITY:'力度',GATE:'时值',PROB:'概率',NOTE:'音符',MIXER:'混音器',VOL:'音量',FILT:'滤波',SEND:'发送',STATE:'状态'};
+const JA={SEQUENCER:'シーケンサー',STEPS:'ステップ',CHAIN:'チェーン',OFF:'オフ',ON:'オン',VELOCITY:'強さ',GATE:'ゲート',PROB:'確率',NOTE:'ノート','SAVE PROJECT':'保存',SLOT:'スロット',CURSOR:'カーソル',LETTER:'文字',ACTION:'動作',NAME:'名前',to:'へ'};
+const HET=Object.assign({},CL,{f:HEF,dict:HE}),ZHT=Object.assign({},CL,{f:ZHF,dict:ZH}),JAT=Object.assign({},CL,{f:JAF,dict:JA});
+function saves(){O.save(ctx('o_save'),CL);O.save(ctx('mSave'),MT);O.save(ctx('rSave'),RUT);O.save(ctx('heSave'),HET);O.save(ctx('jaSave'),JAT);}
+function infPic(g,th){seq(g,th,0);g.save();g.lineCap='round';g.lineJoin='round';const yc=r=>79+11+r*29;
+ g.strokeStyle=th.cur;g.lineWidth=1.6;for(let r=0;r<3;r++){g.beginPath();g.moveTo(232,yc(r));g.quadraticCurveTo(239,yc(r)+14,232,yc(r+1)-3);g.stroke();g.beginPath();g.moveTo(229,yc(r+1)-6);g.lineTo(232,yc(r+1)-2);g.lineTo(236,yc(r+1)-6);g.stroke();}
+ g.setLineDash([3,3]);g.beginPath();g.moveTo(232,yc(3)+8);g.bezierCurveTo(236,198,4,198,3,yc(3));g.lineTo(3,yc(0)-2);g.stroke();g.setLineDash([]);g.beginPath();g.moveTo(1,yc(0)+2);g.lineTo(3,yc(0)-3);g.lineTo(6,yc(0)+2);g.stroke();
+ const cx=5+5*14+3+5.5;g.strokeStyle=th.k[2];g.lineWidth=2;g.beginPath();g.moveTo(cx,yc(0)-14);g.lineTo(cx,yc(3)+14);g.stroke();
+ g.beginPath();g.moveTo(cx-4,yc(3)+9);g.lineTo(cx,yc(3)+14);g.lineTo(cx+4,yc(3)+9);g.moveTo(cx-4,yc(0)-9);g.lineTo(cx,yc(0)-14);g.lineTo(cx+4,yc(0)-9);g.stroke();g.restore();}
+function others(){RUT.dict=RU;vaPages();infPic(ctx('inf'),CL);for(const k in O)O[k](ctx('o_'+k),CL);
+ [1,5,32].forEach(a=>O.lab(ctx('alg'+a),CL,a));O.lab(ctx('malg5'),MT,5);
+ seq(ctx('heSeq'),HET,0);seq(ctx('zhSeq'),ZHT,0);mixer(ctx('zhMix'),ZHT);seq(ctx('jaSeq'),JAT,0);O.arp(ctx('mArp'),MT);saves();
+ seq(ctx('rSeq'),RUT,0);mixer(ctx('rMix'),RUT);fx(ctx('rFx'),RUT);lfo(ctx('rLfo'),RUT);
+ {const g=ctx('rGlo');topLine(g,RUT,'GLOBAL');faslSquare(g,RUT);[['THEME','CLASSIC'],['LANGUAGE','RUSSIAN'],['CLICK','OFF'],['OUTPUT','LINE']].forEach(([a,b],i)=>{const th=RUT,y=72+i*30,sel=i==1;if(sel)rr(g,6,y-3,228,28,4,th.sel,th.k[0],1.4);T(g,th,a,16,y,sel?20:16,sel?th.tx:th.dim);T(g,th,b,226,y,sel?20:16,sel?th.k[0]:th.dim,'right');});knobs(g,RUT,[['LANGUAGE','RUSSIAN'],['',''],['',''],['','']]);}}
+/* ---- VA (polyphonic virtual analog) ---- */
+function vaIcon(g,cx,cy,s,c){g.save();g.strokeStyle=c;g.lineWidth=2;g.lineJoin='round';g.lineCap='round';const h=s/2;
+ [[-0.15,0.35],[0.15,-0.05]].forEach(([dx,dy],k)=>{g.globalAlpha=k?1:0.55;g.beginPath();const x0=cx-h+dx*h,y0=cy+dy*h;g.moveTo(x0,y0+h*0.45);for(let i=0;i<3;i++){const xs=x0+i*h*0.62;g.lineTo(xs+h*0.62,y0-h*0.45);g.lineTo(xs+h*0.62,y0+h*0.45);}g.stroke();});g.restore();}
+function vaHead(g,th,title,inf){topLine(g,th,title);faslSquare(g,th);const ix=inf?info(g,th,inf[0],inf[1]):236,s=2*FQ+FG,lo=5+s+5,n='VA PAD',gw=s+6+TW(g,th,n,19);let x=Math.round(120-gw/2);if(x+gw>ix-6)x=ix-6-gw;x=Math.max(lo,x);
+ rr(g,x,FY,s,s,4,null,th.grn,1.5);vaIcon(g,x+s/2,FY+s/2,s*0.62,th.tx);T(g,th,n,x+s+6,FY+(s-19)/2,19,th.grn);}
+/* Moog-like panel look for MICRO D: black panel, cream lettering, amber/blue rockers, skirted knobs (no logos) */
+const MG=Object.assign({},CL,{tx:'#f2e8d0',dim:'#a39880',ft:'#4a4436',k:['#ffb347','#f2e8d0','#5fa8e8','#e8743b'],grn:'#ffb347',panel:'#0c0b09',edge:'#4a4436',edge4:'#5a5242',sel:'#1d1a14',fill:'#2a1d0c',yel:'#ffb347',bat:'#f2e8d0',moog:1});
+function mbox(g,th,label,seed){box(g,th,6,66,228,122,seed);if(th.moog){g.fillStyle=th.panel;g.fillRect(7,67,226,2);
+ g.font=th.f(10);g.letterSpacing='2px';const w=g.measureText(label).width+10;g.fillStyle='#000';g.fillRect(120-w/2,181,w,11);g.fillStyle=th.dim;g.textAlign='center';g.textBaseline='top';g.fillText(label,121,182);g.letterSpacing='0px';}}
+function mKnob(g,th,cx,cy,r,v,c){g.save();for(let i=0;i<=10;i++){const a=Math.PI*(0.75+1.5*i/10);g.strokeStyle=th.dim;g.lineWidth=1;g.beginPath();g.moveTo(cx+Math.cos(a)*(r+2),cy+Math.sin(a)*(r+2));g.lineTo(cx+Math.cos(a)*(r+4),cy+Math.sin(a)*(r+4));g.stroke();}
+ g.fillStyle='#2a2826';g.beginPath();g.arc(cx,cy,r,0,7);g.fill();g.fillStyle='#111';g.beginPath();g.arc(cx,cy,r*0.72,0,7);g.fill();
+ const a=Math.PI*(0.75+1.5*v);g.strokeStyle=c;g.lineWidth=2;g.lineCap='round';g.beginPath();g.moveTo(cx+Math.cos(a)*r*0.2,cy+Math.sin(a)*r*0.2);g.lineTo(cx+Math.cos(a)*r*0.95,cy+Math.sin(a)*r*0.95);g.stroke();g.restore();}
+function rocker(g,th,cx,cy,on){rr(g,cx-6,cy-4,12,9,2,th.moog?(on?'#e8743b':'#4a2a14'):(on?th.grn:th.ft));if(on){g.fillStyle='rgba(255,255,255,0.5)';g.fillRect(cx-5,cy-3,10,1);}}
+const VA={
+mix(g,th){vaHead(g,th,'MICRO D MIX',['PAGE','1/5']);mbox(g,th,'MIXER',21);T(g,th,'SAW',120,70,22,th.k[0],'center');
+ const F=[u=>1-2*u,u=>u<0.5?Math.sin(u*Math.PI)*1.6-0.6:-(u-0.5)*2.4+0.6,u=>u<0.35?0.8:-0.8,u=>1-4*Math.abs(u-0.5)],L=[0.9,0.3,0.55,0.15],N=['SAW','SHARK','SQR','TRI'];
+ F.forEach((f,i)=>{const x=14+i*30;g.strokeStyle=th.k[i];g.lineWidth=1.4;g.beginPath();for(let k=0;k<=20;k++){const u=(k/10)%1,y=104-f(u)*7;k?g.lineTo(x+2+k,y):g.moveTo(x+2,y);}g.stroke();
+  mKnob(g,th,x+12,130,11,L[i],th.k[i]);rocker(g,th,x+12,152,L[i]>0.2);T(g,th,N[i],x+12,164,10,th.dim,'center');});
+ g.strokeStyle=th.dim;g.lineWidth=1;g.beginPath();g.moveTo(132,140);g.lineTo(146,140);g.moveTo(142,136);g.lineTo(146,140);g.lineTo(142,144);g.stroke();
+ g.strokeStyle=th.grn;g.lineWidth=2;g.beginPath();for(let k=0;k<=76;k++){const u=(k/38)%1,v=F.reduce((a,f,i)=>a+f(u)*L[i],0)/1.6,y=140-v*30;k?g.lineTo(152+k,y):g.moveTo(152,y);}g.stroke();
+ knobs(g,th,[['SAW','90'],['SHARK','30'],['SQR›PLS','55'],['TRI','15']]);},
+osc(g,th){vaHead(g,th,'MICRO D OSC',['PAGE','2/5']);mbox(g,th,'OSCILLATOR',25);T(g,th,'DETUNE',120,70,22,th.k[0],'center');
+ const saw=(x,o)=>((x/34+o)%1)*2-1;[[0,th.k[0],0.55],[0.12,th.tx,1]].forEach(([o,c,a])=>{g.globalAlpha=a;g.strokeStyle=c;g.lineWidth=1.8;g.beginPath();for(let x=0;x<210;x++){const y=136-saw(x,o+x*0.0011)*24;x?g.lineTo(15+x,y):g.moveTo(15,y);}g.stroke();});g.globalAlpha=1;
+ let r=7;g.fillStyle=th.k[1];for(let x=0;x<210;x+=2){r=(r*1103515245+12345)&0x7fffffff;g.fillRect(15+x,176-(r%9),1.5,1.5);}T(g,th,'NOISE PINK',226,160,11,th.k[1],'right');
+ knobs(g,th,[['DETUNE','12'],['NOISE','P 20'],['GLIDE','0'],['VCA','ENV']]);},
+flt(g,th){vaHead(g,th,'MICRO D FILTER',['PAGE','3/5']);mbox(g,th,'FILTER',22);T(g,th,'CUTOFF',120,70,22,th.k[0],'center');
+ const pts=[];for(let x=0;x<220;x++){const u=x/219,w=20*Math.pow(2,u*10)/1200,den=Math.sqrt((1-w*w)**2+0.25*w*w),db=20*Math.log10(1/(den*den));pts.push([10+x,Math.max(98,Math.min(184,150-db*1.4))]);}
+ g.save();if(!th.rain){g.fillStyle=th.fill;g.beginPath();g.moveTo(10,184);pts.forEach(p=>g.lineTo(...p));g.lineTo(230,184);g.fill();}g.strokeStyle=th.grn;g.lineWidth=1.5;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(...p):g.moveTo(...p));g.stroke();g.restore();
+ T(g,th,'LADDER 24 DB',226,94,12,th.dim,'right');knobs(g,th,[['CUTOFF','1.2K'],['RESO','50'],['CONTOUR','+40'],['DRIVE','30']]);},
+env(g,th){vaHead(g,th,'MICRO D ENV',['PAGE','4/5']);mbox(g,th,'CONTOUR',23);T(g,th,'RETRIG ON',120,70,22,th.k[3],'center');
+ const seg=(x0,y0,top)=>[[x0,y0],[x0+26,top],[x0+48,140],[x0+70,140]];g.strokeStyle=th.grn;g.lineWidth=2;g.beginPath();g.moveTo(12,182);
+ [[12,182],[82,140],[152,140]].forEach(([x,y],i)=>seg(x,y,100).forEach(p=>g.lineTo(...p)));g.lineTo(226,182);g.stroke();
+ ['C3','E3','G3'].forEach((n,i)=>{const x=12+i*70;g.fillStyle=th.k[i];g.fillRect(x,176,2,8);T(g,th,n,x+4,172,11,th.k[i]);});
+ knobs(g,th,[['ATTACK','30MS'],['DECAY','400MS'],['SUSTAIN','70'],['RETRIG','ON']]);},
+lfo(g,th){vaHead(g,th,'MICRO D LFO',['PAGE','5/5']);mbox(g,th,'MODULATION',24);T(g,th,'PARA 3',120,70,22,th.k[3],'center');
+ g.strokeStyle=th.k[1];g.lineWidth=1.5;g.beginPath();for(let x=0;x<200;x++){const y=99-Math.sin(x/16)*5;x?g.lineTo(20+x,y):g.moveTo(20,y);}g.stroke();
+ const notes=['C3','E3','G3',''];for(let i=0;i<4;i++){const x=22+i*50,on=i<3;rr(g,x,112,40,24,4,on?th.grn:th.panel,on?null:th.edge4,1.2);T(g,th,on?notes[i]:'—',x+20,116,14,on?'#000':th.ft,'center');
+  g.strokeStyle=on?th.grn:th.ft;g.lineWidth=1.2;g.beginPath();g.moveTo(x+20,136);g.lineTo(120,148);g.stroke();}
+ rr(g,72,148,96,26,5,th.sel,th.k[0],1.6);T(g,th,'ONE LADDER',120,153,14,th.tx,'center');
+ knobs(g,th,[['RATE','5.0HZ'],['WAVE','SINE'],['AMOUNT','-10'],['MODE','PARA 3']]);},
+glo(g,th){topLine(g,th,'GLOBAL');faslSquare(g,th);const it=[['SWING','0%'],['MICRO D TRACKS','2'],['CLICK','OFF'],['OUTPUT','LINE']];
+ it.forEach(([a,b],i)=>{const y=72+i*30,sel=i==1;if(sel)rr(g,6,y-3,228,28,4,th.sel,th.k[0],1.4);T(g,th,a,16,y,sel?20:16,sel?th.tx:th.dim);T(g,th,(sel?'‹ ':'')+b+(sel?' ›':''),226,y,sel?20:16,sel?th.k[0]:th.dim,'right');});
+ knobs(g,th,[['TRACKS','2'],['CPU','52%'],['PEAK','58%'],['','']]);}
+};
+function vaPages(){for(const k in VA)VA[k](ctx('va_'+k),MG);VA.mix(ctx('va_mmix'),MT);VA.lfo(ctx('va_mlfo'),MT);}
+const t0=performance.now();
+function drawAll(){
+ seq(ctx('seq'),CL,0);seq(ctx('seqRec'),CL,1);
+ {const g=ctx('play',240,120);g.setTransform(8,0,0,8,0,0);play(g,3,7,'#3ee07a');g.fillStyle='#ff4b4b';g.beginPath();g.arc(20,7.5,5,0,Math.PI*2);g.fill();
+  g.setTransform(2,0,0,2,0,0);g.font='12px system-ui';g.fillStyle='#8b8494';g.textAlign='center';g.fillText('PLAY ×4',58,112);g.fillText('REC ×4',162,112);}
+ lfo(ctx('lfo'),CL);edit(ctx('edit'),CL);fx(ctx('fx'),CL);glo(ctx('glo'),CL);
+ seq(ctx('mSeq'),MT,0);seq(ctx('mSeqRec'),MT,1);lfo(ctx('mLfo'),MT);edit(ctx('mEdit'),MT);fx(ctx('mFx'),MT);
+ others();requestAnimationFrame(tick);}
+let last=-1;
+function tick(now){PULSE=(now%900)/900;saves();const step=Math.floor((now-t0)/(60000/BPM));if(step!=last){last=step;[['mix',CL],['mMix',MT]].forEach(([id,th])=>{const g=ctx(id);mixer(g,th);chainDot(g,th,step);});}requestAnimationFrame(tick);}
+Promise.all([document.fonts.load('700 12px "Barlow Condensed"'),document.fonts.load('12px "Share Tech Mono"'),document.fonts.load('700 12px "Roboto Condensed"','АБВ'),document.fonts.load('700 12px "Noto Sans Hebrew"','אבג'),document.fonts.load('700 12px "Noto Sans SC"',Object.values(ZH).join('')),document.fonts.load('700 12px "Noto Sans JP"',Object.values(JA).join(''))]).then(drawAll,drawAll);
+</script></body></html>

@@ -60,6 +60,17 @@ const char *lfo_target_name(unsigned t, char out[12])
     out[0] = 'T'; out[1] = (char)('1' + track); out[2] = ' '; strcpy(out + 3, track_names[p]);
     return out;
 }
+/* The target's full name for the LFO page's window (user 13.11: show what is modulated). */
+const char *lfo_target_title(unsigned t, char out[20])
+{
+    static const char *const master_long[MASTER_TARGETS] = {"FILTER CUTOFF", "FILTER RESO", "DRIVE", "CHORUS DEPTH", "PHASER FDBK", "RING FREQ", "REVERB MIX"};
+    static const char *const track_long[TRACK_PARAMS] = {"VOLUME", "PAN", "CUTOFF", "RESO", "ENV MOD", "REV SEND"};
+    if (!t || t >= TARGETS) { strcpy(out, "OFF"); return out; }
+    if (t <= MASTER_TARGETS) { strcpy(out, master_long[t - 1]); return out; }
+    unsigned i = t - 1 - MASTER_TARGETS;
+    out[0] = 'T'; out[1] = (char)('1' + i / TRACK_PARAMS); out[2] = ' '; strcpy(out + 3, track_long[i % TRACK_PARAMS]);
+    return out;
+}
 const char *lfo_wave_name(unsigned w) { return waves[w % LFO_WAVES]; }
 void lfo_rate_name(unsigned r, char out[12])
 {

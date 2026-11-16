@@ -49,6 +49,28 @@ Based on the official open release FM1 Open V14 by M-VAVE ([fm1_open](https://gi
 **Safety**
 - **SAFE mode:** hold **OCT−** during the first 1.5 s after power on. The synth starts without loading projects, so a bad project cannot block start-up.
 
+## Source status: ALPHA (November 2026)
+
+The `main` branch now holds the **current development source** (an ALPHA after v0.1 beta). It is **ahead of the v0.1-beta release**: the install page and `.fwsc` in `release/v0.1-beta` were built from older code and do not contain what is listed below. No binary is published for this ALPHA; to try it you must build it yourself (see *Build from source*).
+
+> **Warning: flashing is at your own risk.** One FM-1 was bricked during development (a crash at start-up). Recovery needs extra hardware (a USB bridge to the flash chip). Before any flash: take a full dump of your flash and keep it in two places, keep the last good `.fwsc`, and read [Install and recovery](docs/INSTALL_AND_RECOVERY.md). Install **only through the web install page** in Chrome or Edge. Never write below `0x4000` (bootloader). No warranty.
+
+**Known problems of this ALPHA**
+- A reboot was seen once when changing the track in the mixer (cause not found).
+- Changing the CLOCK source (GLOBAL > BLUETOOTH) can reboot the synth.
+- With many tracks, MICRO D and all master effects on, the CPU can overload; a load guard then switches effects off and shortens voices.
+
+**Added since v0.1 beta** (all tested on a PC only, many not yet on the device)
+- Boot protection: failed-start counter, SAFE mode, USB download mode, CRC on stored records.
+- MICRO D voice engine, binaural/chip sounds, key and scale helpers, Russian menu texts.
+- Sequencer rework: variation, ratchet, longer notes, follow modes; arpeggiator changes.
+- Load guard with CPU display, black-box record of the last session, diagnostic web pages (`tools/fm1-diag.html`, `tools/fm1-diag2.html`).
+- Newest (13.11): still pictures for the effect pages, short names for sends, a redesigned mixer with a beat blink, readable LFO target names, 303 ENV page changes, faster screen redraws.
+- A phone companion web app (`phone/`, how to install: [docs/phone-install.md](docs/phone-install.md)); `phone/vendor/` holds a prebuilt simulator built from this source.
+- Many host tests in `tests/` (`tests/run_*.sh`).
+
+Design drawings (browser mockups) are in [docs/mockups](docs/mockups).
+
 ## Download and install
 
 **Current version: v0.1 beta** — download from [release/v0.1-beta](release/v0.1-beta):

@@ -58,7 +58,12 @@ void fm1_controls_read(struct fm1_controls *value)
     *value = controls;
     memset(controls.encoders, 0, sizeof controls.encoders);
 }
+void fm1_led_raw(int idx, int on) { (void)idx; (void)on; }
+int fm1_led_probe_key(int idx) { (void)idx; return -1; }
+int fm1_led_probe(int idx) { (void)idx; return -1; } /* matrix LED finder: device only */
 void fm1_led_set(unsigned key, int on) { if (key < sizeof leds) leds[key] = on != 0; }
+static uint8_t leds_dim[41];
+void fm1_led_dim_set(unsigned key, int on) { if (key < sizeof leds_dim) leds_dim[key] = on != 0; } /* shown as 2 */
 /* Track 16-row bands until the browser consumes the next display update. */
 static void screen_changed(unsigned y, unsigned h)
 {
@@ -222,7 +227,7 @@ EXPORT("sim_boot") void sim_boot(unsigned clear)
         ++flash_revision;
     }
     memset(&controls, 0, sizeof controls); controls.battery = 900; controls.knob = 1023;
-    memset(leds, 0, sizeof leds); memset(previous, 0, sizeof previous);
+    memset(leds, 0, sizeof leds); memset(leds_dim, 0, sizeof leds_dim); memset(previous, 0, sizeof previous);
     capture_read = capture_write = capture_on = midi_busy = 0; midi_ready = 6; midi_source = FM1_MIDI_USB;
     now_ms = 0; frames = 0; gate = midi_read = midi_write = midi_reset = 0;
     fm1_output_reset();
@@ -378,7 +383,8 @@ EXPORT("sim_state") const uint8_t *sim_state(void)
         state[209 + t] = v.sequence_length;
         state[217 + t] = v.next_length;
     }
-    memcpy(state + 168, leds, sizeof leds); return state;
+    for (unsigned i = 0; i < sizeof leds; ++i) state[168 + i] = leds[i] ? 1U : leds_dim[i] ? 2U : 0U; /* 2 = soft glow */
+    return state;
 }
 EXPORT("sim_pixels") const uint16_t *sim_pixels(void) { return pixels; }
 EXPORT("sim_frame_revision") uint32_t sim_frame_revision(void) { return frame_revision; }

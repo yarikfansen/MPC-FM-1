@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FM-1 диагностика</title>
+<style>
+  :root { --bg:#111; --fg:#eee; --dim:#9a9a9a; --card:#1c1c1c; --line:#333; --ok:#5fd17a; --bad:#ff5a4f; --warn:#ffb340; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:20px/1.35 system-ui, "Segoe UI", sans-serif; }
+  main { max-width:900px; margin:0 auto; padding:16px; }
+  h1 { font-size:28px; margin:0 0 8px; }
+  #conn { font-size:26px; font-weight:700; padding:12px 16px; border-radius:10px; background:var(--card); margin:8px 0 12px; }
+  #conn.none { color:var(--warn); } #conn.ok { color:var(--ok); } #conn.err { color:var(--bad); }
+  #ports { display:none; gap:12px; flex-wrap:wrap; margin-bottom:12px; font-size:18px; }
+  #ports select { font-size:18px; padding:4px; background:#222; color:var(--fg); border:1px solid var(--line); }
+  section { background:var(--card); border-radius:10px; padding:10px 16px; margin-bottom:12px; }
+  h2 { font-size:20px; color:var(--dim); margin:4px 0 6px; font-weight:600; }
+  .row { display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:6px 8px; border-bottom:1px solid var(--line); border-radius:6px; }
+  .row:last-child { border-bottom:none; }
+  .row .v { font-size:26px; font-weight:700; text-align:right; white-space:nowrap; }
+  .row .v small { font-size:18px; font-weight:400; color:var(--dim); }
+  .row.alarm { background:#5a1512; }
+  .row.alarm .v { color:#fff; }
+  .row .v.txt { font-size:20px; white-space:normal; }
+  .note { font-size:18px; color:var(--warn); }
+  .good { color:var(--ok); } .bad { color:var(--bad); }
+  button { font-size:20px; padding:10px 18px; border-radius:8px; border:1px solid var(--line); background:#2a2a2a; color:var(--fg); cursor:pointer; }
+  #raw { font:13px/1.4 Consolas, monospace; color:var(--dim); white-space:pre-wrap; word-break:break-all; }
+  #selftest { font:14px Consolas, monospace; color:var(--dim); margin-top:12px; }
+  #selftest.ok { color:var(--ok); } #selftest.fail { color:var(--bad); }
+  #copyMsg { font-size:16px; color:var(--dim); margin-left:12px; }
+  #manual { display:none; width:100%; height:160px; font:12px monospace; background:#000; color:#ccc; }
+</style>
+</head>
+<body>
+<main>
+<h1>FM-1: диагностика звука</h1>
+<div id="conn" class="none">Синтезатор не найден</div>
+<div id="ports">
+  <label>Вход: <select id="inSel"></select></label>
+  <label>Выход: <select id="outSel"></select></label>
+</div>
+
+<section>
+  <h2>Звуковые блоки</h2>
+  <div class="row" id="r_blocks"><span>Блоков сыграно</span><span class="v" id="v_blocks">—</span></div>
+  <div class="row" id="r_overruns"><span>Потерянные блоки (щелчок)</span><span class="v" id="v_overruns">—</span></div>
+  <div class="row" id="r_short"><span>Слишком короткие промежутки</span><span class="v" id="v_short">—</span></div>
+  <div class="row" id="r_irqpeak"><span>Пиковая нагрузка звука<br><small>самая высокая с момента включения, % от одного блока</small></span><span class="v" id="v_irqpeak">—</span></div>
+  <div class="row" id="r_restart"><span>Синтезатор перезапускался<br><small>пока открыта эта страница</small></span><span class="v" id="v_restart">0</span></div>
+</section>
+
+<section>
+  <h2>Движок синтезатора</h2>
+  <div class="row"><span>Расчёт звука сейчас</span><span class="v" id="v_render">—</span></div>
+  <div class="row"><span>Расчёт звука, пик</span><span class="v" id="v_epeak">—</span></div>
+  <div class="row"><span>Обработка MIDI</span><span class="v" id="v_midi">—</span></div>
+  <div class="row" id="r_adapted"><span>Голоса урезаны (раз)</span><span class="v" id="v_adapted">—</span></div>
+  <div class="row" id="r_eover"><span>Перегрузки движка</span><span class="v" id="v_eover">—</span></div>
+  <div class="row"><span>Сколько голосов можно</span><span class="v" id="v_voices">—</span></div>
+  <div class="row" id="r_gain"><span>Лимитер движка</span><span class="v" id="v_gain">—</span></div>
+</section>
+
+<section>
+  <h2>Наша часть звука (MICRO D, эффекты, сведение)</h2>
+  <div class="row"><span>Движок (вызов на ядре 0), пик<br><small>за последнюю секунду, % от блока</small></span><span class="v" id="v_ecall">—</span></div>
+  <div class="row"><span>MICRO D, пик<br><small>за последнюю секунду, % от блока</small></span><span class="v" id="v_mdpeak">—</span></div>
+  <div class="row"><span>MICRO D + эффекты + сведение, пик<br><small>за последнюю секунду, % от блока</small></span><span class="v" id="v_mixpeak">—</span></div>
+  <div class="row"><span>Эффекты MASTER FX, последний замер<br><small>% от блока</small></span><span class="v" id="v_fx">—</span></div>
+  <div class="row" id="r_shed"><span>Защита от перегрузки выключала эффекты (раз)</span><span class="v" id="v_shed">—</span></div>
+  <div class="row" id="r_shednow"><span>Эффекты сейчас</span><span class="v" id="v_shednow">—</span></div>
+  <div class="row"><span>Цена каждого эффекта, как её выучила защита<br><small>% от блока; «нет замера» = эффект ещё не работал</small></span><span class="v" id="v_units">—</span></div>
+  <div class="row"><span>Остальной путь эффектов<br><small>% от блока: с эффектами / без эффектов / очистка памяти</small></span><span class="v" id="v_bases">—</span></div>
+  <div class="row"><span>До защиты (движок + MICRO D + чужие прерывания), пик<br><small>за последнюю секунду, % от блока</small></span><span class="v" id="v_gnow">—</span></div>
+  <div class="row"><span>Одиночные всплески выше 75 %<br><small>один блок, соседние ниже: похоже на чужое прерывание, а не на нагрузку</small></span><span class="v" id="v_lone">—</span></div>
+  <div class="row"><span>Наш опрос кнопок (прерывание), самый долгий<br><small>за последнюю секунду, % от блока</small></span><span class="v" id="v_panel">—</span></div>
+</section>
+
+<section>
+  <h2>Очередь движка и MIDI</h2>
+  <div class="row" id="r_under"><span>Движок не успел (опустошения)</span><span class="v" id="v_under">—</span></div>
+  <div class="row" id="r_mdrop"><span>Потерянные MIDI-сообщения</span><span class="v" id="v_mdrop">—</span></div>
+</section>
+
+<section>
+  <h2>Экран: сколько времени занимает рисование (за последнюю секунду)</h2>
+  <div id="ui_rows"><div class="row"><span>Данные</span><span class="v">—</span></div></div>
+</section>
+
+<section>
+  <h2>Чёрный ящик: этот запуск (читается раз в 5 секунд)</h2>
+  <div id="bb_now"><div class="row"><span>Данные</span><span class="v">—</span></div></div>
+</section>
+
+<section>
+  <h2>Чёрный ящик: прошлый запуск (что было перед перезапуском)</h2>
+  <div id="bb_last"><div class="row"><span>Данные</span><span class="v">—</span></div></div>
+</section>
+
+<section>
+  <h2>Журнал перегрузок этого запуска (последние 8, новые сверху)</h2>
+  <div id="bb_log"><div class="row"><span>Данные</span><span class="v">—</span></div></div>
+</section>
+
+<section>
+  <button id="copyBtn">Скопировать журнал</button><span id="copyMsg"></span>
+  <textarea id="manual" readonly></textarea>
+</section>
+
+<section>
+  <h2>Сырые числа (для координатора)</h2>
+  <div id="raw">нет данных</div>
+</section>
+
+<div id="selftest">самопроверка: …</div>
+</main>
+
+<script>
+"use strict";
+/* ===== Protocol (mirror of app/transfer.c) =====
+ * Frame: F0 7D 46('F') 4D('M') 02 cmd token-lo token-hi <packed payload> checksum F7.
+ * checksum: sum of bytes from 7D through checksum == 0 (mod 128)  (transfer.c:292-296, 344-347).
+ * Packing: LSB-first stream of 8-bit bytes in 7-bit chunks; a trailing partial chunk is sent
+ *          if bits remain (transfer.c:331-343).
+ * Unpacking: chunks from index 8 to n-3; reject if a leftover value is non-zero or >= 7 bits
+ *          remain (transfer.c:298-311).
+ * Reply: header bytes 0..7 copied from the request, byte 5 |= 64; first unpacked byte = status
+ *          (0 ok, 1 empty, 64-r for negative r) (transfer.c:328-330).
+ */
+const HDR = [0xF0, 0x7D, 0x46, 0x4D, 0x02];
+
+/* SAFETY: the only commands this page may ever send. All are read-only (transfer.c commands 17-19, 23-25);
+ * 17-19, 23 and 25 carry no payload, 24 exactly one byte = black box part 0..2 (guardedFrame checks both).
+ * Never 3..8, 10, 12..16 or any other sysex. 23-25 are new: older firmware answers them with an error
+ * status, so their fields show "нет данных". */
+const ALLOWED_COMMANDS = Object.freeze([17, 18, 19, 23, 24, 25]);
+const BB_PARTS = 3;
+
+function packStream(bytes) {               // 8-bit bytes -> 7-bit chunks (as transfer.c:331-343)
+  const out = []; let value = 0, bits = 0;
+  for (const b of bytes) {
+    value |= (b & 255) << bits; bits += 8;
+    while (bits >= 7) { out.push(value & 127); value >>>= 7; bits -= 7; }
+  }
+  if (bits) out.push(value & 127);
+  return out;
+}
+function unpackStream(chunks) {            // 7-bit chunks -> bytes, or null (as transfer.c:298-311)
+  const out = []; let value = 0, bits = 0;
+  for (const c of chunks) {
+    if (c > 127) return null;
+    value |= c << bits; bits += 7;
+    if (bits >= 8) { out.push(value & 255); value >>>= 8; bits -= 8; }
+  }
+  if (value || bits >= 7) return null;
+  return out;
+}
+function checksumOf(bytesFrom1) {          // value that makes sum(7D..checksum) == 0 mod 128
+  let s = 0; for (const b of bytesFrom1) s += b;
+  return (128 - (s & 127)) & 127;
+}
+function buildFrame(cmd, token, payload) {
+  const f = HDR.concat([cmd & 127, token & 127, (token >> 7) & 127], packStream(payload));
+  f.push(checksumOf(f.slice(1)));
+  f.push(0xF7);
+  return f;
+}
+function parseFrame(m) {                   // -> {cmd, token, data[]} or null
+  const n = m.length;
+  if (n < 10 || m[0] !== 0xF0 || m[n - 1] !== 0xF7) return null;
+  for (let i = 0; i < 5; ++i) if (m[i] !== HDR[i]) return null;
+  let s = 0;
+  for (let i = 1; i + 1 < n; ++i) { if (m[i] > 127) return null; s += m[i]; }
+  if (s & 127) return null;
+  const data = unpackStream(Array.from(m.slice(8, n - 2)));
+  if (!data) return null;
+  return { cmd: m[5], token: m[6] | (m[7] << 7), data };
+}
+function u32(d, o) { return ((d[o] | (d[o+1] << 8) | (d[o+2] << 16)) + d[o+3] * 16777216) >>> 0; }
+function u16(d, o) { return d[o] | (d[o+1] << 8); }
+/* Command 23 reply (after the status byte), board ticks: load guard trips u32, bypassing now u8, master
+ * effects' last cost u32, ticks of one block u32, then three peaks since the previous read of 23: the
+ * engine call on core 0 (block start to our mix), MICRO D render, our whole part (MICRO D + effects + mix). */
+function decode23(s, r) {
+  if (!r || r.status !== 0 || r.d.length < 25) return;
+  s.shed_count = u32(r.d, 0); s.shedding = r.d[4]; s.fx_ticks = u32(r.d, 5); s.block_ticks = u32(r.d, 9);
+  s.engine_call_peak = u32(r.d, 13); s.micro_d_peak = u32(r.d, 17); s.mix_peak = u32(r.d, 21);
+  /* Version 2 (appended; a version 1 reply ends at byte 25 and leaves these fields undefined): 25 reply
+   * version, 26 number of unit costs n, 27 shift; then u16 each, ticks = value << shift (65535 = that or
+   * more): n costs the load guard has learned per effect (0 = not measured yet), the rest of the effects
+   * path with / without an effect on, the dearest memory clearing, the longest block start -> guard since
+   * the previous read, the longest run of our panel scan interrupt since the previous read; last u32 =
+   * lone spikes (blocks over the guard's 75 % with both neighbours under it) since start. */
+  if (r.d.length < 28 || r.d[25] < 2) return;
+  const n = r.d[26], unit = 2 ** r.d[27];
+  if (r.d.length < 28 + 2 * n + 14) return;
+  const t = o => u16(r.d, o) * unit;
+  for (let u = 0; u < n && u < UNIT_KEYS.length; ++u) s[UNIT_KEYS[u]] = t(28 + 2 * u);
+  const o = 28 + 2 * n;
+  s.base_float = t(o); s.base_dry = t(o + 2); s.clear_cost = t(o + 4); s.guard_now_peak = t(o + 6); s.panel_irq_peak = t(o + 8);
+  s.lone_spikes = u32(r.d, o + 10); s.tick_unit = unit;
+}
+/* Units of app/master_fx.h in their order (MFX_FILTER .. MFX_U_LOWCUT). */
+const UNIT_KEYS = ["cost_filter", "cost_drive", "cost_chorus", "cost_phaser", "cost_ring", "cost_reverb", "cost_eq", "cost_comp", "cost_lowcut"];
+const UNIT_NAMES = ["FILTER", "DRIVE", "CHORUS", "PHASER", "RING", "REVERB", "EQ", "COMP", "LOW CUT"];
+/* Command 24 = black box (app/blackbox.h bb_read), request payload one byte = part 0..2; reply after the
+ * status byte, 44 bytes, little-endian: 0 layout version (1), 1 part, 2 have (bit 0: this session's record
+ * runs, bit 1: the previous session's record was readable), 3 load log entries 0..8.
+ * part 0: bytes 4..23 this session, 24..43 the previous one, each: uptime_ms u32, control_ms u32,
+ *   restarts u16, overruns u16, sheds u16, page, control, cpu, cpu_peak, flags, version (u8).
+ * part 1 / 2: log entries 0..3 / 4..7 (newest first), 10 bytes each from byte 4: uptime_ms u32, kind,
+ *   page, control, cpu (u8), count u16; kind 0 = no entry. */
+function bbRecord(d, o) {
+  return { uptime_ms: u32(d, o), control_ms: u32(d, o + 4), restarts: u16(d, o + 8), overruns: u16(d, o + 10),
+           sheds: u16(d, o + 12), page: d[o + 14], control: d[o + 15], cpu: d[o + 16], cpu_peak: d[o + 17],
+           flags: d[o + 18], version: d[o + 19] };
+}
+function bbPartOk(r, part) { return !!r && r.status === 0 && r.d.length >= 44 && r.d[0] === 1 && r.d[1] === part; }
+/* replies[0..2] = {status, d} or null -> {now, last, count, events[], complete} or null (old firmware / no reply) */
+function decode24(replies) {
+  const r0 = replies[0];
+  if (!bbPartOk(r0, 0)) return null;
+  const bb = { now: (r0.d[2] & 1) ? bbRecord(r0.d, 4) : null, last: (r0.d[2] & 2) ? bbRecord(r0.d, 24) : null,
+               count: r0.d[3], events: [], complete: true };
+  for (let p = 1; p < BB_PARTS; ++p) {
+    const r = replies[p];
+    if (!bbPartOk(r, p)) { bb.complete = false; continue; }
+    for (let k = 0; k < 4; ++k) {
+      const o = 4 + 10 * k;
+      if (!r.d[o + 4]) continue;
+      bb.events.push({ index: (p - 1) * 4 + k, uptime_ms: u32(r.d, o), kind: r.d[o + 4], page: r.d[o + 5],
+                       control: r.d[o + 6], cpu: r.d[o + 7], count: u16(r.d, o + 8) });
+    }
+  }
+  return bb;
+}
+function bbTime(ms) {                     // 754000 -> "12 мин 34 с"
+  const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60;
+  return (h ? h + " ч " : "") + (h || m ? m + " мин " : "") + (s % 60) + " с";
+}
+function bbControl(c) {                   // blackbox.h: 0..6 encoder, 16 + n button, 255 none
+  return c === 255 ? "ничего не трогали" : c < 16 ? "ручка (энкодер) " + c : "кнопка " + (c - 16);
+}
+function bbFlags(f) {
+  const t = [];
+  if (f & 1) t.push("SAFE");
+  t.push(f & 2 ? "секвенсор играл" : "секвенсор стоял");
+  if (f & 4) t.push("USB подключён");
+  return t.join(", ");
+}
+function bbKind(e) {
+  return e.kind === 1 ? "потеряны звуковые блоки: " + e.count : e.kind === 2 ? "защита выключила эффекты: " + e.count
+       : e.kind === 3 ? "нагрузка выше 85 %" : "неизвестное событие " + e.kind;
+}
+/* Command 25 = screen timing (F8 hook, app/ui_meter.h), no payload; reply after the status byte, 51 bytes,
+ * little-endian: 0 layout version (1), 1..4 ticks of one audio block, 5..8 the audio timer's period register,
+ * then draw / compose / flush, 14 bytes each from 9 / 23 / 37: calls u32, max ticks u32, average ticks u32,
+ * max whole ms u16. Every read starts the figures again (the page reads once a second).
+ * draw = the frame's damage pass, compose = one band of 16 rows, flush = all bands of one control poll. */
+const UI_KINDS = ["draw", "compose", "flush"];
+function decode25(r) {
+  if (!r || r.status !== 0 || r.d.length < 51 || r.d[0] !== 1) return null;
+  const u = { block_ticks: u32(r.d, 1), period: u32(r.d, 5) };
+  UI_KINDS.forEach((k, i) => {
+    const o = 9 + 14 * i;
+    u[k] = { count: u32(r.d, o), max: u32(r.d, o + 4), avg: u32(r.d, o + 8), max_ms: u16(r.d, o + 12) };
+  });
+  return u;
+}
+const BLOCK_MS = 128000 / 44118;          // one audio block: 128 frames at 44 118 Hz (board/fm1_audio.h)
+function uiMs(ticks, blockTicks) { return blockTicks ? ticks * BLOCK_MS / blockTicks : undefined; }
+
+/* ===== Self-test: hand-computed vectors ===== */
+const VECTORS = [
+  { name: "запрос 19, токен 5",
+    /* F0 7D 46 4D 02 13 05 00 cs F7, no payload.
+     * sum 7D..token-hi = 125+70+77+2+19+5+0 = 298; 298 mod 128 = 42; cs = 128-42 = 86 = 0x56. */
+    kind: "build", cmd: 19, token: 5, payload: [],
+    bytes: [0xF0,0x7D,0x46,0x4D,0x02,0x13,0x05,0x00,0x56,0xF7] },
+  { name: "запрос 17, токен 16383",
+    /* token 16383 = lo 0x7F, hi 0x7F. sum = 125+70+77+2+17+127+127 = 545; 545 mod 128 = 33;
+     * cs = 95 = 0x5F. */
+    kind: "build", cmd: 17, token: 16383, payload: [],
+    bytes: [0xF0,0x7D,0x46,0x4D,0x02,0x11,0x7F,0x7F,0x5F,0xF7] },
+  { name: "запрос 24 (чёрный ящик), часть 2, токен 5",
+    /* payload [02]: pack -> 02, leftover 1 bit -> 00. sum = 125+70+77+2+24+5+0+2+0 = 305; 305 mod 128 = 49;
+     * cs = 79 = 0x4F. */
+    kind: "build", cmd: 24, token: 5, payload: [2],
+    bytes: [0xF0,0x7D,0x46,0x4D,0x02,0x18,0x05,0x00,0x02,0x00,0x4F,0xF7] },
+  { name: "ответ 3 байта (не кратно 7)",
+    /* reply cmd 19|64 = 0x53, token 5, response = [00 FF 01] (24 bits).
+     * pack: i0: v=00,bits8 -> emit 00, v=0,bits1; i1: v=FF<<1=1FE,bits9 -> emit 7E, v=3,bits2;
+     *       i2: v=3|1<<2=7,bits10 -> emit 07, v=0,bits3; leftover bits3 -> emit 00.  => 00 7E 07 00
+     * sum = 125+70+77+2+83+5+0 + 0+126+7+0 = 495; 495 mod 128 = 111; cs = 17 = 0x11. */
+    kind: "both", cmd: 0x53, token: 5, payload: [0x00,0xFF,0x01],
+    bytes: [0xF0,0x7D,0x46,0x4D,0x02,0x53,0x05,0x00,0x00,0x7E,0x07,0x00,0x11,0xF7] },
+  { name: "ответ 7 байт (ровно 8 кусков)",
+    /* response = 7 x FF = 56 one-bits = 8 full 7-bit chunks of 7F, no partial chunk.
+     * sum = 362 (header 7D..token-hi with cmd 0x53) + 8*127 = 1378; 1378 mod 128 = 98; cs = 30 = 0x1E. */
+    kind: "both", cmd: 0x53, token: 5, payload: [0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF],
+    bytes: [0xF0,0x7D,0x46,0x4D,0x02,0x53,0x05,0x00,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x1E,0xF7] },
+  { name: "полный ответ 19 (17 байт)",
+    /* response = status 00, blocks=1, short=0, overruns=0, peak=0x80 (all LE 32-bit) = 17 bytes = 136 bits.
+     * 136 = 19*7 + 3 -> 20 chunks. Set bits: blocks bit0 = stream bit 8 -> chunk 1 pos 1 = 0x02;
+     * peak bit7 = stream bit 13*8+7 = 111 -> chunk 15 pos 6 = 0x40. All other chunks 00.
+     * sum = 362 + 2 + 64 = 428; 428 mod 128 = 44; cs = 84 = 0x54. */
+    kind: "both", cmd: 0x53, token: 5,
+    payload: [0, 1,0,0,0, 0,0,0,0, 0,0,0,0, 0x80,0,0,0],
+    bytes: [0xF0,0x7D,0x46,0x4D,0x02,0x53,0x05,0x00,
+            0x00,0x02,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x40,0x00,0x00,0x00,0x00,
+            0x54,0xF7] },
+  { name: "отказ: лишние биты в хвосте",
+    /* As the 3-byte reply but last chunk 08 instead of 00: leftover value != 0 -> reject
+     * (transfer.c:310). Checksum recomputed so only the padding is wrong: 495+8 = 503,
+     * 503 mod 128 = 119, cs = 9. */
+    kind: "reject",
+    bytes: [0xF0,0x7D,0x46,0x4D,0x02,0x53,0x05,0x00,0x00,0x7E,0x07,0x08,0x09,0xF7] },
+  { name: "отказ: неверная сумма",
+    kind: "reject",
+    bytes: [0xF0,0x7D,0x46,0x4D,0x02,0x53,0x05,0x00,0x00,0x7E,0x07,0x00,0x12,0xF7] },
+  { name: "отказ: лишний кусок (7 бит в остатке)",
+    /* 9 chunks of 00 = 63 bits = 7 bytes + 7 bits left -> "bits >= 7" -> reject (transfer.c:310).
+     * sum = 362 (header with cmd 0x53) + 0; 362 mod 128 = 106; cs = 22 = 0x16. */
+    kind: "reject",
+    bytes: [0xF0,0x7D,0x46,0x4D,0x02,0x53,0x05,0x00,0,0,0,0,0,0,0,0,0,0x16,0xF7] },
+];
+function eq(a, b) { return a.length === b.length && a.every((x, i) => x === b[i]); }
+function selfTest() {
+  const fails = [];
+  for (const v of VECTORS) {
+    if (v.kind === "build" || v.kind === "both") {
+      const f = buildFrame(v.cmd, v.token, v.payload);
+      if (!eq(f, v.bytes)) fails.push(v.name + ": сборка " + hex(f));
+    }
+    if (v.kind === "both") {
+      const p = parseFrame(Uint8Array.from(v.bytes));
+      if (!p || p.cmd !== v.cmd || p.token !== v.token || !eq(p.data, v.payload)) fails.push(v.name + ": разбор");
+    }
+    if (v.kind === "reject" && parseFrame(Uint8Array.from(v.bytes)) !== null) fails.push(v.name + ": принят");
+  }
+  // random round trips, all payload lengths 0..70
+  for (let len = 0; len <= 70; ++len) {
+    const p = Array.from({ length: len }, (_, i) => (i * 73 + len * 31 + 7) & 255);
+    const back = unpackStream(packStream(p));
+    if (!back || !eq(back, p)) { fails.push("туда-обратно, длина " + len); break; }
+  }
+  // command 23: every field at its own offset; an error reply (older firmware) decodes nothing
+  {
+    const s = {};
+    decode23(s, { status: 0, d: [3,0,0,0, 1, 0x10,0x27,0,0, 0x63,0x2a,0x0e,0, 0x40,0x0d,0x03,0, 0xa0,0x86,0x01,0, 0xff,0xff,0xff,0xff] });
+    if (s.shed_count !== 3 || s.shedding !== 1 || s.fx_ticks !== 10000 || s.block_ticks !== 928355 || s.engine_call_peak !== 200000 ||
+        s.micro_d_peak !== 100000 || s.mix_peak !== 4294967295) fails.push("разбор ответа 23");
+    if (s.cost_filter !== undefined || s.lone_spikes !== undefined) fails.push("короткий ответ 23 дал новые поля");
+    const o = {}; decode23(o, { status: 71, d: [] });
+    if (Object.keys(o).length) fails.push("ответ 23 с ошибкой разобран");
+    // version 2: 9 unit costs (1..9), 10, 11, 12, guard 13, panel 65535 (saturated), shift 5, lone spikes 0x01020304
+    const v2 = new Array(25).fill(0).concat([2, 9, 5]);
+    for (let k = 1; k <= 13; ++k) v2.push(k, 0);
+    v2.push(255, 255, 4, 3, 2, 1);
+    const w = {}; decode23(w, { status: 0, d: v2 });
+    if (w.cost_filter !== 32 || w.cost_lowcut !== 288 || w.base_float !== 320 || w.base_dry !== 352 || w.clear_cost !== 384 ||
+        w.guard_now_peak !== 416 || w.panel_irq_peak !== 65535 * 32 || w.lone_spikes !== 0x01020304) fails.push("разбор ответа 23 версии 2");
+    const cut = {}; decode23(cut, { status: 0, d: v2.slice(0, 59) });
+    if (cut.shed_count !== 0 || cut.cost_filter !== undefined) fails.push("обрезанный ответ 23 версии 2");
+  }
+  // command 24: the same bytes as tests/t_blackbox.c case 8 (parts 0 and 1); part 2 empty
+  {
+    const p0 = [1,0,3,3, 0x2c,0x01,0,0, 0xea,0,0,0, 1,0, 0xff,0xff, 1,0, 12,20,88,88,4,1,
+                0xc8,0,0,0, 0x32,0,0,0, 0,0, 2,0, 0,0, 7,3,91,91,2,1];
+    const p1 = [1,1,3,3, 0x2c,0x01,0,0,3,12,20,88,1,0, 0x2c,0x01,0,0,2,12,20,88,1,0, 0x2c,0x01,0,0,1,12,20,88,0xff,0xff,
+                0,0,0,0,0,0,0,0,0,0];
+    const p2 = [1,2,3,3].concat(new Array(40).fill(0));
+    const b = decode24([{ status: 0, d: p0 }, { status: 0, d: p1 }, { status: 0, d: p2 }]);
+    if (!b || !b.complete || b.count !== 3 || !b.now || !b.last || b.now.uptime_ms !== 300 || b.now.control_ms !== 234 ||
+        b.now.restarts !== 1 || b.now.overruns !== 65535 || b.now.sheds !== 1 || b.now.page !== 12 || b.now.control !== 20 ||
+        b.now.cpu !== 88 || b.now.cpu_peak !== 88 || b.now.flags !== 4 || b.now.version !== 1 ||
+        b.last.uptime_ms !== 200 || b.last.control_ms !== 50 || b.last.restarts !== 0 || b.last.overruns !== 2 ||
+        b.last.page !== 7 || b.last.control !== 3 || b.last.cpu !== 91 || b.last.flags !== 2 ||
+        b.events.length !== 3 || b.events[0].kind !== 3 || b.events[1].kind !== 2 || b.events[2].kind !== 1 ||
+        b.events[2].count !== 65535 || b.events[2].uptime_ms !== 300 || b.events[2].page !== 12 || b.events[2].cpu !== 88)
+      fails.push("разбор ответа 24");
+    const cold = p0.slice(); cold[2] = 1;
+    const c = decode24([{ status: 0, d: cold }, null, { status: 0, d: p2 }]);
+    if (!c || c.last !== null || c.complete || c.events.length) fails.push("ответ 24 без прошлого запуска");
+    if (decode24([{ status: 71, d: [] }, null, null]) !== null) fails.push("ответ 24 с ошибкой разобран");
+    const wrongPart = p1.slice(); wrongPart[1] = 2;
+    if (decode24([{ status: 0, d: p0 }, { status: 0, d: wrongPart }, null]).events.length) fails.push("ответ 24: чужая часть");
+    if (bbTime(754000) !== "12 мин 34 с" || bbControl(255) !== "ничего не трогали" || bbControl(20) !== "кнопка 4")
+      fails.push("текст чёрного ящика");
+  }
+  // command 25: the same bytes as tests/t_ui_meter.c case 2
+  {
+    const d = [1, 0x45,0x23,0x01,0, 0,0,0,0,
+               3,0,0,0, 0x90,0x01,0,0, 0xfa,0,0,0, 1,0,
+               2,0,0,0, 0x71,0x11,0x01,0, 0x70,0x11,0x01,0, 2,0,
+               1,0,0,0, 4,3,2,1, 4,3,2,1, 6,0];
+    const u = decode25({ status: 0, d });
+    if (!u || u.block_ticks !== 0x12345 || u.period !== 0 || u.draw.count !== 3 || u.draw.max !== 400 || u.draw.avg !== 250 ||
+        u.draw.max_ms !== 1 || u.compose.count !== 2 || u.compose.max !== 70001 || u.compose.avg !== 70000 ||
+        u.compose.max_ms !== 2 || u.flush.count !== 1 || u.flush.max !== 0x01020304 || u.flush.avg !== 0x01020304 ||
+        u.flush.max_ms !== 6) fails.push("разбор ответа 25");
+    if (decode25({ status: 71, d: [] }) !== null) fails.push("ответ 25 с ошибкой разобран");
+    if (Math.abs(uiMs(928419, 928419) - 2.9013) > 0.001) fails.push("перевод тиков в мс");
+  }
+  // the send guard must refuse every command outside the list, and any payload except 24's part 0..2
+  for (let c = 0; c < 128; ++c) {
+    let threw = false;
+    try { guardedFrame(c, 1, c === 24 ? [0] : []); } catch (e) { threw = true; }
+    if (threw === ALLOWED_COMMANDS.includes(c)) { fails.push("защита отправки, команда " + c); break; }
+  }
+  for (const [c, p] of [[24, []], [24, [3]], [24, [0, 0]], [17, [0]], [23, [1]], [25, [0]]]) {
+    let threw = false;
+    try { guardedFrame(c, 1, p); } catch (e) { threw = true; }
+    if (!threw) fails.push("защита отправки, команда " + c + " с данными [" + p + "]");
+  }
+  const el = document.getElementById("selftest");
+  if (fails.length) {
+    el.textContent = "самопроверка: ОШИБКА — " + fails.join("; ");
+    el.className = "fail"; console.error("FM-1 diag self-test FAILED:", fails);
+  } else {
+    el.textContent = "самопроверка: OK";
+    el.className = "ok"; console.log("FM-1 diag self-test: OK (" + VECTORS.length + " vectors, round trips 0..70 bytes, replies 23 / 24 / 25, send guard)");
+  }
+  return fails.length === 0;
+}
+function hex(a) { return Array.from(a, x => x.toString(16).padStart(2, "0")).join(" "); }
+
+/* ===== Sending (the ONLY place that calls output.send) ===== */
+function guardedFrame(cmd, token, payload = []) {
+  if (!ALLOWED_COMMANDS.includes(cmd)) throw new Error("command " + cmd + " is not allowed");
+  const ok = cmd === 24 ? payload.length === 1 && Number.isInteger(payload[0]) && payload[0] >= 0 && payload[0] < BB_PARTS
+                        : payload.length === 0;
+  if (!ok) throw new Error("payload not allowed for command " + cmd);
+  const f = buildFrame(cmd, token, payload);
+  if (f.length !== (payload.length ? 12 : 10) || f[5] !== cmd) throw new Error("bad frame");
+  return f;
+}
+function sendCommand(cmd, token, payload) {
+  const f = guardedFrame(cmd, token, payload);
+  if (!outPort) return false;
+  outPort.send(f);
+  return true;
+}
+
+/* ===== MIDI ports ===== */
+let midi = null, inPort = null, outPort = null;
+const MATCH = /usb-midi|fm-?1/i;
+const conn = document.getElementById("conn");
+function setConn(text, cls) { conn.textContent = text; conn.className = cls; }
+function candidates(map) { return Array.from(map.values()).filter(p => MATCH.test(p.name || "") && p.state !== "disconnected"); }
+function fillSelect(sel, list, current) {
+  const ids = list.map(p => p.id).join("|");
+  if (sel.dataset.ids !== ids) {
+    sel.innerHTML = "";
+    for (const p of list) { const o = document.createElement("option"); o.value = p.id; o.textContent = p.name; sel.appendChild(o); }
+    sel.dataset.ids = ids;
+  }
+  if (current && list.some(p => p.id === current.id)) sel.value = current.id;
+}
+function choosePorts() {
+  if (!midi) return;
+  const ins = candidates(midi.inputs), outs = candidates(midi.outputs);
+  const inSel = document.getElementById("inSel"), outSel = document.getElementById("outSel");
+  fillSelect(inSel, ins, inPort); fillSelect(outSel, outs, outPort);
+  document.getElementById("ports").style.display = (ins.length > 1 || outs.length > 1) ? "flex" : "none";
+  const ni = ins.find(p => p.id === inSel.value) || ins[0] || null;
+  const no = outs.find(p => p.id === outSel.value) || outs[0] || null;
+  if (ni !== inPort) {
+    if (inPort) inPort.onmidimessage = null;
+    inPort = ni;
+    if (inPort) inPort.onmidimessage = onMessage;
+  }
+  outPort = no;
+  if (!inPort || !outPort) setConn("Синтезатор не найден", "none");
+}
+document.getElementById("inSel").onchange = choosePorts;
+document.getElementById("outSel").onchange = choosePorts;
+
+async function startMidi() {
+  if (!navigator.requestMIDIAccess) { setConn("Этот браузер не умеет MIDI. Откройте страницу в Chrome или Edge.", "err"); return; }
+  try {
+    midi = await navigator.requestMIDIAccess({ sysex: true });
+  } catch (e) {
+    setConn("Нет доступа к MIDI. Разрешите MIDI (sysex) для этой страницы и обновите её.", "err");
+    console.warn("requestMIDIAccess failed:", e && e.name);
+    return;
+  }
+  midi.onstatechange = choosePorts;
+  choosePorts();
+  setInterval(choosePorts, 2000);   // keep looking
+  setInterval(pollRound, 1000);
+}
+
+/* ===== Polling: one request at a time (the synth keeps one incoming mailbox, transfer.c:40-42) ===== */
+let token = (Date.now() & 0x3fff) || 1;
+let waiting = null;                       // {cmd, token, resolve, timer}
+let busyRound = false;
+let lastReplyAt = 0;
+function nextToken() { token = (token % 16383) + 1; return token; }
+function request(cmd, payload = []) {
+  return new Promise(resolve => {
+    const t = nextToken();
+    if (!sendCommand(cmd, t, payload)) { resolve(null); return; }
+    waiting = { cmd, token: t, resolve, timer: setTimeout(() => { waiting = null; resolve(null); }, 300) };
+  });
+}
+function onMessage(ev) {
+  const d = ev.data;
+  if (!d || d[0] !== 0xF0 || !waiting) return;
+  const p = parseFrame(d);
+  if (!p || p.cmd !== (waiting.cmd | 64) || p.token !== waiting.token || !p.data.length) return;
+  const w = waiting; waiting = null; clearTimeout(w.timer);
+  lastReplyAt = Date.now();
+  w.resolve({ status: p.data[0], d: p.data.slice(1) });
+}
+async function pollRound() {
+  if (busyRound || !inPort || !outPort) return;
+  busyRound = true;
+  try {
+    const s = { t: Date.now() };
+    const r17 = await request(17), r18 = await request(18), r19 = await request(19), r23 = await request(23), r25 = await request(25);
+    s.st17 = r17 ? r17.status : ""; s.st18 = r18 ? r18.status : ""; s.st19 = r19 ? r19.status : ""; s.st23 = r23 ? r23.status : "";
+    s.st25 = r25 ? r25.status : "";
+    decode23(s, r23);
+    const ui = decode25(r25);
+    if (ui) for (const k of UI_KINDS) { s[k + "_n"] = ui[k].count; s[k + "_max"] = ui[k].max; s[k + "_avg"] = ui[k].avg; s[k + "_max_ms"] = ui[k].max_ms; }
+    if (r17 || r18 || r19) showUi(ui);
+    if (r17 && r17.status === 0 && r17.d.length >= 18) {
+      s.submitted = u32(r17.d, 0); s.completed = u32(r17.d, 4); s.underruns = u32(r17.d, 8);
+      s.midi_dropped = u32(r17.d, 12); s.samples_status = r17.d[16]; s.edit_recording = r17.d[17];
+    }
+    if (r18 && r18.status === 0 && r18.d.length >= 32) {
+      s.render_ticks = u32(r18.d, 0); s.engine_peak_ticks = u32(r18.d, 4); s.midi_ticks = u32(r18.d, 8);
+      s.adapted = u32(r18.d, 12); s.overloads = u32(r18.d, 16); s.voice_capacity = u32(r18.d, 20);
+      s.master_gain = u32(r18.d, 24); s.deadline_ticks = u32(r18.d, 28);
+    }
+    if (r19 && r19.status === 0 && r19.d.length >= 16) {
+      s.blocks = u32(r19.d, 0); s.short_intervals = u32(r19.d, 4); s.overruns = u32(r19.d, 8); s.irq_peak_ticks = u32(r19.d, 12);
+    }
+    if ((r17 || r18 || r19) && Date.now() - bbAt >= 5000) {   // black box every 5 s (3 small requests)
+      bbAt = Date.now();
+      const parts = [];
+      for (let p = 0; p < BB_PARTS; ++p) parts.push(await request(24, [p]));
+      showBlackBox(decode24(parts), parts);
+    }
+    if (r17 || r18 || r19) {
+      setConn("Синтезатор подключён: " + inPort.name, "ok");
+      record(s);
+    } else if (Date.now() - lastReplyAt > 3000) {
+      setConn("Синтезатор не отвечает (" + outPort.name + ")", "err");
+    }
+  } finally { busyRound = false; }
+}
+
+/* ===== Screen timing display (command 25) ===== */
+function showUi(u) {
+  if (!u) { bbRows("ui_rows", [["Данные", "нет данных <small>(старая прошивка или нет ответа)</small>"]]); return; }
+  const names = { draw: ["Расчёт кадра", "раз за секунду"], compose: ["Одна полоса экрана (16 строк)", "полос за секунду"],
+                  flush: ["Вывод на экран за один опрос", "опросов за секунду"] };
+  const ms = t => { const v = uiMs(t, u.block_ticks); return v === undefined ? "—" : v.toFixed(2) + " мс"; };
+  bbRows("ui_rows", UI_KINDS.map(k => {
+    const x = u[k];
+    if (!x.count) return [names[k][0], "0 <small>не было</small>"];
+    return [names[k][0], "макс " + esc(ms(x.max)) + " / сред " + esc(ms(x.avg)) +
+            " <small>" + esc(fmt(x.count)) + " " + names[k][1] + "; макс по часам " + esc(x.max_ms) + " мс</small>"];
+  }));
+}
+
+/* ===== Black box display ===== */
+let bbAt = 0, bbRaw = "";
+function esc(t) { return String(t).replace(/[&<>]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[ch]); }
+function bbRows(id, rows) {
+  document.getElementById(id).innerHTML = rows.map(([k, v, alarm]) =>
+    "<div class='row" + (alarm ? " alarm" : "") + "'><span>" + esc(k) + "</span><span class='v txt'>" + v + "</span></div>").join("");
+}
+function bbRecordRows(r) {
+  return [["Работал", esc(bbTime(r.uptime_ms))],
+          ["Открытая страница (номер)", esc(r.page)],
+          ["Последнее движение", esc(bbControl(r.control)) + (r.control === 255 ? "" : " <small>на " + esc(bbTime(r.control_ms)) + "</small>")],
+          ["Нагрузка звука: последняя / самая высокая", esc(r.cpu + " % / " + r.cpu_peak + " %"), r.cpu_peak >= 85],
+          ["Потерянные звуковые блоки", esc(fmt(r.overruns)), r.overruns > 0],
+          ["Защита выключала эффекты (раз)", esc(fmt(r.sheds)), r.sheds > 0],
+          ["Перезапусков подряд без выключения", esc(r.restarts), r.restarts > 0],
+          ["Режим", esc(bbFlags(r.flags))]];
+}
+function showBlackBox(bb, parts) {
+  bbRaw = parts.map((r, i) => "24/" + i + ": " + (r ? r.status + " | " + hex(r.d) : "нет ответа")).join("\n");
+  const NO = [["Данные", "нет данных <small>(старая прошивка или нет ответа)</small>"]];
+  if (!bb) { bbRows("bb_now", NO); bbRows("bb_last", NO); bbRows("bb_log", NO); return; }
+  bbRows("bb_now", bb.now ? bbRecordRows(bb.now) : [["Данные", "запись ещё не начата"]]);
+  bbRows("bb_last", bb.last ? bbRecordRows(bb.last)
+       : [["Данные", "нет <small>(синтезатор был выключен, или это первое включение после прошивки)</small>"]]);
+  const rows = bb.events.map(e => ["№" + (e.index + 1) + " на " + bbTime(e.uptime_ms),
+    esc(bbKind(e)) + " <small>страница " + esc(e.page) + ", нагрузка " + esc(e.cpu) + " %, " + esc(bbControl(e.control)) + "</small>", true]);
+  if (!bb.complete) rows.push(["Внимание", "часть журнала не прочиталась, данные неполные"]);
+  bbRows("bb_log", rows.length ? rows : [["Событий", "нет <small>(перегрузок не было)</small>"]]);
+}
+
+/* ===== Display and log ===== */
+const LOG_FIELDS = ["blocks","short_intervals","overruns","irq_peak_ticks",
+  "render_ticks","engine_peak_ticks","midi_ticks","adapted","overloads","voice_capacity","master_gain","deadline_ticks",
+  "submitted","completed","underruns","midi_dropped","samples_status","edit_recording","st17","st18","st19",
+  "shed_count","shedding","fx_ticks","block_ticks","engine_call_peak","micro_d_peak","mix_peak","st23",
+  "draw_n","draw_max","draw_avg","draw_max_ms","compose_n","compose_max","compose_avg","compose_max_ms",
+  "flush_n","flush_max","flush_avg","flush_max_ms","st25",
+  "cost_filter","cost_drive","cost_chorus","cost_phaser","cost_ring","cost_reverb","cost_eq","cost_comp","cost_lowcut",
+  "base_float","base_dry","clear_cost","guard_now_peak","panel_irq_peak","lone_spikes"];
+const log = [];                           // last 10 minutes, one entry per second
+let prev = null, restarts = 0;
+const alarmUntil = {};
+function fmt(n) { return n === undefined ? "—" : n.toLocaleString("ru-RU"); }
+function pct(a, b) { return (a === undefined || !b) ? "—" : (a * 100 / b).toFixed(1) + " %"; }
+function setV(id, html) { document.getElementById(id).innerHTML = html; }
+function counterRow(row, id, key, s) {
+  const v = s[key];
+  if (v === undefined) { setV(id, "—"); return; }
+  let added = 0;
+  if (prev && prev[key] !== undefined && v >= prev[key]) added = v - prev[key];
+  if (added > 0) alarmUntil[row] = Date.now() + 3000;
+  setV(id, fmt(v) + " <small>+" + fmt(added) + " за секунду</small>");
+}
+function record(s) {
+  if (prev && prev.blocks !== undefined && s.blocks !== undefined && s.blocks < prev.blocks) { restarts++; prev = null; }
+  log.push(s);
+  while (log.length && s.t - log[0].t > 600000) log.shift();
+
+  setV("v_blocks", fmt(s.blocks));
+  counterRow("r_overruns", "v_overruns", "overruns", s);
+  counterRow("r_short", "v_short", "short_intervals", s);
+  /* The interrupt's peak is counted in ticks of the board timer. Device log 10.11: 758 882 ticks with no
+   * dropped block, so one block is over 867 000 ticks: the timer is most likely 320 MHz
+   * (320e6 * 128 / 44118 = 928 419 ticks per block). deadline_ticks (24 MHz) is the engine's own scale. */
+  const BOARD_BLOCK_TICKS = 928419;
+  setV("v_irqpeak", pct(s.irq_peak_ticks, BOARD_BLOCK_TICKS) +
+       " <small>" + fmt(s.irq_peak_ticks) + " тиков; блок принят за 928 419 тиков (таймер 320 МГц, оценка)</small>");
+  setV("v_restart", fmt(restarts));
+  if (restarts) alarmUntil["r_restart"] = Infinity;
+
+  setV("v_render", pct(s.render_ticks, s.deadline_ticks));
+  setV("v_epeak", pct(s.engine_peak_ticks, s.deadline_ticks));
+  setV("v_midi", pct(s.midi_ticks, s.deadline_ticks));
+  counterRow("r_adapted", "v_adapted", "adapted", s);
+  counterRow("r_eover", "v_eover", "overloads", s);
+  setV("v_voices", fmt(s.voice_capacity));
+  if (s.master_gain !== undefined) {
+    const g = s.master_gain / 1073741824;
+    const on = g < 1.99;
+    setV("v_gain", g.toFixed(3) + (on ? " <small class='bad'>лимитер движка работает</small>" : " <small class='good'>не срабатывает</small>"));
+    if (on) alarmUntil["r_gain"] = Date.now() + 3000;
+  } else setV("v_gain", "—");
+
+  const NO = "нет данных <small>(старая прошивка)</small>";
+  for (const [id, key] of [["v_ecall", "engine_call_peak"], ["v_mdpeak", "micro_d_peak"], ["v_mixpeak", "mix_peak"], ["v_fx", "fx_ticks"]])
+    setV(id, s[key] === undefined ? NO : pct(s[key], s.block_ticks) + " <small>" + fmt(s[key]) + " тиков</small>");
+  if (s.shed_count === undefined) { setV("v_shed", NO); setV("v_shednow", NO); }
+  else {
+    counterRow("r_shed", "v_shed", "shed_count", s);
+    setV("v_shednow", s.shedding ? "<span class='bad'>выключены (нагрузка)</span>" : "<span class='good'>работают</span>");
+    if (s.shedding) alarmUntil["r_shednow"] = Date.now() + 3000;
+  }
+  /* command 23 version 2: what the guard learned, spikes, our panel interrupt */
+  if (s.lone_spikes === undefined) for (const id of ["v_units", "v_bases", "v_gnow", "v_lone", "v_panel"]) setV(id, NO);
+  else {
+    const sat = 65535 * s.tick_unit;
+    const p = v => v === undefined ? "—" : v === 0 ? "нет замера" : (v >= sat ? "≥ " : "") + pct(v, s.block_ticks);
+    setV("v_units", UNIT_KEYS.map((k, u) => UNIT_NAMES[u] + " " + p(s[k])).join("<br>"));
+    setV("v_bases", p(s.base_float) + " / " + p(s.base_dry) + " / " + p(s.clear_cost));
+    setV("v_gnow", p(s.guard_now_peak) + " <small>" + fmt(s.guard_now_peak) + " тиков</small>");
+    let added = 0;
+    if (prev && prev.lone_spikes !== undefined && s.lone_spikes >= prev.lone_spikes) added = s.lone_spikes - prev.lone_spikes;
+    setV("v_lone", fmt(s.lone_spikes) + " <small>+" + fmt(added) + " за секунду</small>");
+    setV("v_panel", p(s.panel_irq_peak) + " <small>" + fmt(s.panel_irq_peak) + " тиков</small>");
+  }
+  counterRow("r_under", "v_under", "underruns", s);
+  counterRow("r_mdrop", "v_mdrop", "midi_dropped", s);
+
+  for (const row of ["r_overruns","r_short","r_adapted","r_eover","r_gain","r_under","r_mdrop","r_restart","r_shed","r_shednow"])
+    document.getElementById(row).classList.toggle("alarm", (alarmUntil[row] || 0) > Date.now());
+
+  document.getElementById("raw").textContent =
+    LOG_FIELDS.map(k => k + "=" + (s[k] === undefined ? "" : s[k])).join("  ") +
+    "\nстатус 17/18/19/23/25: " + [s.st17, s.st18, s.st19, s.st23, s.st25].map(x => x === "" ? "нет ответа" : x).join(" / ") +
+    "  записей в журнале: " + log.length + (bbRaw ? "\nчёрный ящик (последнее чтение):\n" + bbRaw : "");
+  prev = s;
+}
+function csv() {
+  const lines = ["time,unix_ms," + LOG_FIELDS.join(",")];
+  for (const s of log) {
+    const d = new Date(s.t);
+    lines.push(d.toLocaleString("sv-SE").replace(" ", "T") + "," + s.t + "," + LOG_FIELDS.map(k => s[k] === undefined ? "" : s[k]).join(","));
+  }
+  return lines.join("\n") + "\n";
+}
+document.getElementById("copyBtn").onclick = async () => {
+  const text = csv(), msg = document.getElementById("copyMsg");
+  try { await navigator.clipboard.writeText(text); msg.textContent = "скопировано строк: " + log.length; return; } catch (e) {}
+  const ta = document.getElementById("manual");
+  ta.value = text; ta.style.display = "block"; ta.select();
+  let ok = false; try { ok = document.execCommand("copy"); } catch (e) {}
+  msg.textContent = ok ? "скопировано строк: " + log.length : "не получилось скопировать: выделите текст ниже и нажмите Ctrl+C";
+};
+
+selfTest();
+startMidi();
+</script>
+</body>
+</html>

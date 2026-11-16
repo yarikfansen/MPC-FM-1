@@ -4,6 +4,7 @@
 # Usage (Git Bash, repo root): sh tools/fm1-build.sh
 cd "$(dirname "$0")/.." || exit 1
 LIMIT=789793  # FlashLimit - USER 200704 - BT - VM - header, see sdk/Package.cs
+sh tools/stamp_build.sh
 WIN=$(pwd -W)
 FM1_PI32_TOOLCHAIN='C:\JL\pi32' cmd //c "cd /d $WIN && .\build.bat" > build/build.log 2>&1
 status=$?

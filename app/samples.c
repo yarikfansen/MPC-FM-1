@@ -22,6 +22,7 @@ static struct sample_header {
     uint8_t padding[32];
 } header;
 _Static_assert(sizeof header == 512, "sample bank header");
+_Static_assert(REC_MAX_FRAMES == (GROOVE_SAMPLE_LIMIT - sizeof header) / 228U * 320U, "one take may fill the whole bank");
 static unsigned state, total, position;
 static uint32_t checksum, changed_at;
 static uint32_t crc32(uint32_t crc, unsigned offset, const uint8_t *p, unsigned bytes)

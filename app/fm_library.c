@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only WITH GPL-3.0-linking-exception */
+#include "audio_output.h"
 #include "instrument.h"
 #include "fm_patch.h"
 #include "fm1_device.h"
@@ -132,16 +133,16 @@ int groove_fm_library_recover(void)
     fm1_engine_pause(); banks[index]=staged;
     const struct bank *stored=read_bank(address);
     if (!stored || stored->crc!=staged->crc || memcmp(stored,staged,sizeof *stored)) {
-        r=fm1_flash_erase(address);
+        r=flash_erase_safe(address);
         for (unsigned at=0;!r && at<sizeof *staged;at+=64) {
             uint8_t buffer[64]; unsigned n=sizeof *staged-at; if (n>64) n=64;
             memcpy(buffer,(const uint8_t *)staged+at,n);
-            r=fm1_flash_write(address+at,buffer,n);
+            r=flash_write_safe(address+at,buffer,n);
         }
         stored=r?NULL:read_bank(address);
         if (!r && (!stored || stored->crc!=staged->crc)) r=FM1_FLASH_IO;
     }
-    if (!r) { banks[index]=stored; r=fm1_flash_erase(STAGE); }
+    if (!r) { banks[index]=stored; r=flash_erase_safe(STAGE); }
     fm1_engine_resume(); return r;
 }
 int groove_fm_library_read(unsigned index, uint8_t raw[4096])
@@ -169,13 +170,13 @@ int groove_fm_library_write(unsigned index, const uint8_t raw[4096])
     if (banks[index] && banks[index]->crc==b->crc &&
         !memcmp(banks[index]->voice,b->voice,sizeof b->voice)) { free(b); return 0; }
     fm1_engine_pause();
-    r=fm1_flash_erase(STAGE);
-    if (!r) r=fm1_flash_write(STAGE,b,sizeof *b);
+    r=flash_erase_safe(STAGE);
+    if (!r) r=flash_write_safe(STAGE,b,sizeof *b);
     if (!r) {
         const uint8_t *written=fm1_flash_map(STAGE,sizeof *b);
         if (!written || memcmp(written,b,sizeof *b)) r=FM1_FLASH_IO;
     }
-    if (!r) { uint32_t commit=0; r=fm1_flash_write(STAGE+offsetof(struct bank,commit),&commit,4); }
+    if (!r) { uint32_t commit=0; r=flash_write_safe(STAGE+offsetof(struct bank,commit),&commit,4); }
     /* A driver may report failure after programming the complete commit word.
      * Make subsequent reads agree with reboot recovery in that ambiguous case. */
     const struct bank *staged=read_bank(STAGE);

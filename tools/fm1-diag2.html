@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FM-1 диагностика: два синтезатора</title>
+<style>
+  :root { --bg:#111; --fg:#eee; --dim:#9a9a9a; --card:#1c1c1c; --line:#333; --ok:#5fd17a; --bad:#ff5a4f; --warn:#ffb340; --a:#ff9a3c; --b:#8fb4ff; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:18px/1.35 system-ui, "Segoe UI", sans-serif; }
+  main { max-width:1100px; margin:0 auto; padding:16px; }
+  h1 { font-size:28px; margin:0 0 8px; }
+  h2 { font-size:20px; color:var(--dim); margin:4px 0 6px; font-weight:600; }
+  section { background:var(--card); border-radius:10px; padding:10px 16px; margin-bottom:12px; }
+  .devs { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:760px) { .devs { grid-template-columns:1fr; } }
+  .dev { background:var(--card); border-radius:10px; padding:10px 14px; }
+  .dev h2 { margin:0 0 6px; }
+  .conn { font-size:20px; font-weight:700; padding:8px 12px; border-radius:8px; background:#161616; margin:6px 0; }
+  .conn.none { color:var(--warn); } .conn.ok { color:var(--ok); } .conn.err { color:var(--bad); }
+  .sel { display:flex; flex-direction:column; gap:6px; font-size:16px; }
+  select, input[type=text], input[type=number], textarea { font-size:16px; padding:4px; background:#222; color:var(--fg); border:1px solid var(--line); border-radius:4px; }
+  .row { display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:5px 6px; border-bottom:1px solid var(--line); border-radius:6px; }
+  .row:last-child { border-bottom:none; }
+  .row .v { font-size:22px; font-weight:700; text-align:right; white-space:nowrap; }
+  .row .v small { font-size:14px; font-weight:400; color:var(--dim); }
+  .row small.l { font-size:14px; color:var(--dim); font-weight:400; }
+  .row.alarm { background:#5a1512; }
+  .good { color:var(--ok); } .bad { color:var(--bad); }
+  button { font-size:18px; padding:8px 16px; border-radius:8px; border:1px solid var(--line); background:#2a2a2a; color:var(--fg); cursor:pointer; }
+  button:disabled { opacity:.4; cursor:default; }
+  button.go { background:#1f5a31; }
+  table { border-collapse:collapse; width:100%; font-size:16px; }
+  th, td { border-bottom:1px solid var(--line); padding:4px 8px; text-align:right; }
+  th:first-child, td:first-child { text-align:left; }
+  td.pos { color:var(--bad); } td.neg { color:var(--ok); }
+  .step { padding:8px 10px; border:1px solid var(--line); border-radius:8px; margin-bottom:8px; }
+  .step.cur { border-color:var(--ok); }
+  .step.done { opacity:.75; }
+  .step .t { font-weight:700; }
+  .step .ins { color:var(--fg); margin:4px 0; }
+  .step .acts { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .step input.note { flex:1; min-width:200px; }
+  #prog { height:10px; background:#222; border-radius:5px; overflow:hidden; margin:8px 0; }
+  #progBar { height:100%; width:0; background:var(--ok); }
+  #manual { display:none; width:100%; height:160px; font:12px monospace; background:#000; color:#ccc; }
+  #selftest { font:14px Consolas, monospace; color:var(--dim); margin-top:12px; }
+  #selftest.ok { color:var(--ok); } #selftest.fail { color:var(--bad); }
+  .hint { font-size:15px; color:var(--dim); }
+  .oc { color:var(--a); } .bc { color:var(--b); }
+</style>
+</head>
+<body>
+<main>
+<h1>FM-1: два синтезатора сразу</h1>
+<p class="hint">Страница только читает цифры нагрузки (команды 17, 18, 19, 23), нот и настроек не шлёт. Можно подключить один синтезатор, тогда правая колонка пустая.</p>
+
+<p><button id="swapBtn" type="button">&#8644; Поменять синтезаторы местами</button> <span class="hint">Если названия перепутаны: порты двух колонок меняются местами, выбор запоминается для следующего раза.</span></p>
+<div class="devs">
+  <div class="dev" id="dev0">
+    <h2 class="oc"><input type="text" id="lab0" value="Оранжевый" size="14"></h2>
+    <div class="conn none" id="conn0">Не выбран</div>
+    <div class="sel"><label>Вход: <select id="in0"></select></label><label>Выход: <select id="out0"></select></label></div>
+    <div class="hint" id="idn0"></div>
+  </div>
+  <div class="dev" id="dev1">
+    <h2 class="bc"><input type="text" id="lab1" value="Чёрный" size="14"></h2>
+    <div class="conn none" id="conn1">Не выбран</div>
+    <div class="sel"><label>Вход: <select id="in1"></select></label><label>Выход: <select id="out1"></select></label></div>
+    <div class="hint" id="idn1"></div>
+  </div>
+</div>
+<p class="hint" id="whoHint">Оба синтезатора называются одинаково. Как понять, какой есть какой: выдерни USB-кабель одного — пропавший порт покажется здесь, и его id запомнится за выбранным именем. Выбор портов запоминается до закрытия страницы.</p>
+
+<section>
+  <h2>Живые цифры (раз в секунду)</h2>
+  <table id="liveTbl"></table>
+</section>
+
+<section>
+  <h2>Тест «Влияние Bluetooth»</h2>
+  <div class="hint">Длительность шага, секунд: <input type="number" id="dur" value="30" min="5" max="600" style="width:80px"> &nbsp; Перед началом шага пиковые цифры сбрасываются чтением. Шаги можно делать в любом порядке, но разности считаются от шага 1.</div>
+  <div id="prog"><div id="progBar"></div></div>
+  <div id="steps"></div>
+  <div class="acts"><button id="stopBtn" disabled>Остановить шаг</button> <span id="stepMsg" class="hint"></span></div>
+</section>
+
+<section>
+  <h2>Итог по шагам: среднее / максимум (блок = 100 %)</h2>
+  <div id="sumWrap" class="hint">Шагов ещё нет.</div>
+</section>
+
+<section>
+  <h2>Разница с шагом 1 (среднее, процентных пунктов блока)</h2>
+  <div id="diffWrap" class="hint">Нужен шаг 1 и ещё хотя бы один.</div>
+</section>
+
+<section>
+  <button id="csvAll">Скопировать все замеры (CSV)</button>
+  <button id="csvSum">Скопировать итоги (CSV)</button>
+  <button id="saveAll">Сохранить файлом</button>
+  <span id="copyMsg" class="hint"></span>
+  <textarea id="manual" readonly></textarea>
+</section>
+
+<div id="selftest">самопроверка: …</div>
+</main>
+
+<script>
+"use strict";
+/* ===== Protocol (mirror of app/transfer.c; copied from tools/fm1-diag.html, see there for the byte layout) =====
+ * Frame: F0 7D 46 4D 02 cmd token-lo token-hi <packed payload> checksum F7; checksum makes the sum of
+ * bytes 7D..checksum 0 mod 128; payload = 8-bit bytes in 7-bit chunks, LSB first. */
+const HDR = [0xF0, 0x7D, 0x46, 0x4D, 0x02];
+
+/* SAFETY: the only commands this page may ever send: 17, 18, 19, 23, all read-only and without payload.
+ * (The one-synth page also sends 24 and 25; this page does not.) */
+const ALLOWED_COMMANDS = Object.freeze([17, 18, 19, 23]);
+
+function packStream(bytes) {
+  const out = []; let value = 0, bits = 0;
+  for (const b of bytes) {
+    value |= (b & 255) << bits; bits += 8;
+    while (bits >= 7) { out.push(value & 127); value >>>= 7; bits -= 7; }
+  }
+  if (bits) out.push(value & 127);
+  return out;
+}
+function unpackStream(chunks) {
+  const out = []; let value = 0, bits = 0;
+  for (const c of chunks) {
+    if (c > 127) return null;
+    value |= c << bits; bits += 7;
+    if (bits >= 8) { out.push(value & 255); value >>>= 8; bits -= 8; }
+  }
+  if (value || bits >= 7) return null;
+  return out;
+}
+function checksumOf(bytesFrom1) { let s = 0; for (const b of bytesFrom1) s += b; return (128 - (s & 127)) & 127; }
+function buildFrame(cmd, token, payload) {
+  const f = HDR.concat([cmd & 127, token & 127, (token >> 7) & 127], packStream(payload));
+  f.push(checksumOf(f.slice(1)));
+  f.push(0xF7);
+  return f;
+}
+function parseFrame(m) {
+  const n = m.length;
+  if (n < 10 || m[0] !== 0xF0 || m[n - 1] !== 0xF7) return null;
+  for (let i = 0; i < 5; ++i) if (m[i] !== HDR[i]) return null;
+  let s = 0;
+  for (let i = 1; i + 1 < n; ++i) { if (m[i] > 127) return null; s += m[i]; }
+  if (s & 127) return null;
+  const data = unpackStream(Array.from(m.slice(8, n - 2)));
+  if (!data) return null;
+  return { cmd: m[5], token: m[6] | (m[7] << 7), data };
+}
+function u32(d, o) { return ((d[o] | (d[o+1] << 8) | (d[o+2] << 16)) + d[o+3] * 16777216) >>> 0; }
+function u16(d, o) { return d[o] | (d[o+1] << 8); }
+
+const UNIT_KEYS = ["cost_filter", "cost_drive", "cost_chorus", "cost_phaser", "cost_ring", "cost_reverb", "cost_eq", "cost_comp", "cost_lowcut"];
+const UNIT_NAMES = ["FILTER", "DRIVE", "CHORUS", "PHASER", "RING", "REVERB", "EQ", "COMP", "LOW CUT"];
+/* Command 23 (see tools/fm1-diag.html for the layout): version 1 = 25 bytes, version 2 appends unit costs etc. */
+function decode23(s, r) {
+  if (!r || r.status !== 0 || r.d.length < 25) return;
+  s.shed_count = u32(r.d, 0); s.shedding = r.d[4]; s.fx_ticks = u32(r.d, 5); s.block_ticks = u32(r.d, 9);
+  s.engine_call_peak = u32(r.d, 13); s.micro_d_peak = u32(r.d, 17); s.mix_peak = u32(r.d, 21);
+  if (r.d.length < 28 || r.d[25] < 2) return;
+  const n = r.d[26], unit = 2 ** r.d[27];
+  if (r.d.length < 28 + 2 * n + 14) return;
+  const t = o => u16(r.d, o) * unit;
+  for (let u = 0; u < n && u < UNIT_KEYS.length; ++u) s[UNIT_KEYS[u]] = t(28 + 2 * u);
+  const o = 28 + 2 * n;
+  s.base_float = t(o); s.base_dry = t(o + 2); s.clear_cost = t(o + 4); s.guard_now_peak = t(o + 6); s.panel_irq_peak = t(o + 8);
+  s.lone_spikes = u32(r.d, o + 10); s.tick_unit = unit;
+}
+/* Commands 17 / 18 / 19 -> fields of one sample (same offsets as the one-synth page). */
+function decode17(s, r) {
+  if (r && r.status === 0 && r.d.length >= 18) {
+    s.submitted = u32(r.d, 0); s.completed = u32(r.d, 4); s.underruns = u32(r.d, 8);
+    s.midi_dropped = u32(r.d, 12);
+  }
+}
+function decode18(s, r) {
+  if (r && r.status === 0 && r.d.length >= 32) {
+    s.render_ticks = u32(r.d, 0); s.engine_peak_ticks = u32(r.d, 4); s.midi_ticks = u32(r.d, 8);
+    s.adapted = u32(r.d, 12); s.overloads = u32(r.d, 16); s.voice_capacity = u32(r.d, 20);
+    s.master_gain = u32(r.d, 24); s.deadline_ticks = u32(r.d, 28);
+  }
+}
+function decode19(s, r) {
+  if (r && r.status === 0 && r.d.length >= 16) {
+    s.blocks = u32(r.d, 0); s.short_intervals = u32(r.d, 4); s.overruns = u32(r.d, 8); s.irq_peak_ticks = u32(r.d, 12);
+  }
+}
+const BOARD_BLOCK_TICKS = 928419;     // estimate used by the one-synth page for command 19's peak (320 MHz timer)
+function decodeAll(t, r17, r18, r19, r23) {
+  const s = { t };
+  decode17(s, r17); decode18(s, r18); decode19(s, r19); decode23(s, r23);
+  return s;
+}
+
+/* ===== Metrics: what is shown / averaged. pct = percent of a block (or of the engine deadline); counters are
+ * differences between two reads. Each metric: {key, name, get(sample) -> number|undefined, unit}. */
+function pctOf(v, base) { return (v === undefined || !base) ? undefined : v * 100 / base; }
+const METRICS = [
+  { key: "irq_peak",  name: "Пик звука (прерывание), % блока", peak: true, get: s => pctOf(s.irq_peak_ticks, BOARD_BLOCK_TICKS) },
+  { key: "engine_call", name: "Вызов движка, пик, % блока",    peak: true, get: s => pctOf(s.engine_call_peak, s.block_ticks) },
+  { key: "micro_d",   name: "MICRO D, пик, % блока",           peak: true, get: s => pctOf(s.micro_d_peak, s.block_ticks) },
+  { key: "ours",      name: "MICRO D + эффекты + сведение, пик, % блока", peak: true, get: s => pctOf(s.mix_peak, s.block_ticks) },
+  { key: "master_fx", name: "MASTER FX, последний замер, % блока", get: s => pctOf(s.fx_ticks, s.block_ticks) },
+  { key: "guard",     name: "До защиты (всё вместе), пик, % блока", peak: true, get: s => pctOf(s.guard_now_peak, s.block_ticks) },
+  { key: "panel_irq", name: "Опрос кнопок (прерывание), пик, % блока", peak: true, get: s => pctOf(s.panel_irq_peak, s.block_ticks) },
+  { key: "render",    name: "Расчёт звука сейчас, % дедлайна",  get: s => pctOf(s.render_ticks, s.deadline_ticks) },
+  { key: "engine_pk", name: "Расчёт звука, пик, % дедлайна",    peak: true, get: s => pctOf(s.engine_peak_ticks, s.deadline_ticks) },
+  { key: "midi",      name: "Обработка MIDI, % дедлайна",       get: s => pctOf(s.midi_ticks, s.deadline_ticks) },
+].concat(UNIT_KEYS.map((k, u) => ({ key: k, name: "Эффект " + UNIT_NAMES[u] + ", % блока", get: s => (s[k] === undefined ? undefined : pctOf(s[k], s.block_ticks)) })));
+/* Counters shown as "added during the step": lone spikes, effect removals, dropped blocks, underruns, dropped MIDI. */
+const COUNTERS = [
+  { key: "lone_spikes", name: "Одиночные всплески > 75 %" },
+  { key: "shed_count",  name: "Защита выключала эффекты" },
+  { key: "overruns",    name: "Потерянные блоки" },
+  { key: "underruns",   name: "Опустошения очереди движка" },
+  { key: "midi_dropped", name: "Потерянные MIDI" },
+];
+/* Metrics that go into the compact difference table (the headline figures). */
+const DIFF_KEYS = ["irq_peak", "engine_call", "micro_d", "ours", "guard", "panel_irq", "engine_pk", "midi"];
+
+/* ===== Test steps: edit this array to change the test. id is the step number shown to the user. ===== */
+const STEPS = [
+  { id: 1, title: "Оба молчат, Bluetooth выключен",
+    text: "На обоих синтезаторах Bluetooth выключен, секвенсор остановлен, ничего не нажимать. Это точка отсчёта." },
+  { id: 2, title: "Bluetooth включён, пары нет",
+    text: "Включи Bluetooth на обоих, но не соединяй их друг с другом. Секвенсор стоит." },
+  { id: 3, title: "Соединены (хозяин / ведомый), секвенсор стоит",
+    text: "Соедини синтезаторы: один хозяин, другой ведомый. Дождись, пока соединение установится. Секвенсор не запускай." },
+  { id: 4, title: "Ведущий играет, ведомый идёт по такту и нотам",
+    text: "Запусти секвенсор на ведущем. Ведомый идёт по такту (clock) и принимает ноты. Звук включён на обоих." },
+  { id: 5, title: "То же с обычными мастер-эффектами",
+    text: "Тот же режим, но включи свои обычные MASTER FX на обоих (как в игре). Секвенсор играет." },
+  { id: 6, title: "Bluetooth снова выключен",
+    text: "Останови секвенсор, выключи Bluetooth на обоих. Контроль: цифры должны вернуться к шагу 1." },
+];
+
+/* ===== Per-device state ===== */
+const DEVS = [
+  { idx: 0, label: "Оранжевый", inId: "", outId: "", inPort: null, outPort: null, waiting: null, busy: false, lastReplyAt: 0, last: null, prev: null },
+  { idx: 1, label: "Чёрный",    inId: "", outId: "", inPort: null, outPort: null, waiting: null, busy: false, lastReplyAt: 0, last: null, prev: null },
+];
+const samples = [];       // raw: {t, dev, label, step, sample}
+const results = {};       // step id -> {note, start, end, dur, perDev: [stats0, stats1]}
+let activeStep = null;    // {id, start, end, startedSamples}
+
+/* ===== Statistics ===== */
+function meanMax(values) {
+  const v = values.filter(x => typeof x === "number" && isFinite(x));
+  if (!v.length) return null;
+  let sum = 0, max = -Infinity;
+  for (const x of v) { sum += x; if (x > max) max = x; }
+  return { mean: sum / v.length, max, n: v.length };
+}
+/* list of samples of one device -> {metrics: {key: {mean,max,n}}, counters: {key: added}, n} */
+function stepStats(list) {
+  const out = { n: list.length, metrics: {}, counters: {} };
+  for (const m of METRICS) { const r = meanMax(list.map(m.get)); if (r) out.metrics[m.key] = r; }
+  for (const c of COUNTERS) {
+    const vals = list.map(s => s[c.key]).filter(x => x !== undefined);
+    if (vals.length >= 2) out.counters[c.key] = Math.max(0, vals[vals.length - 1] - vals[0]);
+  }
+  return out;
+}
+/* Difference table: step stats minus the base step's, mean and max, for DIFF_KEYS.
+ * results = {stepId: {perDev: [stats|null, stats|null]}} -> rows [{step, dev, key, dMean, dMax}] */
+function diffRows(res, baseId, ids, nDev) {
+  const rows = [];
+  const base = res[baseId];
+  if (!base) return rows;
+  for (const id of ids) {
+    if (id === baseId || !res[id]) continue;
+    for (let d = 0; d < nDev; ++d) {
+      const a = base.perDev[d], b = res[id].perDev[d];
+      if (!a || !b) continue;
+      for (const k of DIFF_KEYS) {
+        const x = a.metrics[k], y = b.metrics[k];
+        if (!x || !y) continue;
+        rows.push({ step: id, dev: d, key: k, dMean: y.mean - x.mean, dMax: y.max - x.max });
+      }
+    }
+  }
+  return rows;
+}
+
+/* ===== CSV ===== */
+const RAW_FIELDS = ["blocks","short_intervals","overruns","irq_peak_ticks","render_ticks","engine_peak_ticks","midi_ticks","adapted","overloads",
+  "voice_capacity","master_gain","deadline_ticks","submitted","completed","underruns","midi_dropped",
+  "shed_count","shedding","fx_ticks","block_ticks","engine_call_peak","micro_d_peak","mix_peak",
+  "cost_filter","cost_drive","cost_chorus","cost_phaser","cost_ring","cost_reverb","cost_eq","cost_comp","cost_lowcut",
+  "base_float","base_dry","clear_cost","guard_now_peak","panel_irq_peak","lone_spikes"];
+function csvCell(v) {
+  if (v === undefined || v === null) return "";
+  const t = String(v);
+  return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+}
+function isoTime(ms) { return new Date(ms).toISOString(); }
+function csvAll(rows) {
+  const lines = ["time,unix_ms,synth,step," + RAW_FIELDS.join(",")];
+  for (const r of rows) {
+    lines.push([isoTime(r.t), r.t, csvCell(r.label), r.step === null || r.step === undefined ? "" : r.step]
+      .concat(RAW_FIELDS.map(k => csvCell(r.sample[k]))).join(","));
+  }
+  return lines.join("\n") + "\n";
+}
+function csvSummary(res, labels, ids) {
+  const head = ["step", "title", "note", "synth", "seconds", "samples", "metric", "mean", "max"];
+  const lines = [head.join(",")];
+  for (const id of ids) {
+    const r = res[id]; if (!r) continue;
+    const st = STEPS.find(s => s.id === id);
+    for (let d = 0; d < r.perDev.length; ++d) {
+      const p = r.perDev[d]; if (!p) continue;
+      for (const m of METRICS) {
+        const x = p.metrics[m.key]; if (!x) continue;
+        lines.push([id, csvCell(st ? st.title : ""), csvCell(r.note), csvCell(labels[d]), r.dur, p.n, csvCell(m.name),
+                    x.mean.toFixed(3), x.max.toFixed(3)].join(","));
+      }
+      for (const c of COUNTERS) {
+        if (p.counters[c.key] === undefined) continue;
+        lines.push([id, csvCell(st ? st.title : ""), csvCell(r.note), csvCell(labels[d]), r.dur, p.n, csvCell(c.name + " (прибавка)"),
+                    p.counters[c.key], p.counters[c.key]].join(","));
+      }
+    }
+  }
+  const diffs = diffRows(res, ids[0], ids, 2);
+  if (diffs.length) {
+    lines.push("");
+    lines.push("diff_vs_step_" + ids[0] + ",synth,metric,delta_mean,delta_max");
+    for (const d of diffs) {
+      const m = METRICS.find(x => x.key === d.key);
+      lines.push([d.step, csvCell(labels[d.dev]), csvCell(m.name), d.dMean.toFixed(3), d.dMax.toFixed(3)].join(","));
+    }
+  }
+  return lines.join("\n") + "\n";
+}
+
+/* ===== Self-test: hand-computed frames, same vectors as the one-synth page ===== */
+function eq(a, b) { return a.length === b.length && a.every((x, i) => x === b[i]); }
+function hex(a) { return Array.from(a, x => x.toString(16).padStart(2, "0")).join(" "); }
+function guardedFrame(cmd, token, payload = []) {
+  if (!ALLOWED_COMMANDS.includes(cmd)) throw new Error("command " + cmd + " is not allowed");
+  if (payload.length) throw new Error("payload not allowed for command " + cmd);
+  const f = buildFrame(cmd, token, payload);
+  if (f.length !== 10 || f[5] !== cmd) throw new Error("bad frame");
+  return f;
+}
+function selfTest() {
+  const fails = [];
+  if (!eq(buildFrame(19, 5, []), [0xF0,0x7D,0x46,0x4D,0x02,0x13,0x05,0x00,0x56,0xF7])) fails.push("кадр 19");
+  if (!eq(buildFrame(17, 16383, []), [0xF0,0x7D,0x46,0x4D,0x02,0x11,0x7F,0x7F,0x5F,0xF7])) fails.push("кадр 17");
+  const rep = [0xF0,0x7D,0x46,0x4D,0x02,0x53,0x05,0x00,0x00,0x7E,0x07,0x00,0x11,0xF7];
+  const p = parseFrame(Uint8Array.from(rep));
+  if (!p || p.cmd !== 0x53 || p.token !== 5 || !eq(p.data, [0, 255, 1])) fails.push("разбор ответа");
+  if (parseFrame(Uint8Array.from([0xF0,0x7D,0x46,0x4D,0x02,0x53,0x05,0x00,0x00,0x7E,0x07,0x00,0x12,0xF7])) !== null) fails.push("неверная сумма принята");
+  for (let len = 0; len <= 70; ++len) {
+    const q = Array.from({ length: len }, (_, i) => (i * 73 + len * 31 + 7) & 255);
+    const back = unpackStream(packStream(q));
+    if (!back || !eq(back, q)) { fails.push("туда-обратно " + len); break; }
+  }
+  const s = {};
+  decode23(s, { status: 0, d: [3,0,0,0, 1, 0x10,0x27,0,0, 0x63,0x2a,0x0e,0, 0x40,0x0d,0x03,0, 0xa0,0x86,0x01,0, 0xff,0xff,0xff,0xff] });
+  if (s.shed_count !== 3 || s.fx_ticks !== 10000 || s.block_ticks !== 928355 || s.mix_peak !== 4294967295 || s.lone_spikes !== undefined) fails.push("ответ 23");
+  for (let c = 0; c < 128; ++c) {
+    let threw = false;
+    try { guardedFrame(c, 1, []); } catch (e) { threw = true; }
+    if (threw === ALLOWED_COMMANDS.includes(c)) { fails.push("защита отправки " + c); break; }
+  }
+  for (const c of [17, 18, 19, 23]) {
+    let threw = false;
+    try { guardedFrame(c, 1, [0]); } catch (e) { threw = true; }
+    if (!threw) fails.push("защита: данные в " + c);
+  }
+  const el = document.getElementById("selftest");
+  if (fails.length) { el.textContent = "самопроверка: ОШИБКА — " + fails.join("; "); el.className = "fail"; console.error("FM-1 diag2 self-test FAILED:", fails); }
+  else { el.textContent = "самопроверка: OK"; el.className = "ok"; }
+  return fails.length === 0;
+}
+
+/* ===== MIDI: per-device request / reply (one request at a time per synth; the two are polled in parallel) ===== */
+let midi = null, token = (Date.now() & 0x3fff) || 1;
+function nextToken() { token = (token % 16383) + 1; return token; }
+function request(dev, cmd) {
+  return new Promise(resolve => {
+    if (!dev.outPort || !dev.inPort) { resolve(null); return; }
+    const t = nextToken();
+    const f = guardedFrame(cmd, t, []);          // the ONLY place that sends
+    dev.waiting = { cmd, token: t, resolve, timer: setTimeout(() => { dev.waiting = null; resolve(null); }, 300) };
+    dev.outPort.send(f);
+  });
+}
+function onMessageFor(dev) {
+  return ev => {
+    const d = ev.data, w = dev.waiting;
+    if (!d || d[0] !== 0xF0 || !w) return;
+    const p = parseFrame(d);
+    if (!p || p.cmd !== (w.cmd | 64) || p.token !== w.token || !p.data.length) return;
+    dev.waiting = null; clearTimeout(w.timer);
+    dev.lastReplyAt = Date.now();
+    w.resolve({ status: p.data[0], d: p.data.slice(1) });
+  };
+}
+async function pollDevice(dev) {
+  if (dev.busy || !dev.inPort || !dev.outPort) return null;
+  dev.busy = true;
+  try {
+    const r17 = await request(dev, 17), r18 = await request(dev, 18), r19 = await request(dev, 19), r23 = await request(dev, 23);
+    if (!(r17 || r18 || r19)) return null;
+    const s = decodeAll(Date.now(), r17, r18, r19, r23);
+    s.st23 = r23 ? r23.status : "";
+    return s;
+  } finally { dev.busy = false; }
+}
+async function pollRound() {
+  // read both synths at once: their mailboxes are independent
+  const out = await Promise.all(DEVS.map(d => pollDevice(d)));
+  out.forEach((s, i) => { if (s) accept(DEVS[i], s); else updateConn(DEVS[i]); });
+}
+/* A new sample from a synth: restart detection, step bookkeeping, display. */
+function accept(dev, s) {
+  if (dev.prev && dev.prev.blocks !== undefined && s.blocks !== undefined && s.blocks < dev.prev.blocks) s.restarted = true;
+  dev.prev = dev.last; dev.last = s;
+  const stepId = activeStep ? activeStep.id : null;
+  samples.push({ t: s.t, dev: dev.idx, label: dev.label, step: stepId, sample: s });
+  while (samples.length && !activeStep && s.t - samples[0].t > 3600000) samples.shift();   // keep 1 h outside tests
+  updateConn(dev);
+  renderLive();
+}
+
+/* ===== Port selection ===== */
+const MATCH = /usb-midi|fm-?1/i;
+function candidates(map) { return Array.from(map.values()).filter(p => MATCH.test(p.name || "") && p.state !== "disconnected"); }
+function portText(p) { return (p.name || "?") + "  [" + p.id.slice(0, 8) + "]"; }
+function fillSelect(sel, list, cur) {
+  const ids = list.map(p => p.id).join("|");
+  if (sel.dataset.ids !== ids) {
+    sel.innerHTML = "";
+    const none = document.createElement("option"); none.value = ""; none.textContent = "— нет —"; sel.appendChild(none);
+    for (const p of list) { const o = document.createElement("option"); o.value = p.id; o.textContent = portText(p); sel.appendChild(o); }
+    sel.dataset.ids = ids;
+  }
+  sel.value = (cur && list.some(p => p.id === cur)) ? cur : "";
+}
+let lastIds = null;
+function choosePorts() {
+  if (!midi) return;
+  const ins = candidates(midi.inputs), outs = candidates(midi.outputs);
+  const idsNow = ins.map(p => p.id).sort().join("|") + "#" + outs.map(p => p.id).sort().join("|");
+  // report which ports appeared / vanished so the user can tell the synths apart by unplugging one
+  if (lastIds !== null && lastIds !== idsNow) noteIdentity(lastIds, idsNow);
+  lastIds = idsNow;
+  // default assignment: first free in/out pair goes to a device that has none, in port order
+  for (const dev of DEVS) {
+    if (dev.inId && !ins.some(p => p.id === dev.inId)) dev.inId = "";
+    if (dev.outId && !outs.some(p => p.id === dev.outId)) dev.outId = "";
+  }
+  // ports remembered from the last visit (set by the swap button or a manual choice) come before the port order
+  const saved = loadPorts();
+  for (const dev of DEVS) {
+    const sv = saved && saved[dev.idx];
+    if (!sv || dev.userChose) continue;
+    if (!dev.inId && ins.some(p => p.id === sv[0]) && !DEVS.some(o => o.inId === sv[0])) dev.inId = sv[0];
+    if (!dev.outId && outs.some(p => p.id === sv[1]) && !DEVS.some(o => o.outId === sv[1])) dev.outId = sv[1];
+  }
+  for (const dev of DEVS) {
+    if (!dev.inId) { const f = ins.find(p => !DEVS.some(o => o.inId === p.id)); if (f && !dev.userChose) dev.inId = f.id; }
+    if (!dev.outId) { const f = outs.find(p => !DEVS.some(o => o.outId === p.id)); if (f && !dev.userChose) dev.outId = f.id; }
+  }
+  for (const dev of DEVS) {
+    const i = dev.idx;
+    fillSelect(document.getElementById("in" + i), ins, dev.inId);
+    fillSelect(document.getElementById("out" + i), outs, dev.outId);
+    const ni = ins.find(p => p.id === dev.inId) || null, no = outs.find(p => p.id === dev.outId) || null;
+    if (ni !== dev.inPort) {
+      if (dev.inPort) dev.inPort.onmidimessage = null;
+      dev.inPort = ni;
+      if (ni) ni.onmidimessage = onMessageFor(dev);
+      dev.prev = dev.last = null;
+    }
+    dev.outPort = no;
+    const idn = document.getElementById("idn" + i);
+    idn.textContent = dev.inPort ? "вход " + dev.inPort.id + (dev.outPort ? "; выход " + dev.outPort.id : "") : "";
+    updateConn(dev);
+  }
+}
+const PORTS_KEY = "fm1diag2.ports";
+function loadPorts() { try { const v = JSON.parse(localStorage.getItem(PORTS_KEY)); return Array.isArray(v) ? v : null; } catch (e) { return null; } }
+function savePorts() { try { localStorage.setItem(PORTS_KEY, JSON.stringify(DEVS.map(d => [d.inId, d.outId]))); } catch (e) { /* private window: works without it */ } }
+function swapDevs() {
+  const a = DEVS[0], b = DEVS[1];
+  [a.inId, b.inId] = [b.inId, a.inId];
+  [a.outId, b.outId] = [b.outId, a.outId];
+  a.userChose = b.userChose = true;
+  savePorts(); choosePorts();
+}
+let identityMsg = "";
+function noteIdentity(before, after) {
+  const b = before.split("#"), a = after.split("#");
+  const gone = b[0].split("|").filter(x => x && !a[0].split("|").includes(x));
+  const came = a[0].split("|").filter(x => x && !b[0].split("|").includes(x));
+  const who = id => { const d = DEVS.find(x => x.inId === id); return d ? d.label : null; };
+  const parts = [];
+  if (gone.length) parts.push("пропал порт " + gone.map(x => x.slice(0, 8)).join(", ") + (gone.map(who).filter(Boolean).length ? " (был у «" + gone.map(who).filter(Boolean).join(", ") + "»)" : ""));
+  if (came.length) parts.push("появился порт " + came.map(x => x.slice(0, 8)).join(", "));
+  identityMsg = parts.join("; ");
+  document.getElementById("whoHint").textContent = "Последнее изменение портов: " + identityMsg +
+    ". Если порты поменялись местами после переподключения, выбери их заново в списках.";
+}
+function updateConn(dev) {
+  const el = document.getElementById("conn" + dev.idx);
+  if (!dev.inPort || !dev.outPort) { el.textContent = "Не выбран"; el.className = "conn none"; return; }
+  if (Date.now() - dev.lastReplyAt > 3000) { el.textContent = "Не отвечает"; el.className = "conn err"; return; }
+  el.textContent = "Подключён"; el.className = "conn ok";
+}
+for (const dev of DEVS) {
+  const i = dev.idx;
+  document.getElementById("in" + i).onchange = e => { dev.inId = e.target.value; dev.userChose = true; savePorts(); choosePorts(); };
+  document.getElementById("out" + i).onchange = e => { dev.outId = e.target.value; dev.userChose = true; savePorts(); choosePorts(); };
+  document.getElementById("lab" + i).oninput = e => { dev.label = e.target.value || ("Синтезатор " + (i + 1)); renderLive(); renderResults(); };
+}
+document.getElementById("swapBtn").onclick = swapDevs;
+async function startMidi() {
+  if (!navigator.requestMIDIAccess) { document.getElementById("conn0").textContent = "Этот браузер не умеет MIDI. Откройте страницу в Chrome или Edge."; return; }
+  try { midi = await navigator.requestMIDIAccess({ sysex: true }); }
+  catch (e) { document.getElementById("conn0").textContent = "Нет доступа к MIDI. Разрешите MIDI (sysex) для этой страницы и обновите её."; return; }
+  midi.onstatechange = choosePorts;
+  choosePorts();
+  setInterval(choosePorts, 2000);
+  setInterval(pollRound, 1000);
+}
+
+/* ===== Display ===== */
+function esc(t) { return String(t).replace(/[&<>]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[ch]); }
+function fmt(n) { return n === undefined ? "—" : n.toLocaleString("ru-RU"); }
+function f1(v) { return v === undefined ? "—" : v.toFixed(1) + " %"; }
+function liveCell(dev, get, counter) {
+  const s = dev.last; if (!s) return "—";
+  const v = get(s);
+  if (v === undefined) return "—";
+  if (!counter) return f1(v);
+  const p = dev.prev;
+  const add = p && p[counter] !== undefined && s[counter] >= p[counter] ? s[counter] - p[counter] : 0;
+  return fmt(v) + (add ? " <span class='bad'>+" + add + "</span>" : "");
+}
+function renderLive() {
+  const rows = METRICS.map(m => [m.name, d => liveCell(d, m.get)])
+    .concat(COUNTERS.map(c => [c.name + " (всего)", d => liveCell(d, s => s[c.key], c.key)]))
+    .concat([["Блоков сыграно", d => (d.last ? fmt(d.last.blocks) : "—")]]);
+  const head = "<tr><th></th>" + DEVS.map(d => "<th class='" + (d.idx ? "bc" : "oc") + "'>" + esc(d.label) + "</th>").join("") + "</tr>";
+  document.getElementById("liveTbl").innerHTML = head + rows.map(([n, f]) => "<tr><td>" + esc(n) + "</td>" + DEVS.map(d => "<td>" + f(d) + "</td>").join("") + "</tr>").join("");
+}
+
+/* ===== Steps UI ===== */
+function renderSteps() {
+  const box = document.getElementById("steps");
+  box.innerHTML = STEPS.map(st => {
+    const r = results[st.id], cur = activeStep && activeStep.id === st.id;
+    return "<div class='step" + (cur ? " cur" : "") + (r ? " done" : "") + "' data-id='" + st.id + "'>" +
+      "<div class='t'>Шаг " + st.id + ". " + esc(st.title) + (r ? " <span class='good'>— записан</span>" : "") + "</div>" +
+      "<div class='ins'>" + esc(st.text) + "</div>" +
+      "<div class='acts'><button class='go' data-go='" + st.id + "'" + (activeStep ? " disabled" : "") + ">Начать шаг</button>" +
+      "<input type='text' class='note' data-note='" + st.id + "' placeholder='заметка к шагу' value='" + esc((r && r.note) || stepNotes[st.id] || "").replace(/'/g, "&#39;") + "'></div></div>";
+  }).join("");
+  box.querySelectorAll("[data-go]").forEach(b => b.onclick = () => startStep(Number(b.dataset.go)));
+  box.querySelectorAll("[data-note]").forEach(i => i.oninput = () => { stepNotes[i.dataset.note] = i.value; if (results[i.dataset.note]) results[i.dataset.note].note = i.value; });
+}
+const stepNotes = {};
+let stepTimer = null;
+async function startStep(id) {
+  if (activeStep) return;
+  const dur = Math.max(5, Math.min(600, Number(document.getElementById("dur").value) || 30));
+  // clear the peak-hold figures: one read of command 23 on every connected synth (peaks restart at each read), discarded
+  await Promise.all(DEVS.map(async d => {
+    if (!d.inPort || !d.outPort) return;
+    for (let k = 0; d.busy && k < 40; ++k) await new Promise(r => setTimeout(r, 50));   // let a running poll finish first
+    if (d.busy) return;
+    d.busy = true;
+    try { await request(d, 23); } finally { d.busy = false; }
+  }));
+  activeStep = { id, start: Date.now(), end: Date.now() + dur * 1000, dur, from: samples.length };
+  document.getElementById("stopBtn").disabled = false;
+  renderSteps();
+  stepTimer = setInterval(tickStep, 250);
+  tickStep();
+}
+function tickStep() {
+  if (!activeStep) return;
+  const left = activeStep.end - Date.now(), frac = 1 - left / (activeStep.dur * 1000);
+  document.getElementById("progBar").style.width = Math.min(100, Math.max(0, frac * 100)) + "%";
+  document.getElementById("stepMsg").textContent = "Шаг " + activeStep.id + ": осталось " + Math.max(0, Math.ceil(left / 1000)) + " с";
+  if (left <= 0) finishStep(false);
+}
+function finishStep(aborted) {
+  if (!activeStep) return;
+  clearInterval(stepTimer);
+  const a = activeStep; activeStep = null;
+  const mine = samples.slice(a.from).filter(x => x.step === a.id);
+  const labels = DEVS.map(d => d.label);
+  const perDev = DEVS.map(d => {
+    const list = mine.filter(x => x.dev === d.idx).map(x => x.sample);
+    return list.length ? stepStats(list) : null;
+  });
+  const seconds = Math.round((Date.now() - a.start) / 1000);
+  results[a.id] = { note: stepNotes[a.id] || "", start: a.start, dur: seconds, perDev, aborted: !!aborted };
+  document.getElementById("stopBtn").disabled = true;
+  document.getElementById("progBar").style.width = "0";
+  document.getElementById("stepMsg").textContent = "Шаг " + a.id + " записан (" + seconds + " с)" + (aborted ? ", остановлен раньше" : "");
+  renderSteps(); renderResults();
+}
+document.getElementById("stopBtn").onclick = () => finishStep(true);
+
+function stepIds() { return STEPS.map(s => s.id).filter(id => results[id]); }
+function renderResults() {
+  const ids = stepIds(), labels = DEVS.map(d => d.label);
+  const sumEl = document.getElementById("sumWrap"), diffEl = document.getElementById("diffWrap");
+  if (!ids.length) { sumEl.textContent = "Шагов ещё нет."; diffEl.textContent = "Нужен шаг 1 и ещё хотя бы один."; return; }
+  const keys = DIFF_KEYS.concat(["master_fx"]);
+  let h = "<table><tr><th>Шаг</th><th>Синтез.</th>" + keys.map(k => "<th>" + esc(METRICS.find(m => m.key === k).name.replace(/, % .*$/, "")) + "</th>").join("") +
+    COUNTERS.map(c => "<th>" + esc(c.name) + "</th>").join("") + "</tr>";
+  for (const id of ids) {
+    const r = results[id];
+    for (let d = 0; d < DEVS.length; ++d) {
+      const p = r.perDev[d]; if (!p) continue;
+      h += "<tr><td>" + id + (r.note ? " <small class='hint'>" + esc(r.note) + "</small>" : "") + "</td><td class='" + (d ? "bc" : "oc") + "'>" + esc(labels[d]) + "</td>" +
+        keys.map(k => { const x = p.metrics[k]; return "<td>" + (x ? x.mean.toFixed(1) + " / " + x.max.toFixed(1) : "—") + "</td>"; }).join("") +
+        COUNTERS.map(c => "<td>" + (p.counters[c.key] === undefined ? "—" : p.counters[c.key]) + "</td>").join("") + "</tr>";
+    }
+  }
+  sumEl.innerHTML = h + "</table>";
+  const base = ids[0], rows = diffRows(results, base, ids, DEVS.length);
+  if (!rows.length) { diffEl.textContent = "Нужен шаг 1 и ещё хотя бы один."; return; }
+  let g = "<div class='hint'>База: шаг " + base + ". Красное — выросло, зелёное — упало. Среднее / максимум.</div><table><tr><th>Шаг</th><th>Синтез.</th>" +
+    DIFF_KEYS.map(k => "<th>" + esc(METRICS.find(m => m.key === k).name.replace(/, % .*$/, "")) + "</th>").join("") + "</tr>";
+  const seen = [];
+  for (const r of rows) { const key = r.step + "/" + r.dev; if (!seen.includes(key)) seen.push(key); }
+  for (const key of seen) {
+    const [st, dv] = key.split("/").map(Number);
+    g += "<tr><td>" + st + "</td><td class='" + (dv ? "bc" : "oc") + "'>" + esc(labels[dv]) + "</td>" + DIFF_KEYS.map(k => {
+      const r = rows.find(x => x.step === st && x.dev === dv && x.key === k);
+      if (!r) return "<td>—</td>";
+      const cls = r.dMean > 0.5 ? "pos" : r.dMean < -0.5 ? "neg" : "";
+      return "<td class='" + cls + "'>" + (r.dMean >= 0 ? "+" : "") + r.dMean.toFixed(1) + " / " + (r.dMax >= 0 ? "+" : "") + r.dMax.toFixed(1) + "</td>";
+    }).join("") + "</tr>";
+  }
+  diffEl.innerHTML = g + "</table>";
+}
+
+/* ===== Export ===== */
+function allCsvText() { return csvAll(samples); }
+function summaryCsvText() { return csvSummary(results, DEVS.map(d => d.label), stepIds()); }
+async function copyText(text, what) {
+  const msg = document.getElementById("copyMsg");
+  try { await navigator.clipboard.writeText(text); msg.textContent = "скопировано: " + what; return; } catch (e) {}
+  const ta = document.getElementById("manual");
+  ta.value = text; ta.style.display = "block"; ta.select();
+  let ok = false; try { ok = document.execCommand("copy"); } catch (e) {}
+  msg.textContent = ok ? "скопировано: " + what : "не получилось скопировать: выделите текст ниже и нажмите Ctrl+C";
+}
+document.getElementById("csvAll").onclick = () => copyText(allCsvText(), "замеров " + samples.length);
+document.getElementById("csvSum").onclick = () => copyText(summaryCsvText(), "итоги");
+document.getElementById("saveAll").onclick = () => {
+  const blob = new Blob([allCsvText() + "\n" + summaryCsvText()], { type: "text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "fm1-diag2-" + new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-") + ".csv";
+  a.click();
+};
+
+selfTest();
+renderSteps(); renderLive();
+startMidi();
+</script>
+</body>
+</html>

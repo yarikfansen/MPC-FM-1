@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FM-1 v10 эскизы</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#141217;color:#ddd;font:14px/1.45 system-ui,sans-serif}
+main{max-width:1180px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:6px 0 2px}h2{font-size:15px;margin:0 0 8px;color:#fff}
+.lead{color:#aaa;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.card{background:#1d1a21;border:1px solid #2c2932;border-radius:10px;padding:12px}
+.wide{grid-column:1/-1}
+canvas{width:240px;height:240px;border-radius:6px;display:block;margin:0 auto 8px;background:#000}
+.pair{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.cap{text-align:center;font-size:12px;color:#888;margin-bottom:4px}
+p,ul{margin:6px 0 0;color:#bbb;font-size:13px}ul{padding-left:18px}
+</style></head><body><main>
+<h1>FM-1 v10 — эскизы (код не трогаю до «да»)</h1>
+<p class="lead">Длинные ноты на сетке, новая страница SAVE, свои цвета у движков, страница INFO, живой фон в «Матрице». Уже сделано без эскиза (ты попросил прямо): удержание HOME открывает осциллограф, ещё одно удержание — микшер.</p>
+<div class="grid">
+<div class="card wide"><h2>1. Длинная нота / аккорд — «хвост кометы»</h2>
+<div class="pair"><div><div class="cap">сетка: нота держится 5 шагов, аккорд — 3</div><canvas id="long"></canvas></div><div><div class="cap">STEP EDIT первого шага — что записано</div><canvas id="longEdit"></canvas></div></div>
+<ul><li>Записывая вживую, отпускание клавиши тоже ловим: держал меньше шага → GATE в % шага; дольше → первый шаг GATE 100 % + TIE, следующие шаги — продолжение (TIE), последний — сколько додержал.</li>
+<li>На сетке: первый шаг — обычная клетка, от её центра тянется линия-хвост через все шаги звучания, к концу тускнеет. Аккорд — толстая линия (по числу нот).</li>
+<li>STEP EDIT показывает честно: LENGTH «5 ШАГОВ», TIE ON; ручкой LENGTH можно удлинить/укоротить — хвост меняется сразу.</li></ul></div>
+<div class="card"><h2>2. SAVE — главное крупно, симметрично</h2><canvas id="save"></canvas>
+<ul><li>По центру крупно имя проекта, буква под курсором пульсирует.</li><li>Над ним — номер слота крупно; 16 слотов — два ровных ряда по 8 по центру (жёлтый — этот проект, золотой — занят, контур — пусто).</li><li>Снизу: розовая SAVE, «to», зелёная галочка — по центру.</li></ul></div>
+<div class="card"><h2>3. Цвета движков</h2><canvas id="engines"></canvas>
+<ul><li>У каждого движка свой цвет значка: DX7 — небесный, 303 — кислотно-зелёный, 808 — оранжевый, PSG — фиолетовый, PLUCK — янтарный, SAMPLER — бирюзовый, MICRO D — медно-оранжевый.</li><li>Цвета не совпадают с цветами ручек, чтобы не путать.</li></ul></div>
+<div class="card"><h2>4. INFO</h2><canvas id="info"></canvas>
+<ul><li>GLOBAL → INFO: версия и сборка, на чём основано, память и процессор, батарея, ссылки (GitHub, Ko-fi). Всё по центру, главное крупно.</li></ul></div>
+<div class="card"><h2>5. Матрица: живой фон</h2><canvas id="mx"></canvas>
+<ul><li>Тусклый «цифровой дождь» медленно течёт за окнами; яркость низкая, надписи всегда поверх на чёрном.</li><li>Только в теме «Матрица», можно выключить в GLOBAL.</li></ul></div>
+</div></main>
+<script>
+const F=p=>'700 '+p+'px "Barlow Condensed"',MF=p=>p+'px "Share Tech Mono"',TX='#f2eef5',DIM='#8b8494',FT='#4a4552',K=['#ff7eb3','#3ee07a','#ffd23f','#2fd8c8'],GRN='#3ee07a',RED='#ff4b4b',YEL='#ffd23f';
+const ENG={dx7:'#6cb6ff','303':'#b6f03c','808':'#ff8a3d',psg:'#b58cff',pluck:'#ffc94d',smp:'#2fd8c8',md:'#e8743b'};
+function ctx(id,w=240,h=240){const c=document.getElementById(id);c.width=w*2;c.height=h*2;const g=c.getContext('2d');g.setTransform(2,0,0,2,0,0);g.fillStyle='#000';g.fillRect(0,0,w,h);return g;}
+function rr(g,x,y,w,h,r,f,s,lw=1){g.beginPath();g.roundRect(x,y,w,h,r);if(f){g.fillStyle=f;g.fill();}if(s){g.strokeStyle=s;g.lineWidth=lw;g.stroke();}}
+function T(g,s,x,y,p,c,a='left',font=F){g.font=font(p);g.fillStyle=c;g.textAlign=a;g.textBaseline='top';g.fillText(s,x,y);}
+function line(g,pts,c,w=2){g.strokeStyle=c;g.lineWidth=w;g.lineJoin='round';g.lineCap='round';g.beginPath();pts.forEach((p,i)=>i?g.lineTo(...p):g.moveTo(...p));g.stroke();}
+function hdr(g,title,kind,name){T(g,'120',5,3,22,TX);T(g,'BPM',38,11,11,GRN);T(g,title,120,4,20,TX,'center');g.fillStyle=GRN;g.beginPath();g.moveTo(183,9);g.lineTo(192,14.5);g.lineTo(183,20);g.fill();T(g,'100',224,3,22,TX,'right');rr(g,228,7,6,13,1.5,null,TX);
+ ['F','A','S','L'].forEach((l,i)=>{const x=5+(i%2)*13,y=28+Math.floor(i/2)*13;rr(g,x,y,11,11,2.5,i<3?[TX,GRN,RED][i]:null,i<3?null:FT);T(g,l,x+5.5,y+1,10,i<3?'#000':FT,'center');});
+ if(kind){rr(g,48,28,26,24,4,null,ENG[kind],1.5);icon(g,kind,61,40,18,ENG[kind]);T(g,name,80,31,19,ENG[kind]);}}
+function icon(g,k,cx,cy,s,c){const h=s/2;g.save();g.strokeStyle=c;g.fillStyle=c;g.lineWidth=1.8;g.lineJoin='round';g.beginPath();
+ if(k=='dx7'){for(let j=0;j<3;j++){const yy=cy-h*.5+j*h*.5;for(let i=0;i<=16;i++){const x=cx-h+i*s/16,y=yy+Math.sin(i/16*Math.PI*2*(j+1))*h*.18;i?g.lineTo(x,y):g.moveTo(x,y);}}g.stroke();}
+ else if(k=='303'){[[-1,.6],[-.3,-.6],[-.3,.6],[.4,-.6],[.4,.6],[1,-.6]].forEach(([x,y],i)=>i?g.lineTo(cx+x*h,cy+y*h):g.moveTo(cx+x*h,cy+y*h));g.stroke();}
+ else if(k=='808'){g.arc(cx,cy,h*.8,0,7);g.stroke();g.beginPath();g.arc(cx,cy,h*.3,0,7);g.fill();}
+ else if(k=='psg'){[[-1,.5],[-1,-.5],[-.33,-.5],[-.33,.5],[.33,.5],[.33,-.5],[1,-.5],[1,.5]].forEach(([x,y],i)=>i?g.lineTo(cx+x*h,cy+y*h):g.moveTo(cx+x*h,cy+y*h));g.stroke();}
+ else if(k=='pluck'){for(let i=0;i<=24;i++){const u=i/24,x=cx-h+u*s,y=cy-Math.sin(u*Math.PI*6)*h*.8*Math.exp(-u*2.5);i?g.lineTo(x,y):g.moveTo(x,y);}g.stroke();}
+ else if(k=='smp'){for(let i=0;i<=12;i++){const x=cx-h+i*s/12,a=(.3+.7*Math.abs(Math.sin(i*1.3)))*h*.8;g.moveTo(x,cy-a);g.lineTo(x,cy+a);}g.stroke();}
+ else {[0,1].forEach(j=>{g.globalAlpha=j?1:.5;g.beginPath();for(let i=0;i<3;i++){const x0=cx-h+i*h*.66+(j?2:-2),y0=cy+(j?2:-2);g.moveTo(x0,y0+h*.5);g.lineTo(x0+h*.66,y0-h*.5);g.lineTo(x0+h*.66,y0+h*.5);}g.stroke();});}
+ g.restore();}
+function knobs(g,l){l.forEach((k,i)=>{const x=i*60;g.fillStyle=K[i];g.fillRect(x+6,197,48,2);T(g,k[0],x+30,202,16,TX,'center');T(g,k[1],x+30,219,16,K[i],'center');});}
+function grid(g,y0,pitch,h,on,longs){const X=s=>5+s*14+Math.floor(s/4)*3;
+ for(let r=0;r<4;r++)for(let s=0;s<16;s++){const i=r*16+s,x=X(s),y=y0+r*pitch;const tail=longs.find(L=>L.r==r&&s>L.s&&s<=L.s+L.n);
+  rr(g,x,y,11,h,3,on.includes(i)?'#3ee07a':tail?'#0e1a12':'#101013',on.includes(i)?null:(tail?'#1f5a33':s%4==0?'#45404c':'#2a2730'));}
+ longs.forEach(L=>{const y=y0+L.r*pitch+h/2,x0=X(L.s)+5.5,x1=X(L.s+L.n)+5.5;const gr=g.createLinearGradient(x0,0,x1,0);gr.addColorStop(0,'rgba(62,224,122,1)');gr.addColorStop(1,'rgba(62,224,122,.15)');
+  g.strokeStyle=gr;g.lineWidth=L.w;g.lineCap='round';g.beginPath();g.moveTo(x0,y);g.lineTo(x1,y);g.stroke();g.fillStyle='#fff';g.beginPath();g.arc(x0,y,1.6,0,7);g.fill();});}
+let t0=performance.now(),save_g;
+function drawAll(){
+ {const g=ctx('long');hdr(g,'SEQUENCER','dx7','E.PIANO 1');for(let i=0;i<16;i++)rr(g,10+i*14,62,10,8,2,i==0?YEL:null,i==0?null:'#5a4f22');
+  grid(g,77,29,23,[0,8,16,20,27,40,44,52],[{r:0,s:0,n:4,w:3},{r:1,s:4,n:2,w:6},{r:2,s:8,n:3,w:3}]);
+  knobs(g,[['VELOCITY','100'],['LENGTH','5 STEPS'],['PROB','100%'],['NOTE','C4']]);}
+ {const g=ctx('longEdit');hdr(g,'STEP EDIT','dx7','E.PIANO 1');T(g,'STEP 1',235,28,13,DIM,'right');T(g,'5 STEPS',235,41,13,TX,'right');
+  rr(g,6,66,228,122,4,'#0b0a0d','#2a2730');const X=s=>14+s*24;
+  for(let s=0;s<9;s++){rr(g,X(s),94,18,26,3,s==0?'#3ee07a':'#101013',s==0?null:s<5?'#1f5a33':'#2a2730');}
+  const gr=g.createLinearGradient(X(0)+9,0,X(4)+9,0);gr.addColorStop(0,'#3ee07a');gr.addColorStop(1,'rgba(62,224,122,.2)');g.strokeStyle=gr;g.lineWidth=3;g.lineCap='round';g.beginPath();g.moveTo(X(0)+9,107);g.lineTo(X(4)+9,107);g.stroke();
+  T(g,'GATE 100%  ·  TIE ON',120,134,16,TX,'center');T(g,'LAST STEP 60%',120,156,14,DIM,'center');
+  knobs(g,[['CHORD','—'],['TIE','ON'],['LOCK','—'],['LENGTH','5 STEPS']]);}
+ {const g=ctx('engines');hdr(g,'ENGINES');const L=[['dx7','DX7'],['303','303'],['808','808'],['psg','PSG'],['pluck','PLUCK'],['smp','SAMPLER'],['md','MICRO D']];
+  L.forEach(([k,n],i)=>{const x=12+(i%3)*76,y=58+Math.floor(i/3)*44;rr(g,x,y,64,38,6,'#0b0a0d',ENG[k],1.5);icon(g,k,x+32,y+14,20,ENG[k]);T(g,n,x+32,y+24,12,ENG[k],'center');});
+  knobs(g,[['ENGINE','303'],['',''],['',''],['','']]);}
+ {const g=ctx('info');hdr(g,'INFO');T(g,'MPC FM-1',120,34,30,TX,'center');T(g,'V0.2 BETA  ·  BUILD 5F010A6',120,68,13,DIM,'center');
+  rr(g,6,90,228,98,4,'#0b0a0d','#2a2730');[['FLASH FREE','176 KB'],['RAM FREE','41 KB'],['CPU PEAK','52 %'],['BATTERY','100 %']].forEach(([a,b],i)=>{const x=6+(i%2)*114,y=96+Math.floor(i/2)*42;T(g,a,x+57,y,12,DIM,'center');T(g,b,x+57,y+14,22,K[i],'center');});
+  T(g,'BASED ON FM1 OPEN V14 · GITHUB.COM/YARIKFANSEN',120,182,9,DIM,'center');knobs(g,[['LANGUAGE','ENGLISH'],['',''],['',''],['KO-FI','QR']]);}
+ requestAnimationFrame(anim);}
+function anim(now){const p=(now%900)/900;
+ {const g=ctx('save');hdr(g,'SAVE PROJECT');T(g,'SLOT',120,30,12,DIM,'center');T(g,'03',120,40,24,TX,'center');
+  for(let i=0;i<16;i++){const x=120-4*14+(i%8)*14+2,y=68+Math.floor(i/8)*13,used=i<6;rr(g,x,y,10,9,2,i==2?YEL:used?'#7a6a2a':null,i==2?null:used?null:'#5a4f22');}
+  const nm='ACID JAM',cur=7;g.font=F(40);let x=120-g.measureText(nm).width/2;for(let i=0;i<nm.length;i++){const ch=nm[i],w=g.measureText(ch).width,a=.5+.5*Math.sin(p*Math.PI*2);T(g,ch,x,98,40,i==cur?(a>.5?GRN:FT):TX);if(i==cur){g.fillStyle=GRN;g.globalAlpha=a;g.fillRect(x,142,w,3);g.globalAlpha=1;}x+=w;}
+  rr(g,30,152,74,34,17,K[0]);T(g,'SAVE',67,158,22,'#000','center');T(g,'to',120,160,20,TX,'center');line(g,[[150,168],[160,178],[180,156]],GRN,7);
+  knobs(g,[['SLOT','03'],['CURSOR','8'],['LETTER','M'],['ACTION','SAVE']]);}
+ {const g=ctx('mx');const M='#00ff41';g.font=MF(9);let seed=7;const off=now/90;for(let c=0;c<34;c++){seed=(seed*1103515245+12345)&0x7fffffff;const sp=.6+(seed%100)/100,head=(off*sp+seed)%300;for(let y=0;y<240;y+=10){const d=(y-head+600)%300;seed=(seed*1103515245+12345)&0x7fffffff;g.fillStyle=d<14?'#0d5a22':d<60?'#06300f':'#031a08';g.fillText(String.fromCharCode(0x30A0+(seed%90)),c*7,y);}}
+  g.fillStyle='#000';g.fillRect(0,0,240,26);g.font=MF(18);g.fillStyle=M;g.textAlign='left';g.fillText('120',5,4);g.textAlign='center';g.font=MF(16);g.fillText('SEQUENCER',120,6);g.textAlign='right';g.font=MF(18);g.fillText('100',224,4);
+  for(let r=0;r<4;r++)for(let s=0;s<16;s++){const x=5+s*14+Math.floor(s/4)*3,y=77+r*29,on=[0,8,16,20,27,40,44,52].includes(r*16+s);g.fillStyle=on?'#00c032':'#000';g.strokeStyle='#0b3d16';g.beginPath();g.roundRect(x,y,11,23,3);g.fill();if(!on)g.stroke();}
+  g.fillStyle='#000';g.fillRect(0,195,240,45);['VEL','GATE','PROB','NOTE'].forEach((k,i)=>{g.fillStyle=M;g.fillRect(i*60+6,197,48,2);g.font=MF(13);g.textAlign='center';g.fillText(k,i*60+30,203);g.fillText(['100','75%','100%','A2'][i],i*60+30,220);});}
+ requestAnimationFrame(anim);}
+document.fonts.load('700 12px "Barlow Condensed"').then(drawAll,drawAll);
+</script></body></html>

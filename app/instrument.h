@@ -240,6 +240,8 @@ unsigned groove_settings_radio_flags(void);
 unsigned groove_settings_role_value(void);
 int groove_settings_radio(unsigned flags, unsigned role);
 void groove_settings_clock(unsigned mode);
+/* A CLOCK change waits for the stopped transport (project.c clock_poll): no arpeggiator notes meanwhile. */
+unsigned groove_settings_clock_pending(void);
 int groove_settings_status(void);
 void groove_transfer_poll(void);
 void groove_transfer_init(void);

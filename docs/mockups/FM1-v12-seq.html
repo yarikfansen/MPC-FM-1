@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SEQ экран в стиле MICRO D</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#141217;color:#ddd;font:14px/1.45 system-ui,sans-serif}main{max-width:900px;margin:0 auto;padding:16px}
+.row{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}canvas{width:480px;height:480px;max-width:100%;border-radius:4px;background:#000}ul{color:#bbb;font-size:13px}</style></head><body><main>
+<h2 style="color:#fff">SEQ в центральном окне MICRO D: 64 шага + цепочка SONG из 16 слотов</h2>
+<div class="row"><canvas id="a"></canvas></div>
+<ul><li>Без рамки окна: сетка растянута от угла до угла центрального поля (x 5..235, y 64..190), цифр в ячейках нет. Сверху ряд SONG: 16 слотов (номер паттерна), играющий слот янтарный. Под ним 64 шага: 4 ряда × 16, те же колонки, что у слотов (13 px, зазор 1), строки 21 px, зазор 3. Шаг включён — цвет дорожки, пустой — тёмный, за длиной последовательности — едва виден, головка воспроизведения — белая.</li>
+<li>Число шагов и значок цепи — в последней плитке справа вверху (там, где у MICRO D последний значок пути), под батареей. «PATTERN CHAIN» везде называется SONG.</li></ul></main>
+<script>
+const F=p=>'700 '+p+'px "Barlow Condensed","Arial Narrow",sans-serif',TX='#f2eef5',DIM='#8b8494',FT='#4a4552',K=['#ff7eb3','#3ee07a','#ffd23f','#2fd8c8'],GRN='#3ee07a',RED='#ff4b4b',AM='#ffb347',CR='#f2e8d0',WB='#0c0b09',WE='#4a4436',BLU='#5fa8e8';
+function ctx(id){const c=document.getElementById(id);c.width=720;c.height=720;const g=c.getContext('2d');g.setTransform(3,0,0,3,0,0);g.fillStyle='#000';g.fillRect(0,0,240,240);return g;}
+function rr(g,x,y,w,h,r,f,s,lw=1){g.beginPath();g.roundRect(x,y,w,h,r);if(f){g.fillStyle=f;g.fill();}if(s){g.strokeStyle=s;g.lineWidth=lw;g.stroke();}}
+function T(g,s,x,y,p,c,a='left'){g.font=F(p);g.fillStyle=c;g.textAlign=a;g.textBaseline='top';g.fillText(s,x,y);}
+function line(g,pts,c,w=2){g.strokeStyle=c;g.lineWidth=w;g.lineJoin='round';g.lineCap='round';g.beginPath();pts.forEach((p,i)=>i?g.lineTo(...p):g.moveTo(...p));g.stroke();}
+function circ(g,x,y,r,f,s,lw=1){g.beginPath();g.arc(x,y,r,0,7);if(f){g.fillStyle=f;g.fill();}if(s){g.strokeStyle=s;g.lineWidth=lw;g.stroke();}}
+function tri(g,x,y,s,c,down){g.fillStyle=c;g.beginPath();if(down){g.moveTo(x-s,y);g.lineTo(x+s,y);g.lineTo(x,y+s);}else{g.moveTo(x,y);g.lineTo(x+s,y+s/2);g.lineTo(x,y+s);}g.fill();}
+function win(g,x,y,w,h,label){rr(g,x,y,w,h,5,WB,WE);if(label)T(g,label,x+w/2,y+3,13,AM,'center');}
+function fasl(g,st=[1,1,1,0]){['F','A','S','L'].forEach((l,i)=>{const x=5+(i%2)*13,y=28+Math.floor(i/2)*13,on=st[i];rr(g,x,y,11,11,3,on?[TX,GRN,RED,K[3]][i]:null,on?null:FT);T(g,l,x+5.5,y+1,10,on?'#000':FT,'center');});}
+function hdr(g,title,o={}){T(g,'120',5,3,22,TX);T(g,'BPM',38,11,11,GRN);if(title)T(g,title,120,3,o.tp||20,o.tc||TX,'center');
+ tri(g,183,9,11,GRN);T(g,'100',224,3,22,TX,'right');rr(g,228,7,6,13,2,null,TX);fasl(g,o.fasl);}
+function knobs(g,l,hl=-1,cols=K){l.forEach((k,i)=>{const x=i*60;if(hl===i)rr(g,x+3,195,54,45,5,'#1c1a21');g.fillStyle=cols[i];g.fillRect(x+6,197,48,hl===i?3:2);T(g,k[0],x+30,202,k[0].length>6?13:16,k[0]=='-'?FT:TX,'center');T(g,k[1],x+30,215,24,cols[i],'center');});}
+/* small amber icons */
+function icon(g,i,cx,cy,s,c){const h=s/2;
+ if(i==0)line(g,[[cx-h,cy+h*.5],[cx-h*.2,cy-h*.5],[cx-h*.2,cy+h*.5],[cx+h*.6,cy-h*.5],[cx+h*.6,cy+h*.5]],c,1.6);
+ if(i==1){line(g,[[cx-h,cy+h*.4],[cx-h*.1,cy-h*.5],[cx-h*.1,cy+h*.4],[cx+h*.8,cy-h*.5]],c,1.6);line(g,[[cx-h*.8,cy+h*.6],[cx+h*.1,cy-h*.3],[cx+h*.1,cy+h*.6],[cx+h,cy-h*.3]],c,1);}
+ if(i==2)line(g,[[cx-h,cy-h*.2],[cx,cy-h*.2],[cx+h*.3,cy-h*.6],[cx+h*.5,cy+h*.1],[cx+h,cy+h*.6]],c,1.6);
+ if(i==3)line(g,[[cx-h,cy+h*.6],[cx-h*.5,cy-h*.6],[cx,cy-h*.1],[cx+h*.5,cy-h*.1],[cx+h,cy+h*.6]],c,1.6);
+ if(i==4){g.strokeStyle=c;g.lineWidth=1.6;g.beginPath();for(let k=0;k<=20;k++){const x=cx-h+k*s/20,y=cy-Math.sin(k/20*Math.PI*2)*h*.5;k?g.lineTo(x,y):g.moveTo(x,y);}g.stroke();}}
+function strip(g,cur,y=29,x0=34){const w=34,gap=5;for(let i=0;i<5;i++){const x=x0+i*(w+gap),on=i==cur;rr(g,x,y,w,21,5,on?AM:'#15131a',on?null:'#3a3540');icon(g,i,x+w/2,y+10.5,16,on?'#000':DIM);}}
+function wave(i,u){return [1-2*u,.5*(1-2*u)+.5*(1-4*Math.abs(u-.5)),u<.5?1:-1,1-4*Math.abs(u-.5)][i];}
+function sine(g,x,y,w,a,c,lw=1.6,ph=0,n=1.5){line(g,[...Array(w+1)].map((_,k)=>[x+k,y-Math.sin(k/w*Math.PI*2*n+ph)*a]),c,lw);}
+function iconHead(g,cx,cy,c){circ(g,cx,cy,8,null,c,1.6);line(g,[[cx-5,cy+2],[cx-8,cy+2]],c,1.6);}
+
+/* ---------- D1 ---------- */
+function seq(g,big){hdr(g,'',{});T(g,'SEQ 1',120,3,20,TX,'center');
+ const cx=222;line(g,[[cx,34],[cx,60]],YEL(),2.5);circ(g,cx,34,3,null,YEL(),2);circ(g,cx,47,3,null,YEL(),2);circ(g,cx,60,3,null,YEL(),2);
+ T(g,'16',cx-8,big?30:38,big?34:17,TX,'right');
+ for(let r=0;r<2;r++)for(let c=0;c<8;c++){const x=8+c*28,y=80+r*34,on=(r*8+c)%3==0;rr(g,x,y,24,29,3,on?K[0]:'#15131a',on?null:'#3a3540');}
+ T(g,'STEPS',120,152,13,DIM,'center');knobs(g,[['NOTE','C3'],['LEN','1'],['VEL','100'],['PROB','100']],-1);}
+function YEL(){return K[2];}
+/* ---------- D2 ---------- */
+function fxTabs(g,cur){for(let k=0;k<3;k++){const cx=60+k*60,on=k==cur,c=on?AM:DIM;
+  if(on)tri(g,cx,56,8,AM,true);
+  const ic=[[ [-8,5],[-8,-5] ],[]][0];
+  g.save();g.strokeStyle=c;g.lineWidth=1.6;
+  if(k==0){line(g,[[cx-5,70],[cx-5,86]],c,1.6);line(g,[[cx+5,70],[cx+5,86]],c,1.6);rr(g,cx-8,73,6,4,1,c);rr(g,cx+2,80,6,4,1,c);}
+  if(k==1){for(let i=0;i<3;i++){g.beginPath();g.arc(cx,86,5+i*5,Math.PI*1.15,Math.PI*1.85);g.stroke();}}
+  if(k==2){rr(g,cx-10,76,7,7,1,c);rr(g,cx,77,5,5,1,c,null);rr(g,cx+8,78,3,3,1,c);}
+  g.restore();}}
+function fxPage(id,cur,names,vals,title,bars){const g=ctx(id);hdr(g,'');T(g,'6 PLUCK',120,25,13,K[0],'center');
+ win(g,6,44,228,144,'');T(g,title,120,47,13,AM,'center');
+ fxTabs(g,cur);
+ for(let i=0;i<4;i++){const x=i*60+16,f=bars[i];rr(g,x,100,28,84,3,'#18140f',WE);rr(g,x,100+84*(1-f),28,84*f,3,K[i]);}
+ knobs(g,names.map((n,i)=>[n,vals[i]]),-1);return g;}
+
+
+const MDP='#0c0b09';
+function fa(g){['F','A','S','L'].forEach((l,i)=>{const x=5+(i%2)*18,y=27+Math.floor(i/2)*18,on=[1,1,1,0][i];rr(g,x,27+Math.floor(i/2)*18,16,16,2,on?[TX,GRN,RED,K[3]][i]:null,on?null:FT);T(g,l,x+8,y+1,15,on?'#000':FT,'center');});}
+function bar(g,t){T(g,'120',5,3,22,TX);T(g,'BPM',38,11,13,GRN);T(g,t,120,3,20,TX,'center');tri(g,181,8,11,GRN);T(g,'100',224,3,22,TX,'right');rr(g,228,7,6,13,1,null,TX);}
+function chain(g,cx,cy,c){rr(g,cx-12,cy-4,14,8,4,null,c,1.8);rr(g,cx-2,cy-4,14,8,4,null,c,1.8);}
+function scr(id){const g=ctx(id);bar(g,'SEQ');fa(g);
+ /* engine plate + name */
+ rr(g,44,27,34,34,3,null,'#b6f03c',1.5);line(g,[[50,50],[56,38],[56,50],[63,38],[63,50],[72,38]],'#b6f03c',1.8);T(g,'MICRO D',86,35,24,'#b6f03c');
+ /* last plate: step count + chain, under the battery */
+ rr(g,200,27,35,34,3,'#15110a',AM);T(g,'48',217.5,29,22,TX,'center');chain(g,217,55,AM);
+ /* no window: the grid runs corner to corner over the central field (x 5..235, y 64..190) */
+ const X=i=>5+Math.round(i*14.375),W=13;
+ const slots=[1,2,3,1,4,5,2,2,6,7,8,1,0,0,0,0];
+ for(let i=0;i<16;i++){const x=X(i),on=slots[i],cur=i==4;rr(g,x,64,W,21,3,cur?AM:(on?'#15110a':'#0c0b09'),cur?null:(on?AM:'#3a3540'));}
+ const lenSteps=48,play=21,ons=[0,3,6,8,10,13,16,20,22,24,27,30,32,35,38,40,43,45,47];
+ for(let r=0;r<4;r++)for(let c=0;c<16;c++){const n=r*16+c,x=X(c),y=93+r*25,beyond=n>=lenSteps,on=!beyond&&ons.includes(n);
+  rr(g,x,y,W,22,3,on?K[0]:'#18140f',on?null:(beyond?'#2a2730':'#4a4436'));
+  if(n==play)rr(g,x+2.5,y+2.5,W-5,17,2,null,on?'#000':'#fff',2);}
+ knobs(g,[['PAGE','2'],['LENGTH','48'],['SONG','ON'],['SLOT','5']],-1);}
+function drawAll(){scr('a');}
+document.fonts.load('700 12px "Barlow Condensed"').then(drawAll,drawAll);
+</script></body></html>

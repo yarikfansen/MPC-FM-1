@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FM-1 boot logo</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&display=swap" rel="stylesheet">
+<script src="fm1-build.js"></script>
+<style>body{margin:0;background:#141217;color:#ddd;font:14px/1.45 system-ui,sans-serif}main{max-width:1240px;margin:0 auto;padding:16px}
+h2{color:#fff;margin:.2em 0}h3{color:#ffb347;margin:18px 0 4px}canvas{width:240px;height:240px;border-radius:4px;background:#000;display:block;image-rendering:pixelated}
+.row{display:flex;flex-wrap:wrap;gap:10px}.f{text-align:center;font-size:12px;color:#cfc8d6}.live{width:288px!important;height:288px!important}
+button{background:#2a2630;color:#fff;border:1px solid #4a4552;border-radius:4px;padding:4px 12px;cursor:pointer}ul{color:#bbb;font-size:13px}
+.snd{color:#ffb347}</style></head><body><main>
+<h2>FM-1: новая заставка (эскиз, код не менялся)</h2>
+<ul>
+<li><b>Версия из сборки:</b> <span id="ver"></span> (читается из <code>fm1-build.js</code>, его пишет <code>sh tools/mk_mockup_version.sh</code> из <code>app/build_id.h</code>; в прошивке - <code>FM1_VERSION_TAG</code>, не жёстко).</li>
+<li><b>Время:</b> показ <b>2200 мс</b> вместо 1200 (константа в <code>screen.c</code>). Любая кнопка, клавиша или ручка по-прежнему пропускают (как сейчас, ручка мастера - после 150 мс).</li>
+<li><b>Размеры по Фибоначчи:</b> 8 · 13 · 21 · 34 · 55; зазоры 8 и 13; шрифты: название lcd30 (крупнее в наборе нет, lcd44 - только цифры), версия lcd22, остальное lcd14 (было lcd17 / lcd11). Цвета - 8 цветов дорожек из <code>colors[]</code>, янтарь и крем MICRO D.</li>
+<li><b>Рисование:</b> текст рисуется один раз, анимация - только <code>paint_fill</code> прямоугольников (как сейчас у полос), без новых шрифтов и картинок. Оценка флэша: +0.2…0.5 КБ (запас 155 КБ, порог 16 КБ).</li>
+<li class="snd"><b>Звук (отдельная задача движка, здесь не делается):</b> старт на отметке <b>1500 мс</b> - конец окна загрузки (boot settling 1.5 с); кульминация картинки совпадает с этим моментом, до 2200 мс - спокойное удержание.</li>
+</ul>
+<div id="root"></div>
+<script>
+const B=window.FM1_BUILD||{tag:'?',id:'',base:'V14'},VER='V0.2 '+B.tag,HOLD=2200,SND=1500;
+document.getElementById('ver').textContent=VER+' · BUILD '+B.id+' · BASED ON FM1 OPEN '+B.base;
+const c565=v=>'#'+[(v>>11&31)*255/31,(v>>5&63)*255/63,(v&31)*255/31].map(x=>Math.round(x).toString(16).padStart(2,'0')).join('');
+const TR=[0xed17,0xf5ae,0xee8f,0x96b4,0x6e98,0x7d9c,0xad7d,0xf497].map(c565);
+const CREAM=c565(0xf75a),AMBER=c565(0xfd88),DIMC=c565(0xa4d0),PANEL=c565(0x0841),EDGE=c565(0x4a26);
+const FT=(p)=>'700 '+p+'px "Barlow Condensed","Arial Narrow",sans-serif';
+function T(g,s,cx,y,p,c){g.font=FT(p);g.fillStyle=c;g.textAlign='center';g.textBaseline='top';g.fillText(s,cx,y);}
+function R(g,x,y,w,h,c){g.fillStyle=c;g.fillRect(x,y,w,h);}
+const cl=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)),ease=u=>1-(1-u)*(1-u);
+/* common text: lcd30 y34, lcd17 y77 (34+30+13), lcd11 y102 (77+17+8), footer y213 (240-27) */
+/* Text stack (Fibonacci gaps 8/13/21): title lcd30, version lcd22, base lcd14, footer lcd14.
+   lcd30 is the largest letter font in font_lcd.h (lcd44 holds digits only). */
+function rainbow(g,s,cx,y,p){ /* one track colour per visible letter, drawn char by char */
+  g.font=FT(p);const adv=[...s].map(ch=>g.measureText(ch).width),w=adv.reduce((a,b)=>a+b,0);let x=cx-w/2,k=0;
+  const n=[...s].filter(ch=>ch!=' ').length;
+  [...s].forEach((ch,i)=>{if(ch!=' '){g.fillStyle=TR[Math.round(k++*7/(n-1))];g.textAlign='left';g.textBaseline='top';g.fillText(ch,x,y);}x+=adv[i];});
+}
+function texts(g,t,y0=34,fy=213){ /* each text is painted once, like cache->title_cache on the device */
+  const d=g.__d||(g.__d={});const once=(k,f)=>{if(!d[k]){d[k]=1;f()}};
+  once(0,()=>rainbow(g,'MPC FM-1',120,y0,30));
+  if(t>=250)once(1,()=>T(g,VER,120,y0+38,22,AMBER));
+  if(t>=450){once(2,()=>T(g,'BASED ON FM1 OPEN '+B.base,120,y0+68,14,DIMC));once(3,()=>T(g,'FOR M-VAVE FM-1',120,fy,14,DIMC));}
+}
+/* ---------- A: eight bars grow as a bell, then a colour ripple ---------- */
+function A(g,t){
+  texts(g,t);const H=[13,21,34,55,55,34,21,13],cy=156;
+  for(let i=0;i<8;i++){
+    const x=40+21*i,u=ease(cl((t-150-i*110)/380));let h=Math.round(H[i]*u);
+    if(t>SND){const r=cl(1-Math.abs((t-SND)/90-i)/1.6);h+=Math.round(8*r)} /* ripple after sound start */
+    R(g,x,cy-28,13,56,'#000');
+    if(h>=2)R(g,x,cy-Math.round(h/2),13,h,TR[i]);else R(g,x,cy-1,13,2,EDGE);
+  }
+}
+/* ---------- B: 2x8 step grid, a playhead sweeps, all flash at the sound ---------- */
+function B_(g,t){
+  texts(g,t);
+  for(let r=0;r<2;r++)for(let i=0;i<8;i++){
+    const x=8+29*i,y=130+29*r;let c=PANEL,e=EDGE;
+    const on=t-150-i*130-r*65;
+    if(on>0){c=on<130?CREAM:TR[i];e=null}
+    if(t>=SND&&t<SND+160){c=CREAM;e=null}
+    R(g,x,y,21,21,e?e:c);if(e)R(g,x+1,y+1,19,19,c);
+    if(t>=SND+160&&r==0&&i==((t-SND-160)/90|0)%8)R(g,x+7,y+7,7,7,CREAM); /* slow marker */
+  }
+}
+/* ---------- C: sine that turns into FM, drawn left to right ---------- */
+function C(g,t){
+  texts(g,t);const x0=8,W=224,cy=156,A=34,reach=Math.round(W*ease(cl((t-150)/1350)));let py=0;
+  for(let k=0;k<reach;k++){
+    const u=k/W,idx=3.2*u*u,y=Math.round(cy-A*Math.sin(2*Math.PI*u*2+idx*Math.sin(2*Math.PI*u*6)));
+    const seg=Math.min(7,(k/(W/8))|0);
+    {const y0=k?py:y;R(g,x0+k,Math.min(y,y0)-1,2,Math.abs(y-y0)+3,TR[seg]);py=y;} /* fill the step between columns */
+    if(t>SND&&Math.abs(k-(t-SND)*0.4)<3)R(g,x0+k,y-1,2,3,CREAM); /* sheen */
+  }
+}
+/* ---------- D: frame of 40 squares (13, pitch 21) chases clockwise around the screen ---------- */
+const RING=(()=>{const r=[],X=i=>8+21*i;for(let i=0;i<11;i++)r.push([X(i),8]);for(let i=1;i<10;i++)r.push([X(10),X(i)]);
+  for(let i=10;i>=0;i--)r.push([X(i),X(10)+0]);for(let i=9;i>=1;i--)r.push([X(0),X(i)]);return r;})();
+function D(g,t){
+  texts(g,t,59,167);
+  RING.forEach(([x,y],n)=>{let c=PANEL,e=EDGE;const on=t-150-n*30;
+    if(on>0){c=on<90?CREAM:TR[n%8];e=null}
+    if(t>=SND&&t<SND+160){c=CREAM;e=null}
+    R(g,x,y,13,13,e?e:c);if(e)R(g,x+1,y+1,11,11,c);});
+}
+/* ---------- E: six FM operators (3 modulators over 3 carriers), signal flows down ---------- */
+function E(g,t){
+  texts(g,t);const x0=56;
+  for(let i=0;i<3;i++){const x=x0+47*i,cx=x+17;
+    const tm=150+i*200,tl=tm+300,tc=tm+500;
+    const box=(y,on,col)=>{let c=PANEL,e=EDGE;if(on>0){c=on<130?CREAM:col;e=null}if(t>=SND&&t<SND+160){c=CREAM;e=null}R(g,x,y,34,21,e?e:c);if(e)R(g,x+1,y+1,32,19,c);};
+    box(130,t-tm,TR[i*2]);
+    R(g,cx-1,151,2,13,t>=tl?TR[i*2]:EDGE);          /* modulation link */
+    box(164,t-tc,TR[i*2+1]);
+  }
+}
+const V=[['B · STEPS (с правками)','Сетка 2×8, квадраты 21 / зазор 8; шрифты крупнее (версия lcd22, остальное lcd14); MPC FM-1 радугой - по букве на цвет дорожки.',B_],
+['D · FRAME','40 квадратов 13 (шаг 21) по периметру экрана, по часовой бегут цветами дорожек; на 1500 мс вспышка рамки. Текст стоит внутри рамки.',D],
+['E · OPERATORS','Шесть FM-операторов 34×21: три модулятора сверху, три несущие снизу; сигнал идёт вниз по связям, на 1500 мс вспышка.',E],
+['A · BARS (прежний, новые шрифты)','Для сравнения.',A],['C · FM WAVE (прежний, новые шрифты)','Для сравнения.',C]];
+const FR=[200,600,1000,1500,1800,HOLD];const root=document.getElementById('root');
+V.forEach(([name,desc,fn])=>{
+  const h=document.createElement('h3');h.textContent=name;root.appendChild(h);
+  const p=document.createElement('div');p.style.cssText='font-size:13px;color:#bbb;margin-bottom:6px';p.textContent=desc;root.appendChild(p);
+  const row=document.createElement('div');row.className='row';root.appendChild(row);
+  FR.forEach(t=>{const d=document.createElement('div');d.className='f';const c=document.createElement('canvas');c.width=c.height=240;
+    const g=c.getContext('2d');g.fillStyle='#000';g.fillRect(0,0,240,240);
+    /* frames are cumulative: paint every earlier step like the device does */
+    for(let s=0;s<=t;s+=40)fn(g,s);fn(g,t);
+    d.appendChild(c);d.appendChild(document.createTextNode(t+' мс'+(t==SND?' · ♪ звук':'')+(t==HOLD?' · конец/пропуск':'')));row.appendChild(d);});
+  const d=document.createElement('div');d.className='f';const c=document.createElement('canvas');c.className='live';c.width=c.height=240;
+  const b=document.createElement('button');b.textContent='▶ играть';d.appendChild(c);d.appendChild(b);row.appendChild(d);
+  const g=c.getContext('2d');let raf=0;
+  const play=()=>{cancelAnimationFrame(raf);const t0=performance.now();let last=-40;g.__d=null;g.fillStyle='#000';g.fillRect(0,0,240,240);
+    const step=now=>{const t=Math.min(HOLD,now-t0);for(let s=last+40;s<=t;s+=40)fn(g,s);fn(g,t);last=t;if(now-t0<HOLD)raf=requestAnimationFrame(step)};raf=requestAnimationFrame(step)};
+  b.onclick=play;
+});
+</script></main></body></html>
